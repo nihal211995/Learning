@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Hindu Baby Name Explorer</title>
+<style>
+:root{--bg:#fbf6ea;--card:#fffdf7;--ink:#2d1a14;--muted:#6f5a50;--gold:#b8892b;--terra:#b5573a;--maroon:#6b1f2a;--line:#e8dcc3;--btn:#7a2331;--btnink:#fff;--chip:#f3e9d2;--ok:#2f6b3a;--warn:#9a5a00;--shadow:0 1px 3px rgba(80,40,20,.10);
+--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;--dev:"Noto Serif Devanagari","Kohinoor Devanagari","Devanagari Sangam MN","Mangal","Nirmala UI",serif;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+:root[data-theme=dark]{--bg:#1c1412;--card:#261b18;--ink:#f3e9da;--muted:#b9a99a;--gold:#d9b25a;--terra:#df8a6a;--maroon:#e0a0a8;--line:#43332d;--btn:#b24a5a;--chip:#33251f;--ok:#7fc08c;--warn:#e0b060;--shadow:none}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#1c1412;--card:#261b18;--ink:#f3e9da;--muted:#b9a99a;--gold:#d9b25a;--terra:#df8a6a;--maroon:#e0a0a8;--line:#43332d;--btn:#b24a5a;--chip:#33251f;--ok:#7fc08c;--warn:#e0b060;--shadow:none}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;font-size:16px;-webkit-tap-highlight-color:transparent;padding-bottom:env(safe-area-inset-bottom)}
+button,input,select,textarea{font:inherit;color:inherit;touch-action:manipulation}
+.top{display:flex;align-items:center;gap:12px;padding:calc(12px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 8px calc(16px + env(safe-area-inset-left));color:var(--gold)}
+.top h1{margin:0;font-family:var(--serif);font-size:1.35rem;color:var(--maroon);line-height:1.2;flex:1}
+.top h1 small{display:block;font-size:.8rem;font-weight:400;color:var(--muted);font-family:var(--sans)}
+#tabs{position:sticky;top:0;z-index:20;display:flex;gap:6px;overflow-x:auto;padding:8px calc(12px + env(safe-area-inset-right)) 8px calc(12px + env(safe-area-inset-left));background:var(--bg);border-bottom:1px solid var(--line);-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;min-height:44px;padding:0 14px;border:1px solid var(--line);background:var(--card);border-radius:22px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected=true]{background:var(--btn);color:var(--btnink);border-color:var(--btn)}
+main{max-width:980px;margin:0 auto;padding:12px calc(14px + env(safe-area-inset-right)) 96px calc(14px + env(safe-area-inset-left))}
+h2{font-family:var(--serif);color:var(--maroon);margin:8px 0}
+h3{font-family:var(--serif);margin:0;overflow-wrap:anywhere}
+.panel{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:14px;padding:12px 14px;margin:10px 0;box-shadow:var(--shadow)}
+.panel p{margin:6px 0}
+.src{color:var(--muted);font-size:.92rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{min-height:44px;padding:6px 14px;border:1px solid var(--line);background:var(--chip);border-radius:22px;cursor:pointer}
+.chip.on{background:var(--maroon);color:#fff;border-color:var(--maroon)}
+:root[data-theme=dark] .chip.on{color:#1c1412}
+.cnt{opacity:.75;font-size:.85em}
+.btn{min-height:44px;padding:6px 14px;border:1px solid var(--btn);background:var(--btn);color:var(--btnink);border-radius:10px;cursor:pointer}
+.btn.alt{background:transparent;color:var(--btn)}
+:root[data-theme=dark] .btn.alt{color:var(--ink);border-color:var(--gold)}
+.btn.danger{background:#9b2226;border-color:#9b2226;color:#fff}
+.btn.on{background:var(--gold);border-color:var(--gold);color:#2d1a14}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.search{display:flex;gap:8px;margin:10px 0}
+.search input{flex:1;min-width:0;min-height:48px;padding:8px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:16px}
+.fpanel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 14px 12px;margin-bottom:10px}
+.fpanel fieldset{border:0;margin:8px 0;padding:0;min-width:0}
+.fpanel legend{font-weight:600;font-size:.9rem;color:var(--muted)}
+.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+select,textarea{width:100%;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:16px}
+textarea{min-height:70px;resize:vertical}
+label.chk{display:flex;align-items:center;gap:10px;min-height:44px}
+label.chk input{width:22px;height:22px}
+.rhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap}
+.list{display:grid;gap:12px}
+@media(min-width:760px){.list{grid-template-columns:1fr 1fr}.card.open{grid-column:1/-1}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);min-width:0}
+.card.is-hidden{opacity:.55}
+.card.final{border-color:var(--gold);border-width:2px}
+.ch{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.names{min-width:0}
+.dev{font-family:var(--dev);line-height:1.7;color:var(--terra);font-weight:500;margin-left:6px}
+.pron{color:var(--muted);font-size:.9rem;overflow-wrap:anywhere}
+.mean{margin:6px 0;font-weight:500}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.b{font-size:.78rem;padding:2px 9px;border-radius:12px;background:var(--chip);border:1px solid var(--line)}
+.b.ok{color:var(--ok)}.b.warn{color:var(--warn)}.b.g{color:var(--terra)}
+.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.actions .btn{flex:1 1 auto;padding:6px 10px;font-size:.92rem}
+.more{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+dl{margin:0}dt{font-weight:600;color:var(--maroon);margin-top:8px;font-size:.88rem}dd{margin:2px 0 0;overflow-wrap:anywhere}
+.stars{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.stars .btn{min-width:44px;padding:4px}
+.rank{font-family:var(--serif);font-size:1.6rem;color:var(--gold);min-width:32px}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;min-width:120px;overflow-wrap:anywhere}
+th{background:var(--chip);position:sticky;top:0}
+.empty{text-align:center;padding:30px 14px;color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:14px}
+#compareBar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:none;gap:8px;justify-content:center;align-items:center;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--gold)}
+#compareBar.show{display:flex}
+#toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--maroon);color:#fff;padding:10px 16px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:80;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--card);border-radius:16px;padding:18px;max-width:440px;width:100%}
+.modal .actions{justify-content:flex-end}
+details.dd{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 12px;margin:8px 0}
+details.dd summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
+.bar{background:#fff3cd;color:#5a3d00;border:1px solid #e6c36a;border-radius:12px;padding:10px 12px;margin:10px 0}
+:root[data-theme=dark] .bar{background:#3d3115;color:#f3dfa5;border-color:#7a6320}
+#printArea{display:none}
+.rep{font-family:Georgia,serif;color:#222;max-width:800px;margin:0 auto}
+.rep h1{color:#6b1f2a}.rep .it{border:1px solid #ccc;border-radius:8px;padding:8px 12px;margin:8px 0;page-break-inside:avoid}
+.rep table{font-size:11px}.rep th,.rep td{border:1px solid #ccc;min-width:0}
+@media print{body>*:not(#printArea){display:none!important}#printArea{display:block!important}body{background:#fff}}
+</style>
+</head>
+<body>
+<header class="top"><svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true"><circle cx="24" cy="24" r="7" fill="none" stroke="currentColor" stroke-width="2"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M24 4v7M24 37v7M4 24h7M37 24h7M10 10l5 5M33 33l5 5M38 10l-5 5M15 33l-5 5"/></g></svg><h1>Hindu Baby Name Explorer<small>Lalitha · Lakshmi · Sūrya — meanings, sources, shortlist</small></h1></header>
+<nav id="tabs" role="tablist" aria-label="Sections"></nav>
+<main id="view"></main>
+<div id="compareBar"></div>
+<div id="modal"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="printArea"></div>
+<script>
+/* ===== EMBEDDED DATASET ===== */
+const NAMES = [];
+const T = {
+  LSN: 'Lalitā Sahasranāma (Brahmāṇḍa Purāṇa, Lalitopākhyāna)',
+  LAK: 'Lakṣmī Aṣṭottaraśatanāmāvalī (108 names; recensions vary)',
+  SRI: 'Śrī Sūkta (Ṛgveda Khila)',
+  AH: 'Ādityahṛdayam (Rāmāyaṇa, Yuddha Kāṇḍa)',
+  SN: 'Sūrya Namaskāra twelve-name mantra set',
+  RV: 'Ṛgveda'
+};
+/* A(cols, en, dev, iast, pron, gender, meaning, root, definition, spiritual, srcCat, source, reference, attested, modern, themes, extras)
+   cols: l = Lalitha, k = Lakshmi, s = Sun-inspired (letters may combine)
+   srcCat: LS, LK, VE, PU, SU, SI
+   themes: L light, S sun/fire, W wisdom, P prosperity, C strength, B beauty, K compassion, U purity/auspicious, R protection/leadership, N nature/cosmic, D devotion, V victory
+   extras: v variants, nk suggested nicknames, note, sun (1-6), kind, assoc, auth (override label) */
+function A(cols,en,dev,iast,pron,g,mean,root,def,spirit,sc,src,ref,att,mod,th,o){
+  NAMES.push(Object.assign({cols:cols,en:en,dev:dev,iast:iast,pron:pron,g:g,mean:mean,root:root,def:def,spirit:spirit,srcCat:sc,src:src,ref:ref,att:att,mod:mod,th:th},o||{}));
+}
+
+/* ---------- LALITHA SAHASRANAMAM ---------- */
+A('l','Shrimata','श्रीमाता','Śrīmātā','Shree-maa-taa','epithet','Auspicious Mother','śrī + mātṛ','Śrī (fortune, auspiciousness, glory) + mātā (mother): the auspicious or glorious Mother.','The opening name of the Sahasranāma; it presents the Goddess first as the compassionate Mother of all.','LS',T.LSN,'Name 1 (opening name) — confirm against your printed edition',true,'uncommon','UKD',{v:'Srimata, Shreemata',note:'Used almost only as a title of the Goddess; rare as a personal name.'});
+A('l','Lalita','ललिता','Lalitā','Luh-lee-taa','girl','Graceful, playful, charming','√lal (to play, to sport)','From lalita, “playing, charming, delicate”. It is also the proper name of the Goddess whose thousand names the text lists.','Līlā, the Goddess’s effortless creative play, is central to the theology of Lalitā.','LS',T.LSN,'Deity name that titles the text (closing name is Lalitāmbikā)',true,'modern','BD',{v:'Lalitha, Lalitaa',nk:'Lali, Lita',note:'Lalitā is also the name of other figures in Hindu literature; here the sense is the Goddess.'});
+A('l','Lalitambika','ललिताम्बिका','Lalitāmbikā','Luh-lee-taam-bi-kaa','girl','Playful, charming Mother','lalitā + ambikā','Lalitā (graceful, playful) + ambikā (little mother, a name of the Goddess).','Marks the unity of grace and motherhood in the Goddess.','LS',T.LSN,'The closing name of the text (traditionally the 1000th)',true,'uncommon','BD',{v:'Lalithambika, Lalithambikai',nk:'Lalita, Ambika (suggested)'});
+A('l','Tripurasundari','त्रिपुरसुन्दरी','Tripurasundarī','Tri-pu-ra-sun-da-ree','girl','Beauty of the three cities / three worlds','tri + pura + sundarī','Tripura (“three cities”, read in Śākta teaching as three worlds or states of consciousness) + sundarī (beautiful woman).','The central name of the Goddess in the Śrīvidyā tradition.','LS',T.LSN,'Occurs near the end (śrīmatī tripurasundarī) — number not verified',true,'traditional','BDU',{v:'Tripura Sundari',nk:'Sundari, Tripura (suggested)'});
+A('l','Sundari','सुन्दरी','Sundarī','Sun-da-ree','girl','Beautiful woman','sundara (beautiful)','The ordinary Sanskrit word for a beautiful woman, here read as the short form of Tripurasundarī.','Beauty as an aspect of the divine.','LS',T.LSN,'',false,'modern','B',{v:'Sundary',nk:'Sundu, Suni (suggested)',note:'DERIVED short form of Tripurasundarī; not claimed as a verbatim name in the Sahasranāma.'});
+A('l','Tripura','त्रिपुरा','Tripurā','Tri-pu-raa','girl','She of the three cities / worlds','tri + pura','Feminine form commonly used for the Goddess in Śākta texts.','Refers to the Goddess as ruling the three worlds.','LS',T.LSN,'',false,'uncommon','DR',{v:'Tripuraa',note:'DERIVED short form of Tripureśī / Tripurasundarī; not claimed as verbatim. In Bengal and the north-east “Tripura” is also a place name.'});
+A('l','Shiva (girl)','शिवा','Śivā','Shi-vaa','girl','Auspicious one','√śi / śiva (auspicious)','Feminine of śiva, “auspicious, kind”.','The auspicious, benevolent nature of the Goddess.','LS',T.LSN,'In the passage “śivā svādhīnavallabhā” — number not verified',true,'modern','UK',{v:'Shiwa, Siva',note:'In Sanskrit śivā also denotes a jackal and turmeric; in the Devī context it means “auspicious one”. The same spelling is the masculine deity name Shiva, so context matters.'});
+A('l','Shivankari','शिवङ्करी','Śivaṅkarī','Shi-vang-ka-ree','girl','Bestower of auspiciousness','śiva + kara','Śiva (auspicious, well-being) + -karī (maker, bestower).','She who brings about well-being.','LS',T.LSN,'In the passage “śivaṅkarī śivapriyā” — number not verified',true,'uncommon','UP',{v:'Sivankari, Shivankari'});
+A('l','Shankari','शङ्करी','Śaṅkarī','Shun-ka-ree','girl','Beneficent one; consort of Śaṅkara','śaṃ + kara','Śam (well-being) + -karī (maker): “she who does good”; also read as consort of Śaṅkara (Śiva).','Benevolence and peace.','LS',T.LSN,'In the passage “śaṅkarī śrīkarī sādhvī” — number not verified',true,'traditional','UKD',{v:'Sankari',nk:'Shanka (suggested)'});
+A('l','Shreekari','श्रीकरी','Śrīkarī','Shree-ka-ree','girl','Bestower of prosperity and fortune','śrī + kara','Śrī (fortune, splendour) + -karī (maker).','The Goddess as giver of auspicious prosperity.','LS',T.LSN,'In the passage “śaṅkarī śrīkarī sādhvī” — number not verified',true,'uncommon','PU',{v:'Srikari, Shrikari'});
+A('l','Sharvani','शर्वाणी','Śarvāṇī','Shar-vaa-nee','girl','Consort of Śarva (Śiva)','śarva + -āṇī','Feminine companion-form of Śarva, a name of Śiva (“the archer”).','Names the Goddess in relation to Śiva.','LS',T.LSN,'In the passage “śarvāṇī śarmadāyinī” — number not verified',true,'traditional','D',{v:'Sarvani'});
+A('l','Sadhvi','साध्वी','Sādhvī','Saad-vee','girl','Virtuous, good woman','√sādh (to accomplish)','Feminine of sādhu, “straight, good, virtuous”.','Moral uprightness.','LS',T.LSN,'In the passage “śaṅkarī śrīkarī sādhvī” — number not verified',true,'modern','U',{v:'Sadhvi, Saadhvi',note:'Also used as a title for female renunciants.'});
+A('l','Parvati','पार्वती','Pārvatī','Paar-va-tee','girl','Daughter of the mountain','parvata (mountain) + -ī','“She of the mountain”, as daughter of Himavān.','The Goddess as the daughter of the Himalaya and consort of Śiva.','LS',T.LSN,'In the passage “pārvatī padmanayanā padmarāgasamaprabhā” — number not verified',true,'modern','DN',{v:'Parvathi, Paarvati',nk:'Paru, Parvi (suggested)'});
+A('l','Padmanayana','पद्मनयना','Padmanayanā','Pad-ma-na-ya-naa','girl','Lotus-eyed','padma + nayana','Padma (lotus) + nayana (eye).','Lotus-like eyes are a classical image of beauty and serenity.','LS',T.LSN,'In the passage “pārvatī padmanayanā” — number not verified',true,'uncommon','BU',{v:'Padmanayana',nk:'Padma, Nayana (suggested)'});
+A('l','Rajivalochana','राजीवलोचना','Rājīvalocanā','Raa-jee-va-lo-cha-naa','girl','Lotus-eyed','rājīva + locana','Rājīva (lotus) + locana (eye).','Serene, beautiful vision.','LS',T.LSN,'In the passage “rājīvalocanā” — number not verified',true,'uncommon','B',{v:'Rajeevalochana',nk:'Rajiva (suggested)'});
+A('l','Rajarajeshwari','राजराजेश्वरी','Rājarājeśvarī','Raa-ja-raa-jesh-va-ree','girl','Sovereign of sovereigns','rāja + rāja + īśvarī','“Queen of kings”: rājan (king) repeated + īśvarī (sovereign lady).','Supreme sovereignty of the Goddess.','LS',T.LSN,'In the passage “rājarājeśvarī rājyadāyinī” — number not verified',true,'traditional','RC',{v:'Rajarajeswari, Rajarajeshwari',nk:'Raji, Rajeshwari (suggested)'});
+A('lk','Rama','रमा','Ramā','Ra-maa','girl','Delightful one; also a name of Lakṣmī','√ram (to delight)','From √ram, “to please, to rest”; ramā is “the charming one” and is also a standard name of Lakṣmī.','Delight and domestic well-being.','LS',T.LSN,'In the passage “ramā rākendumukhī” — number not verified',true,'modern','BP',{v:'Rama, Ramaa',note:'The identical spelling “Rama” is also the masculine name of Rāma.'});
+A('l','Ramya','रम्या','Ramyā','Ram-yaa','girl','Charming, delightful','√ram','Feminine of ramya, “pleasing, lovely”.','Loveliness of form and character.','LS',T.LSN,'In the passage “ramyā rājīvalocanā” — number not verified',true,'modern','B',{v:'Ramya'});
+A('l','Ranjani','रञ्जनी','Rañjanī','Run-ja-nee','girl','She who delights or gives colour','√rañj (to colour, to please)','Agent noun from √rañj: one who pleases or colours.','Joy and charm.','LS',T.LSN,'In the passage “rañjanī ramaṇī rasyā” — number not verified',true,'modern','BK',{v:'Ranjini, Ranjani',nk:'Ranju, Rani (suggested)'});
+A('l','Kamakshi','कामाक्षी','Kāmākṣī','Kaa-maak-shee','girl','She whose eyes are loving / grant wishes','kāma + akṣi','Kāma (love, desire) + akṣi (eye). Commentaries may analyse the compound in more than one way.','Famous as the presiding goddess of Kāñcīpuram; fulfilment of rightful wishes.','LS',T.LSN,'In the passage “kāmākṣī kāmadāyinī” — number not verified',true,'traditional','DK',{v:'Kamakshi, Kamatchi',nk:'Kamu, Akshi (suggested)'});
+A('l','Kalyani','कल्याणी','Kalyāṇī','Kul-yaa-nee','girl','Auspicious, beautiful, fortunate one','kalyāṇa (auspicious)','Feminine of kalyāṇa, “beautiful, auspicious, prosperous”.','Auspiciousness and welfare.','LS',T.LSN,'In the passage “kalyāṇī jagatīkandā” — number not verified',true,'modern','UP',{v:'Kalyani, Kalyaani',nk:'Kalu, Kally (suggested)'});
+A('l','Karuna','करुणा','Karuṇā','Ka-ru-naa','girl','Compassion','karuṇā (compassion)','Ordinary Sanskrit word for compassion.','The Goddess’s compassion is a recurrent theme.','LS',T.LSN,'',false,'modern','K',{v:'Karuna, Karunaa',nk:'Karu (suggested)',note:'DERIVED from the epithet Karuṇārasasāgarā (“ocean of the nectar of compassion”); the stand-alone form is not claimed as verbatim.'});
+A('l','Sudha','सुधा','Sudhā','Su-dhaa','girl','Nectar','sudhā (nectar)','Ordinary Sanskrit word for the nectar of immortality.','Immortality and sweetness.','LS',T.LSN,'',false,'modern','UN',{v:'Sudha, Sudhaa',note:'DERIVED from an epithet describing the Goddess seated amid an ocean of nectar (Sudhāsāgaramadhyasthā); not claimed as verbatim.'});
+A('ls','Prabhavati','प्रभावती','Prabhāvatī','Pra-bhaa-va-tee','girl','Radiant, full of splendour','prabhā + -vatī','Prabhā (radiance) + -vatī (possessing).','Radiance as a quality of the Goddess.','LS',T.LSN,'In the passage “prabhāvatī prabhārūpā” — number not verified',true,'traditional','LB',{v:'Prabhavathi, Prabhavati',nk:'Prabha (suggested)',sun:6,kind:'Solar concept',assoc:'Names radiance (prabhā) as a quality; it is not an epithet of Sūrya.'});
+A('l','Chinmayi','चिन्मयी','Cinmayī','Chin-ma-yee','girl','Made of pure consciousness','cit + -mayī','Cit (consciousness) + -mayī (consisting of).','The Goddess as pure awareness.','LS',T.LSN,'In the passage “cinmayī paramānandā” — number not verified',true,'uncommon','WD',{v:'Chinmayi, Chinmayee',nk:'Chinmu, Mayi (suggested)'});
+A('ls','Gayatri','गायत्री','Gāyatrī','Gaa-ya-tree','girl','The Gāyatrī metre and mantra; “protector of the singer”','√gai (to sing) + √trai (to protect)','The name of a Vedic metre and of the Gāyatrī mantra (addressed to Savitṛ, the solar deity). The “protects the singer” sense is the traditional etymology.','The mother of the Vedas in tradition; the mantra invokes the Sun’s inspiring light.','LS',T.LSN,'In the passage “gāyatrī vyāhṛtiḥ sandhyā” — number not verified (mantra: Ṛgveda 3.62.10)',true,'modern','WDL',{v:'Gayathri, Gayatri',nk:'Gaya, Gayu (suggested)',sun:3,kind:'Solar concept (mantra addressed to Savitṛ)',assoc:'The Gāyatrī mantra is addressed to Savitṛ, the solar deity, asking for the stimulation of the mind by his light.'});
+A('ls','Sandhya','सन्ध्या','Sandhyā','Sun-dhyaa','girl','Twilight; the junction of day and night','sam + √dhā (to join)','The juncture of day and night, and the ritual worship of the Sun at dawn, noon and dusk (sandhyāvandana).','The sacred meeting-points of the day.','LS',T.LSN,'In the passage “gāyatrī vyāhṛtiḥ sandhyā” — number not verified',true,'modern','DN',{v:'Sandhya, Sandya',nk:'Sandy, Sandhu (suggested)',sun:5,kind:'Solar concept',assoc:'Twilight rites are performed facing the Sun; the word names the Sun’s rising and setting hours.'});
+A('l','Nirmala','निर्मला','Nirmalā','Nir-ma-laa','girl','Spotless, pure','nir + mala (stain)','Nir (without) + mala (stain, impurity).','Purity of mind and heart.','LS',T.LSN,'In the passage “nirmalā nityā nirākārā” — number not verified',true,'modern','U',{v:'Nirmala',nk:'Nimmi (suggested)'});
+A('l','Nitya','नित्या','Nityā','Nit-yaa','girl','Eternal','nitya (constant)','Feminine of nitya, “eternal, constant”.','Timeless nature of the Goddess.','LS',T.LSN,'In the passage “nirmalā nityā nirākārā” — number not verified',true,'modern','D',{v:'Nithya, Nitya',note:'In Śrīvidyā the Nityā are also a group of deities; here the plain sense “eternal” is meant.'});
+A('lk','Shanta','शान्ता','Śāntā','Shaan-taa','girl','Peaceful, tranquil','√śam (to be calm)','Feminine of śānta, “calm, peaceful”.','Peace as a sign of realisation.','LS',T.LSN,'In the passage “niṣkalā śāntā niṣkāmā” — number not verified',true,'modern','UD',{v:'Shantha, Shanta',nk:'Shanti (suggested; a related but different word)',note:'Also appears in Lakṣmī Aṣṭottara lists.'});
+A('l','Hrimati','ह्रीमती','Hrīmatī','Hree-ma-tee','girl','Modest, possessing hrī','hrī + -matī','Hrī means modesty or shame in Sanskrit; the seed syllable hrīṃ is a separate matter. Interpretation varies by commentary.','Modesty and humility.','LS',T.LSN,'In the passage “hrīmatī hṛdyā” — number not verified',true,'uncommon','U',{v:'Hreemati, Hrimati'});
+A('l','Hridya','हृद्या','Hṛdyā','Hrid-yaa','girl','Heart-pleasing, charming','hṛd (heart)','Feminine of hṛdya, “pleasing to the heart”.','The Goddess as dear to the heart.','LS',T.LSN,'In the passage “hrīmatī hṛdyā” — number not verified',true,'uncommon','BK',{v:'Hridya, Hrudya',nk:'Hridu (suggested)'});
+A('l','Bala','बाला','Bālā','Baa-laa','girl','Young girl; youthful one','bāla (young)','Feminine of bāla, “young, child”. Also the name of the child form of the Goddess, Bālā Tripurasundarī.','Freshness and innocence.','LS',T.LSN,'In the passage “bālā līlāvinodinī” — number not verified',true,'modern','BU',{v:'Bala, Baala'});
+A('l','Subhaga','सुभगा','Subhagā','Su-bha-gaa','girl','Fortunate, blessed with good fortune','su + bhaga','Su (good) + bhaga (fortune, prosperity).','Good fortune and grace.','LS',T.LSN,'In the passage “trivargadātrī subhagā tryambakā” — number not verified',true,'uncommon','BP',{v:'Subhaga, Subhaaga'});
+A('l','Shobhana','शोभना','Śobhanā','Sho-bha-naa','girl','Splendid, beautiful','√śubh (to shine, to be beautiful)','Feminine of śobhana, “radiant, beautiful, auspicious”.','Beauty and radiance.','LS',T.LSN,'In the passage “śobhanā sulabhā gatiḥ” — number not verified',true,'modern','BL',{v:'Shobhana, Sobhana',nk:'Shobha, Shobi (suggested)'});
+A('l','Ojovati','ओजोवती','Ojovatī','O-jo-va-tee','girl','Full of vital energy and splendour','ojas + -vatī','Ojas (vigour, vital radiance) + -vatī (possessing).','Vitality and spiritual vigour.','LS',T.LSN,'In the passage “ojovatī dyutidharā” — number not verified',true,'uncommon','CL',{v:'Ojovati, Ojovathi',nk:'Ojas (a different word), Ojo (suggested)'});
+A('ls','Dyutidhara','द्युतिधरा','Dyutidharā','Dyu-ti-dha-raa','girl','Bearer of radiance','dyuti + dhara','Dyuti (splendour, radiance) + -dharā (bearing).','The Goddess as bearer of light.','LS',T.LSN,'In the passage “ojovatī dyutidharā” — number not verified',true,'uncommon','L',{v:'Dyutidhara',nk:'Dyuti (suggested)',sun:6,kind:'Solar concept',assoc:'Radiance (dyuti) is a quality associated with luminaries; this name is not an epithet of Sūrya.'});
+A('l','Aparna','अपर्णा','Aparṇā','A-par-naa','girl','“Leafless”: one who performed austerity without even leaves','a + parṇa (leaf)','In tradition, Pārvatī’s austerity became so severe that she gave up even eating leaves.','Austerity, determination and devotion.','LS',T.LSN,'In the passage “aparṇā caṇḍikā” — number not verified',true,'modern','DU',{v:'Aparna',nk:'Apu, Parna (suggested)'});
+A('l','Chandika','चण्डिका','Caṇḍikā','Chun-di-kaa','girl','The fierce one','√caṇḍ (to be fierce)','Feminine diminutive of caṇḍa, “fierce, passionate”.','The protective, fierce aspect of the Goddess.','LS',T.LSN,'In the passage “aparṇā caṇḍikā” — number not verified',true,'traditional','CR',{v:'Chandika, Chandhika'});
+A('lk','Mahalakshmi','महालक्ष्मी','Mahālakṣmī','Ma-haa-luck-shmee','girl','Great Lakṣmī','mahā + lakṣmī','Mahā (great) + Lakṣmī (fortune, goddess of prosperity).','Great fortune and auspiciousness.','LS',T.LSN,'In the passage “mahādevī mahālakṣmīr” — number not verified',true,'traditional','PU',{v:'Mahalaxmi, Mahalakshmi',nk:'Laxmi, Maha (suggested)'});
+A('l','Mahadevi','महादेवी','Mahādevī','Ma-haa-day-vee','epithet','Great Goddess','mahā + devī','Mahā (great) + devī (goddess).','Supremacy of the Goddess.','LS',T.LSN,'In the passage “māheśvarī mahādevī mahālakṣmīr” — number not verified',true,'traditional','DR',{v:'Mahadevi, Mahadevy'});
+A('lk','Kanta','कान्ता','Kāntā','Kaan-taa','girl','Beloved, lustrous one','√kam (to love) / kānta','Feminine of kānta, “beloved, lovely, radiant”.','Loveliness and grace.','LS',T.LSN,'In the passage “kalāvatī kalālāpā kāntā” — number not verified',true,'traditional','BL',{v:'Kantha, Kanta',note:'Also appears in Lakṣmī Aṣṭottara lists.'});
+A('l','Kalavati','कलावती','Kalāvatī','Ka-laa-va-tee','girl','Accomplished in the arts','kalā + -vatī','Kalā (art, skill) + -vatī (possessing).','Arts and refinement.','LS',T.LSN,'In the passage “kalāvatī kalālāpā” — number not verified',true,'traditional','WB',{v:'Kalavathi, Kalavati',nk:'Kala (suggested)'});
+A('l','Madhumati','मधुमती','Madhumatī','Ma-dhu-ma-tee','girl','Sweet; rich in honey','madhu + -matī','Madhu (honey, sweetness) + -matī (possessing).','Sweetness of speech and spirit.','LS',T.LSN,'In the passage “māyā madhumatī mahī” — number not verified',true,'traditional','BK',{v:'Madhumathi, Madhumati',nk:'Madhu (suggested)'});
+A('l','Mahi','मही','Mahī','Ma-hee','girl','The earth','mahī (earth)','Sanskrit word for the earth; also “great”.','Stability and nourishment.','LS',T.LSN,'In the passage “madhumatī mahī” — number not verified',true,'modern','NU',{v:'Mahi, Mahee'});
+A('l','Manonmani','मनोन्मनी','Manonmanī','Ma-non-ma-nee','girl','State of mind absorbed beyond itself','manas + unmanī','A yogic term for the state in which mind rises beyond itself.','Contemplative absorption.','LS',T.LSN,'In the passage “manonmanī māheśvarī” — number not verified',true,'uncommon','WD',{v:'Manonmani, Manonmanee',nk:'Mani, Manu (suggested)'});
+A('l','Bhagavati','भगवती','Bhagavatī','Bha-ga-va-tee','epithet','Divine, venerable lady','bhagavat + -ī','Feminine of bhagavat, “fortunate, divine, revered”.','Reverence for the Goddess.','LS',T.LSN,'In the passage “padmāsanā bhagavatī” — number not verified',true,'traditional','DR',{v:'Bhagavathi, Bhagwati'});
+A('l','Trayi','त्रयी','Trayī','Tra-yee','girl','The threefold Veda','trayī (triad)','Trayī vidyā: the three Vedas (Ṛg, Yajus, Sāman).','Sacred knowledge.','LS',T.LSN,'In the passage “trayī trivargaranilayā” — number not verified',true,'uncommon','WD',{v:'Trayi, Trayee'});
+A('l','Sumangali','सुमङ्गली','Sumaṅgalī','Su-mung-ga-lee','girl','Auspicious woman','su + maṅgala','Su (good) + maṅgala (auspicious).','Auspiciousness.','LS',T.LSN,'In the passage “bālā līlāvinodinī sumaṅgalī” — number not verified',true,'uncommon','UP',{v:'Sumangali, Sumangala',note:'Traditionally the word also denotes a married woman of auspicious status; consider that connotation.'});
+A('l','Paramjyoti','परंज्योतिः','Paraṃjyotiḥ','Pa-ram-jyo-ti','unisex','Supreme light','para + jyotis','Para (supreme) + jyotis (light).','The Goddess as the supreme light of consciousness.','LS',T.LSN,'In the passage “paraṃjyotiḥ paraṃdhāma” — number not verified',true,'uncommon','LWD',{v:'Paramjyothi, Param Jyoti',nk:'Jyoti (suggested)',note:'The text uses the neuter form paraṃjyotiḥ; a name drawn from it is an adaptation.'});
+A('ls','Sarvaruna','सर्वारुणा','Sarvāruṇā','Sar-vaa-ru-naa','girl','Wholly rose-red, dawn-coloured','sarva + aruṇā','Sarva (all) + aruṇā (reddish, dawn-coloured).','The Goddess’s dawn-red radiance.','LS',T.LSN,'In the passage “sarvāruṇā ’navadyāṅgī” — number not verified',true,'uncommon','LB',{v:'Sarvaruna',nk:'Aruna (suggested; a masculine name)',sun:5,kind:'Solar concept',assoc:'Aruṇa is the red of dawn, and Aruṇa is also Sūrya’s charioteer; the name describes colour, not the Sun god.'});
+
+/* ---------- LAKSHMI TRADITION ---------- */
+A('k','Shree','श्री','Śrī','Shree','girl','Fortune, splendour, auspiciousness; Lakṣmī herself','√śri (to resort to; traditional)','Śrī denotes beauty, prosperity and glory and is the personal name of the goddess in the Śrī Sūkta.','Prosperity understood as radiance and grace.','LK',T.SRI,'Addressed throughout the hymn',true,'modern','PUB',{v:'Sri, Shri',note:'Śrī is also an honorific prefix; as a stand-alone name it is used mainly for girls.'});
+A('k','Lakshmi','लक्ष्मी','Lakṣmī','Luck-shmee','girl','Mark of fortune; goddess of wealth and well-being','lakṣ / lakṣa (to mark, to aim); traditional','The name of the goddess of prosperity; the etymology links to “sign, mark” of good fortune.','Fortune, auspiciousness and abundance.','LK',T.LAK,'Core name of the stotra (the opening name is Prakṛti)',true,'modern','PUB',{v:'Laxmi, Lakshmi, Lakshmee',nk:'Lakshu, Lucky (suggested)'});
+A('k','Padma','पद्मा','Padmā','Pad-maa','girl','Lotus; lotus-born one','padma (lotus)','Lakṣmī is seated on or born from the lotus.','Purity arising from the mud of the world.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','BUN',{v:'Padma, Padmaa'});
+A('k','Padmalaya','पद्मालया','Padmālayā','Pad-maa-la-yaa','girl','Dwelling in the lotus','padma + ālaya (abode)','Padma (lotus) + ālaya (dwelling).','Lakṣmī’s lotus-seat.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','BU',{v:'Padmalaya',nk:'Padma, Laya (suggested)'});
+A('k','Padmini','पद्मिनी','Padminī','Pad-mi-nee','girl','She of the lotus; abounding in lotuses','padma + -inī','Feminine possessive of padma.','Lotus symbolism.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'traditional','BU',{v:'Padmini',note:'In classical erotic literature padminī is also a woman-type classification.'});
+A('k','Padmapriya','पद्मप्रिया','Padmapriyā','Pad-ma-pri-yaa','girl','Beloved of the lotus; fond of lotuses','padma + priyā','Padma (lotus) + priyā (beloved).','Affection for the lotus.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','BD',{v:'Padmapriya',nk:'Padma, Priya (suggested)'});
+A('k','Padmakshi','पद्माक्षी','Padmākṣī','Pad-maak-shee','girl','Lotus-eyed','padma + akṣi','Padma (lotus) + akṣi (eye).','Beautiful, serene gaze.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'traditional','B',{v:'Padmakshi, Padmaakshi',nk:'Padma, Akshi (suggested)'});
+A('k','Padmasundari','पद्मसुन्दरी','Padmasundarī','Pad-ma-sun-da-ree','girl','Beautiful as a lotus','padma + sundarī','Padma (lotus) + sundarī (beautiful woman).','Lotus-like beauty.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','B',{v:'Padmasundari',nk:'Padma, Sundari (suggested)'});
+A('k','Padmamukhi','पद्ममुखी','Padmamukhī','Pad-ma-mu-khee','girl','Lotus-faced','padma + mukha','Padma (lotus) + mukhī (faced).','Radiant, gentle countenance.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','B',{v:'Padmamukhi'});
+A('k','Indira','इन्दिरा','Indirā','In-di-raa','girl','Beauty, splendour; a name of Lakṣmī','uncertain','A name of Lakṣmī; the etymology is traditionally linked to indra but is uncertain.','Beauty and glory.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','BP',{v:'Indira, Indhira',nk:'Indu, Indi (suggested)'});
+A('k','Kamala','कमला','Kamalā','Ka-ma-laa','girl','Lotus; lotus-like lady','kamala (lotus)','A widely used name of Lakṣmī.','Prosperity and beauty.','LK','','',false,'modern','BPU',{v:'Kamala, Kamla',nk:'Kamu (suggested)',auth:'Widely used Lakṣmī epithet — specific text not verified'});
+A('k','Vidya','विद्या','Vidyā','Vid-yaa','girl','Knowledge, learning','√vid (to know)','Knowledge; in the Aṣṭottara, Lakṣmī is also invoked as vidyā.','Wisdom as true wealth.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','W',{v:'Vidhya, Vidya',nk:'Vidu (suggested)',note:'Śrī Vidyā and Vidyā-Lakṣmī are related but distinct contexts.'});
+A('k','Shraddha','श्रद्धा','Śraddhā','Shrud-dhaa','girl','Faith, trust, sincerity','śrad + √dhā','Śrat (heart, trust) + dhā (to place): placing the heart.','Faith as inner foundation.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','DU',{v:'Sraddha, Shraddha'});
+A('k','Surabhi','सुरभि','Surabhi','Su-ra-bhi','girl','Fragrant; the wish-fulfilling cow','surabhi (fragrant)','Fragrance and the divine cow Surabhi.','Abundance and auspicious fragrance.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','NP',{v:'Surabhi, Surabi',nk:'Suri, Rabi (suggested)'});
+A('k','Dhanya','धन्या','Dhanyā','Dhun-yaa','girl','Fortunate, blessed','dhana (wealth)','Feminine of dhanya, “wealthy, fortunate”.','Blessedness and gratitude.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','PU',{v:'Dhanya, Dhanyaa'});
+A('k','Hiranmayi','हिरण्मयी','Hiraṇmayī','Hi-run-ma-yee','girl','Golden','hiraṇya (gold) + -mayī','Made of gold, golden-hued.','Golden radiance of prosperity.','LK',T.SRI,'Verse “candrāṃ hiraṇmayīṃ lakṣmīm” — number not verified',true,'traditional','LP',{v:'Hiranmayi, Hiranmayee',nk:'Hiran, Mayi (suggested)'});
+A('ks','Vibha','विभा','Vibhā','Vi-bhaa','girl','Radiance, light','vi + √bhā (to shine)','Light, splendour.','Radiance.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','L',{v:'Vibha, Vibhaa',sun:6,kind:'Solar concept',assoc:'Names radiance generally; not a name of Sūrya.'});
+A('k','Deepa','दीपा','Dīpā','Dee-paa','girl','Lamp, light','√dīp (to blaze)','A lamp or light.','Light that dispels darkness.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','L',{v:'Dipa, Deepa',nk:'Deepu (suggested)'});
+A('k','Vasudha','वसुधा','Vasudhā','Va-su-dhaa','girl','Earth; bearer of wealth','vasu + √dhā','Vasu (wealth) + dhā (holder).','The earth as source of abundance.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','NP',{v:'Vasudha, Vasundha'});
+A('k','Buddhi','बुद्धि','Buddhi','Bud-dhi','girl','Intellect, discernment','√budh (to awaken)','Faculty of understanding and discrimination.','Wise discernment.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','W',{v:'Buddhi'});
+A('k','Anagha','अनघा','Anaghā','A-na-ghaa','unisex','Sinless, flawless','an + agha (sin, fault)','An (without) + agha (fault).','Purity.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','U',{v:'Anagha, Anagha',note:'Also used for boys (Anagha).'});
+A('k','Ashoka','अशोका','Aśokā','A-sho-kaa','girl','Free from sorrow','a + śoka (sorrow)','Without grief.','Freedom from sorrow.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','UK',{v:'Asoka, Ashoka',note:'The masculine Ashoka (Emperor Aśoka) is more familiar.'});
+A('k','Amruta','अमृता','Amṛtā','Um-ru-taa','girl','Immortal; nectar','a + mṛta (dead)','Not dead: immortal; also ambrosia.','Immortality and sweetness.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','UN',{v:'Amrita, Amruta',nk:'Amu, Ammu (suggested)'});
+A('k','Deepta','दीप्ता','Dīptā','Deep-taa','girl','Blazing, radiant','√dīp (to blaze)','Feminine of dīpta, “lit, shining”.','Radiance.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','L',{v:'Dipta, Deepta'});
+A('ks','Prabha','प्रभा','Prabhā','Pra-bhaa','girl','Radiance, light','pra + √bhā','Splendour, brightness.','Radiance.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','L',{v:'Prabha, Prabhaa',sun:5,kind:'Solar concept',assoc:'The word means radiance or light, such as sunlight. Some Purāṇic lists name a Prabhā among Sūrya’s consorts, but I have not verified the source.'});
+A('k','Chandra','चन्द्रा','Candrā','Chun-draa','girl','Moon-like, shining','√cand (to shine)','Feminine of candra, “shining, moon”.','Moonlike coolness and radiance.','LK',T.SRI,'Verse “candrāṃ hiraṇmayīṃ” — number not verified',true,'modern','LB',{v:'Chandra, Chandraa',note:'Chandra is also a masculine name for the Moon deity.'});
+A('k','Pushti','पुष्टि','Puṣṭi','Push-ti','girl','Nourishment, thriving','√puṣ (to nourish)','Growth and well-being.','Flourishing.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','P',{v:'Pushti, Pusti'});
+A('k','Satya','सत्या','Satyā','Sut-yaa','girl','Truthful','sat (being, truth)','Feminine of satya.','Truth.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','UD',{v:'Satya, Sathya',note:'Satya is also used for boys.'});
+A('k','Tushti','तुष्टि','Tuṣṭi','Tush-ti','girl','Contentment','√tuṣ (to be pleased)','Satisfaction.','Contentment as wealth.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','KU',{v:'Tushti, Tusti'});
+A('k','Yashasvini','यशस्विनी','Yaśasvinī','Ya-sha-svi-nee','girl','Glorious, famous','yaśas (fame)','Feminine of yaśasvin.','Renown.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'traditional','VP',{v:'Yashaswini, Yasasvini',nk:'Yasha, Yashu (suggested)'});
+A('k','Vasundhara','वसुन्धरा','Vasundharā','Va-sun-dha-raa','girl','Bearer of treasure; the earth','vasu + dhara','Holder of wealth.','Earth’s abundance.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'traditional','NP',{v:'Vasundhara',nk:'Vasu, Dhara (suggested)'});
+A('k','Harini','हरिणी','Hariṇī','Ha-ri-nee','girl','Golden-hued (Śrī Sūkta sense)','hari (tawny, golden)','In the opening of the Śrī Sūkta; commentators differ on whether it means golden-coloured or deer-like.','Golden radiance.','LK',T.SRI,'Opening verse “hiraṇyavarṇāṃ hariṇīm”',true,'uncommon','LP',{v:'Harini, Harinee',note:'Interpretations differ among commentators; hariṇī also means a female deer.'});
+A('k','Hemamalini','हेममालिनी','Hemamālinī','Hay-ma-maa-li-nee','girl','Wearing a golden garland','hema + mālā','Hema (gold) + mālinī (garlanded).','Golden adornment.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','BP',{v:'Hemamalini',nk:'Hema, Malini (suggested)'});
+A('k','Siddhi','सिद्धि','Siddhi','Sid-dhi','girl','Accomplishment, fulfilment','√sidh (to succeed)','Success and attainment.','Fulfilment.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','V',{v:'Siddhi, Sidhi'});
+A('k','Shubha','शुभा','Śubhā','Shu-bhaa','girl','Auspicious','√śubh','Auspicious, beautiful.','Auspiciousness.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','U',{v:'Subha, Shubha'});
+A('k','Jaya','जया','Jayā','Ja-yaa','girl','Victory','√ji (to conquer)','Victory.','Success.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'modern','V',{v:'Jaya, Jayaa',note:'Jaya is also used for boys.'});
+A('k','Mangala','मङ्गला','Maṅgalā','Mun-ga-laa','girl','Auspicious','maṅgala (auspicious)','Auspicious, propitious.','Well-being.','LK',T.LAK,'Aṣṭottara list (“Maṅgalā Devī”) — number not verified',true,'traditional','UP',{v:'Mangala, Mangalaa'});
+A('k','Varalakshmi','वरलक्ष्मी','Varalakṣmī','Va-ra-luck-shmee','girl','Boon-giving Lakṣmī','vara (boon) + lakṣmī','Lakṣmī as giver of boons.','Prosperity and blessing.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'traditional','PD',{v:'Varalaxmi, Varalakshmi',nk:'Vara, Laxmi (suggested)',note:'Varalakṣmī Vratam is observed in several parts of India.'});
+A('k','Vijayalakshmi','विजयलक्ष्मी','Vijayalakṣmī','Vi-ja-ya-luck-shmee','girl','Lakṣmī of victory','vijaya + lakṣmī','One of the traditional Aṣṭalakṣmī forms.','Victory with prosperity.','LK','','',false,'traditional','VP',{v:'Vijayalaxmi',nk:'Vijaya, Laxmi (suggested)',auth:'Traditional Aṣṭalakṣmī form — specific text not verified'});
+A('k','Dhanalakshmi','धनलक्ष्मी','Dhanalakṣmī','Dha-na-luck-shmee','girl','Lakṣmī of wealth','dhana + lakṣmī','One of the traditional Aṣṭalakṣmī forms.','Material prosperity.','LK','','',false,'traditional','P',{v:'Dhanalaxmi',nk:'Dhana, Laxmi (suggested)',auth:'Traditional Aṣṭalakṣmī form — specific text not verified'});
+A('k','Hiranyavarna','हिरण्यवर्णा','Hiraṇyavarṇā','Hi-run-ya-var-naa','girl','Golden-hued','hiraṇya + varṇa','Hiraṇya (gold) + varṇa (colour).','Golden radiance of prosperity.','LK',T.SRI,'Opening verse “hiraṇyavarṇāṃ hariṇīm”',true,'uncommon','LP',{v:'Hiranyavarna',nk:'Hiranya, Varna (suggested)'});
+A('k','Ardra','आर्द्रा','Ārdrā','Aar-draa','girl','Moist, compassionate, tender','ārdra (moist)','Moist; also gentle and compassionate in Śrī Sūkta commentaries.','Compassion.','LK',T.SRI,'Verse “ārdrāṃ puṣkariṇīm” — number not verified',true,'uncommon','K',{v:'Ardra, Aardra',note:'Ārdrā is also the name of a nakshatra (lunar mansion); this is a separate use of the word.'});
+A('k','Pingala','पिङ्गला','Piṅgalā','Pin-ga-laa','girl','Tawny, golden-brown','piṅgala (tawny)','A golden-brown colour.','Golden colour.','LK',T.SRI,'Verse “piṅgalāṃ padmamālinīm” — number not verified',true,'uncommon','LB',{v:'Pingala',note:'Piṅgalā is also the name of other figures, including a courtesan in the Bhāgavata Purāṇa.'});
+A('k','Pushkarini','पुष्करिणी','Puṣkariṇī','Push-ka-ri-nee','girl','She of the lotus pond','puṣkara (lotus)','Related to lotus; also “lotus pond”.','Lotus symbolism.','LK',T.SRI,'Verse “ārdrāṃ puṣkariṇīm” — number not verified',true,'uncommon','BN',{v:'Pushkarini'});
+A('ks','Adityavarna','आदित्यवर्णा','Ādityavarṇā','Aa-dit-ya-var-naa','girl','Sun-coloured; radiant as the sun','āditya + varṇa','Āditya (the Sun) + varṇa (colour). The hymn addresses her in the vocative (ādityavarṇe).','Radiance of the Sun, joined to prosperity.','LK',T.SRI,'Verse “ādityavarṇe tapaso ’dhijātaḥ” — number not verified',true,'uncommon','LS',{v:'Adityavarna',nk:'Aditya, Varna (suggested)',sun:5,kind:'Solar concept (simile)',assoc:'A simile comparing Lakṣmī’s hue to the Sun; the Sun is not the subject.'});
+A('ks','Bhaskari','भास्करी','Bhāskarī','Bhaa-ska-ree','girl','Radiant, sun-like','bhās + kara','Feminine of bhāskara, “light-maker”.','Radiance.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','LS',{v:'Bhaskari, Bhaskari',nk:'Bhaskara (a masculine form)',sun:5,kind:'Solar concept (epithet)',assoc:'Describes Lakṣmī as radiant; not a feminine counterpart of the Sun god.'});
+A('k','Bhargavi','भार्गवी','Bhārgavī','Bhaar-ga-vee','girl','Daughter of Bhṛgu','bhṛgu + -ī','Lakṣmī is the daughter of the sage Bhṛgu in Purāṇic accounts.','Lineage and divine birth.','PU','Viṣṇu Purāṇa (Lakṣmī as daughter of Bhṛgu and Khyāti)','Book 1, chapter not verified',true,'traditional','U',{v:'Bhargavi, Bhaargavi',nk:'Bharu (suggested)'});
+A('k','Padmavati','पद्मावती','Padmāvatī','Pad-maa-va-tee','girl','Lotus-possessing','padma + -vatī','Lotus-possessing; a name of the consort of Veṅkaṭeśvara at Tiruchanur.','Prosperity.','LK','','',false,'traditional','PD',{v:'Padmavathi, Padmavati',auth:'Regional tradition (Tiruchanur) — specific text not verified',note:'Also the title of literary works and historical figures.'});
+A('k','Haripriya','हरिप्रिया','Haripriyā','Ha-ri-pri-yaa','girl','Beloved of Hari (Viṣṇu)','hari + priyā','Dear to Viṣṇu.','Devotion.','LK','','',false,'modern','D',{v:'Haripriya',nk:'Hari, Priya (suggested)',auth:'Widely used Lakṣmī epithet — specific text not verified'});
+A('k','Shuchi','शुचि','Śuci','Shu-chi','unisex','Pure, bright','śuci (clean)','Clean, pure, bright.','Purity.','LK',T.LAK,'Aṣṭottara list — number not verified',true,'uncommon','UL',{v:'Suchi, Shuchi'});
+
+/* ---------- SUN-INSPIRED: BOYS ---------- */
+A('s','Surya','सूर्य','Sūrya','Soor-ya','boy','The Sun; the Sun god','√sū or √svṛ (traditional; debated)','Name of the Sun and of the Vedic solar deity. Its derivation is discussed in different ways.','The visible deity: source of light, time and life.','VE',T.RV,'e.g. Ṛgveda 1.115.1 (Sūrya as the soul of what moves and stands still)',true,'modern','LSD',{v:'Suriya, Surya',nk:'Suri (suggested)',sun:1,kind:'Name of Sūrya',assoc:'The name of the Sun deity himself.'});
+A('s','Ravi','रवि','Ravi','Ra-vi','boy','The Sun','uncertain (traditional lexicons offer more than one)','A standard name of the Sun.','The Sun as the day-maker.','SU',T.SN,'One of the twelve names (Om Ravaye namaḥ)',true,'modern','LS',{v:'Ravi',sun:1,kind:'Name of Sūrya',assoc:'A direct epithet of the Sun.'});
+A('s','Bhanu','भानु','Bhānu','Bhaa-nu','boy','Light, ray; the Sun','√bhā (to shine)','From √bhā, “to shine”; denotes light, a ray, and the Sun.','The shining Sun.','SU',T.SN,'One of the twelve names — also in Ādityahṛdayam',true,'modern','LS',{v:'Bhanu, Bhaanu',sun:1,kind:'Name of Sūrya',assoc:'A direct epithet of the Sun.'});
+A('s','Bhaskara','भास्कर','Bhāskara','Bhaa-ska-ra','boy','Maker of light','bhās (light) + kara','Bhās (light) + kara (maker).','The Sun as source of light.','SU',T.SN,'One of the twelve names — also in Ādityahṛdayam',true,'traditional','LS',{v:'Bhaskar',sun:1,kind:'Name of Sūrya',assoc:'A direct epithet of the Sun.'});
+A('s','Divakara','दिवाकर','Divākara','Di-vaa-ka-ra','boy','Maker of the day','divā (day) + kara','Divā (by day) + kara (maker).','The Sun as day-giver.','SU',T.AH,'Epithet in the hymn — verse not verified',true,'traditional','LS',{v:'Divakar',sun:1,kind:'Name of Sūrya',assoc:'A direct epithet of the Sun.'});
+A('s','Prabhakara','प्रभाकर','Prabhākara','Pra-bhaa-ka-ra','boy','Maker of radiance','prabhā + kara','Prabhā (radiance) + kara (maker).','The Sun as source of radiance.','SU',T.AH,'Epithet in the hymn — verse not verified',true,'traditional','LS',{v:'Prabhakar',sun:1,kind:'Name of Sūrya',assoc:'A direct epithet of the Sun.'});
+A('s','Dinakara','दिनकर','Dinakara','Di-na-ka-ra','boy','Maker of the day','dina (day) + kara','Dina (day) + kara (maker).','The Sun as day-giver.','SU','','',false,'traditional','LS',{v:'Dinkar',sun:1,kind:'Name of Sūrya',assoc:'A standard epithet of the Sun in Sanskrit literature.'});
+A('s','Arka','अर्क','Arka','Ar-ka','boy','Ray; the Sun','traditional: √arc (to shine, to praise)','A name of the Sun; also denotes a ray and crystal.','The Sun as radiant giver.','SU',T.SN,'One of the twelve names',true,'modern','LS',{v:'Arka',sun:1,kind:'Name of Sūrya',assoc:'A direct epithet of the Sun.'});
+A('s','Marichi','मरीचि','Marīci','Ma-ree-chi','boy','Ray of light','marīci (ray)','A ray of light.','The Sun’s rays.','SU',T.SN,'One of the twelve names',true,'uncommon','L',{v:'Marichi',sun:1,kind:'Name of Sūrya',assoc:'A direct epithet of the Sun.',note:'Marīci is also the name of a sage, a mind-born son of Brahmā; that is a different figure.'});
+A('s','Tapana','तपन','Tapana','Ta-pa-na','boy','The warming one; the Sun','√tap (to heat)','From √tap, “to warm, to burn”.','The Sun as heat-giver.','SU',T.AH,'Epithet in the hymn — verse not verified',true,'uncommon','LS',{v:'Tapan',sun:1,kind:'Name of Sūrya',assoc:'A direct epithet of the Sun.'});
+A('s','Aditya','आदित्य','Āditya','Aa-dit-ya','boy','Son of Aditi; a solar deity; the Sun','aditi + -ya','Descendant of Aditi; applied to the Ādityas and to the Sun.','The Sun as one of the Ādityas.','SU',T.SN,'One of the twelve names; the Ādityas are praised throughout the Veda',true,'modern','LSR',{v:'Adithya, Aditya',nk:'Adi, Adit (suggested)',sun:2,kind:'Āditya (group) and name of Sūrya',assoc:'Names the Sun and the solar-deity group; not every Āditya is solar.'});
+A('s','Mitra','मित्र','Mitra','Mit-ra','boy','Friend; covenant','traditional: √mid (to be friendly)','Mitra is a Vedic Āditya associated with friendship and covenants, often paired with Varuṇa.','Friendship and trust.','VE',T.RV,'Hymns to Mitra (e.g. Mitra-Varuṇa hymns)',true,'modern','KR',{v:'Mithra, Mitra',sun:2,kind:'Āditya (solar deity)',assoc:'Mitra is linked with daylight and is the first of the twelve names in the Sūrya Namaskāra set.'});
+A('s','Ansh','अंश','Aṃśa','Ansh','boy','Share, portion; a Vedic Āditya','aṃśa (part)','Aṃśa is named among the Ādityas in the Ṛgveda.','Share, portion and generosity.','VE',T.RV,'Ṛgveda (Āditya lists) — hymn not verified',true,'modern','R',{v:'Amsha, Ansh, Amsh',sun:2,kind:'Āditya (solar deity)',assoc:'An Āditya; solar link is through the Āditya group rather than being a name of Sūrya himself.'});
+A('s','Aryaman','अर्यमन्','Aryaman','Ar-ya-man','boy','Companion; guardian of hospitality and bonds','aryaman','A Vedic Āditya connected with hospitality and marriage bonds; in the Gītā Kṛṣṇa says he is Aryamā among the Pitṛs.','Friendship and honour.','VE',T.RV,'Ṛgveda; Bhagavad Gītā 10.29',true,'modern','RK',{v:'Aryaman, Aryama',sun:2,kind:'Āditya (solar deity)',assoc:'An Āditya; not himself a name of the Sun.'});
+A('s','Varuna','वरुण','Varuṇa','Va-ru-na','boy','Guardian of cosmic order; lord of waters','traditional: √vṛ (to cover)','A Vedic Āditya associated with cosmic order and the waters.','Order and truth.','VE',T.RV,'Ṛgveda 1.115.1 (the Sun is “eye of Mitra and Varuṇa”)',true,'modern','RN',{v:'Varun',sun:2,kind:'Āditya (solar deity)',assoc:'An Āditya; the Sun is called the eye of Mitra and Varuṇa. Varuṇa himself is not a name of Sūrya.'});
+A('s','Anshuman','अंशुमान्','Aṃśumān','Un-shu-maan','boy','Radiant, possessing rays','aṃśu + -mat','Aṃśu (ray) + -mān (possessing).','The Sun as ray-bearer.','SU',T.AH,'Epithet in the hymn — verse not verified',true,'uncommon','LS',{v:'Anshuman, Amshuman',sun:1,kind:'Name of Sūrya',assoc:'A solar epithet; also the name of an Ikṣvāku king of the solar dynasty in the Rāmāyaṇa.'});
+A('s','Martanda','मार्तण्ड','Mārtāṇḍa','Maar-taan-da','boy','The Sun; son of the “dead egg”','mṛta + aṇḍa (traditional)','Applied to the Sun; traditional account in Ṛgveda 10.72 describes Aditi’s eighth son.','The Sun as cosmic.','SU',T.AH,'Epithet in the hymn; also Ṛgveda 10.72 — verse not verified',true,'traditional','LS',{v:'Martand, Marthanda',sun:1,kind:'Name of Sūrya',assoc:'A direct epithet of the Sun.'});
+A('s','Vivasvan','विवस्वान्','Vivasvān','Vi-vas-vaan','boy','Shining forth; brilliant one','vi + √vas (to shine)','A name of the Sun in the Veda; Vivasvān is father of Manu and Yama.','The Sun as progenitor.','VE',T.RV,'Ṛgveda; Bhagavad Gītā 4.1',true,'uncommon','LS',{v:'Vivasvan, Vivasvat',sun:3,kind:'Solar deity',assoc:'A direct name of the Sun in Vedic literature.'});
+A('s','Savitar','सवितृ','Savitṛ','Sa-vi-tar','boy','Impeller, stimulator; the solar deity of sunrise and sunset','√sū (to impel)','Savitṛ is the Vedic deity of the Sun as impeller; the Gāyatrī mantra is addressed to him.','Inspiration.','VE',T.RV,'Ṛgveda 3.62.10 (the Gāyatrī mantra)',true,'uncommon','LWD',{v:'Savitr, Savita',sun:3,kind:'Solar deity',assoc:'A direct solar deity; Savitā is used in the twelve-name set.'});
+A('s','Pushan','पूषन्','Pūṣan','Poo-shan','boy','Nourisher; guardian of paths and herds','√puṣ (to nourish)','A Vedic solar deity, guide on journeys and keeper of herds.','Guidance.','VE',T.RV,'Ṛgveda (hymns to Pūṣan; Book 6)',true,'uncommon','RP',{v:'Pushan',sun:3,kind:'Solar deity',assoc:'A Vedic deity of solar character; also in the twelve-name set. His solar nature is more limited than Sūrya’s.'});
+A('s','Aruna','अरुण','Aruṇa','A-ru-na','boy','Reddish; dawn-coloured; Sūrya’s charioteer','aruṇa (reddish)','In epic and Purāṇic accounts Aruṇa drives Sūrya’s chariot.','The dawn glow.','PU','Mahābhārata, Ādi Parva (Aruṇa and Garuḍa)','Chapter not verified',true,'modern','L',{v:'Arun',sun:4,kind:'Mythological figure',assoc:'Aruṇa is Sūrya’s charioteer and the word names dawn colour.'});
+A('s','Karna','कर्ण','Karṇa','Kar-na','boy','Ear (tradition links the name to his natural earrings)','karṇa (ear)','A hero of the Mahābhārata, son of Kuntī and Sūrya, born with natural armour and earrings.','Generosity and loyalty.','PU','Mahābhārata','Ādi and Vana Parva (chapters not verified)',true,'traditional','CV',{v:'Karan, Karna',sun:4,kind:'Mythological figure',assoc:'Son of the Sun god Sūrya in the epic.',note:'The epic is tragic; some families weigh that when choosing. It is a personal preference.'});
+A('s','Sugriva','सुग्रीव','Sugrīva','Su-gree-va','boy','Beautiful-necked','su + grīvā (neck)','Vānara king in the Rāmāyaṇa; son of Sūrya.','Loyalty and friendship.','PU','Vālmīki Rāmāyaṇa','Kiṣkindhā Kāṇḍa (verse not verified)',true,'uncommon','RC',{v:'Sugriv',sun:4,kind:'Mythological figure',assoc:'Described as a son of Sūrya.'});
+A('s','Revanta','रेवन्त','Revanta','Re-van-ta','boy','Splendid; associated with horses','uncertain','Purāṇic tradition describes Revanta as a son of Sūrya.','Vigour.','PU','','',false,'uncommon','C',{v:'Revant',sun:4,kind:'Mythological figure',assoc:'Associated with Sūrya in Purāṇic accounts; source reference not verified.'});
+A('s','Manu','मनु','Manu','Ma-nu','boy','Thinker; progenitor of humanity','√man (to think)','Vaivasvata Manu, the Manu of the present age, is the son of Vivasvān.','Wisdom and leadership.','PU','Purāṇas (Vaivasvata Manu)','Text and chapter not verified',true,'modern','WR',{v:'Manu',sun:4,kind:'Mythological figure',assoc:'Son of Vivasvān (the Sun) in tradition.',note:'Manu is also a general title for several progenitors across ages.'});
+A('s','Kiran','किरण','Kiraṇa','Ki-ran','unisex','Ray of light','kiraṇa (ray)','A common Sanskrit noun for a ray of light.','Light.','SI','','',false,'modern','L',{v:'Kiran, Kiranaa',sun:5,kind:'Solar concept',assoc:'A ray of sunlight.'});
+A('s','Rashmi','रश्मि','Raśmi','Rush-mi','unisex','Ray, beam','raśmi (ray)','A ray of light; also a rein.','Light.','SI','','',false,'modern','L',{v:'Rashmi, Rasmi',sun:5,kind:'Solar concept',assoc:'A ray of sunlight.',note:'Also means a rein or cord.'});
+A('s','Prabhat','प्रभात','Prabhāta','Pra-bhaat','boy','Dawn, morning','pra + √bhā','Morning light.','New beginnings.','SI','','',false,'modern','LN',{v:'Prabhat',sun:5,kind:'Solar concept',assoc:'Names the hour of sunrise.'});
+A('s','Uday','उदय','Udaya','U-day','boy','Rising (of the Sun); prosperity','ud + √i (to go up)','The rising; the sunrise.','Rising fortune.','SI','','',false,'modern','LV',{v:'Uday',sun:5,kind:'Solar concept',assoc:'Names the rising Sun.'});
+A('s','Tejas','तेजस्','Tejas','Tay-jas','boy','Fiery energy, brilliance','√tij (to be sharp)','Radiant energy.','Brilliance.','SI','','',false,'modern','LC',{v:'Tejas',sun:6,kind:'Solar concept',assoc:'A general word for radiant energy; not specific to Sūrya.'});
+A('s','Pratap','प्रताप','Pratāpa','Pra-taap','boy','Heat, glory, valour','pra + √tap','Blazing heat extended to glory.','Valour.','SI','','',false,'modern','CV',{v:'Pratap',sun:6,kind:'Solar concept',assoc:'Linked to the idea of blazing heat; not a Sūrya epithet.'});
+A('s','Prakash','प्रकाश','Prakāśa','Pra-kaash','unisex','Light, brightness, clarity','pra + √kāś','Light and clarity.','Light.','SI','','',false,'modern','LW',{v:'Prakash',sun:6,kind:'Solar concept',assoc:'A general word for light; not specific to Sūrya.'});
+
+/* ---------- SUN-INSPIRED: GIRLS ---------- */
+A('s','Usha','उषा','Uṣā','Oo-shaa','girl','Dawn','√vas (to shine)','The Vedic dawn goddess Uṣas; in Ṛgveda 1.115.2 the Sun follows her.','New light.','VE',T.RV,'Ṛgveda (many hymns to Uṣas)',true,'modern','LN',{v:'Usha, Ushaa',sun:3,kind:'Solar deity',assoc:'The Vedic goddess of dawn; she accompanies the Sun but is not the Sun god.'});
+A('s','Suryaa','सूर्या','Sūryā','Soor-yaa','girl','Sun-maiden; daughter of Sūrya','sūrya + -ā','In Ṛgveda 10.85 Sūryā is the Sun’s daughter whose wedding hymn is the model for marriage.','Radiance and auspicious union.','VE',T.RV,'Ṛgveda 10.85',true,'uncommon','LS',{v:'Surya',sun:3,kind:'Solar deity',assoc:'Sun-daughter in the Vedic wedding hymn.',note:'Attested in the Veda; I did not make it up from the masculine.'});
+A('s','Savitri','सावित्री','Sāvitrī','Saa-vi-tree','girl','Belonging to Savitṛ','savitṛ + -ī','The Sāvitrī verse and the daughter of Savitṛ in Ṛgveda 10.85; also the devoted wife of the Mahābhārata.','Devotion and perseverance.','VE',T.RV,'Ṛgveda 10.85; Mahābhārata, Vana Parva (Sāvitrī-upākhyāna)',true,'modern','DU',{v:'Savitri, Savithri',sun:3,kind:'Solar deity / figure',assoc:'Derived from Savitṛ; the Vedic Sāvitrī is solar, the epic Sāvitrī shares the name.'});
+A('s','Aditi','अदिति','Aditi','A-di-ti','girl','Boundless, unbound; mother of the Ādityas','a + diti (traditional: not bound)','The Vedic goddess Aditi, mother of the Ādityas.','Infinity.','VE',T.RV,'Ṛgveda (hymns to Aditi)',true,'modern','NR',{v:'Aditi, Adithi',sun:3,kind:'Solar deity (mother of the Ādityas)',assoc:'Mother of the Ādityas; not a solar deity herself.'});
+A('s','Samjna','संज्ञा','Saṃjñā','Sun-gyaa','girl','Consciousness; name','saṃ + √jñā','In the Purāṇas Saṃjñā is a wife of Sūrya.','Awareness.','PU','Viṣṇu Purāṇa and other Purāṇas','Chapter not verified',true,'uncommon','W',{v:'Sanjna, Samjna',sun:4,kind:'Mythological figure',assoc:'A wife of Sūrya in Purāṇic accounts; details differ between texts.'});
+A('s','Chhaya','छाया','Chāyā','Chhaa-yaa','girl','Shadow; shade, shelter','chāyā (shade)','In Purāṇic accounts Saṃjñā’s shadow double Chāyā became Sūrya’s wife.','Shelter.','PU','Viṣṇu Purāṇa and other Purāṇas','Chapter not verified',true,'uncommon','KU',{v:'Chaya, Chhaya',sun:4,kind:'Mythological figure',assoc:'Sūrya’s wife (the shadow double) in Purāṇic accounts.'});
+A('s','Saranyu','सरण्यू','Saraṇyū','Sa-ran-yoo','girl','Swift one','√sṛ (to move)','In Ṛgveda 10.17, Saraṇyū is a daughter of Tvaṣṭṛ and wife of Vivasvān.','Swiftness.','VE',T.RV,'Ṛgveda 10.17',true,'uncommon','C',{v:'Saranyu',sun:4,kind:'Mythological figure',assoc:'Wife of Vivasvān in the Veda.'});
+A('s','Tapati','तपती','Tapatī','Ta-pa-tee','girl','Warming one; Sūrya’s daughter','√tap','In the Mahābhārata Tapatī is a daughter of Sūrya and mother of Kuru.','Warmth.','PU','Mahābhārata, Ādi Parva (Tapatī-saṃvaraṇa-upākhyāna)','Chapter not verified',true,'uncommon','LN',{v:'Tapti, Tapati',sun:4,kind:'Mythological figure',assoc:'Daughter of Sūrya in the epic; the Tapī river is linked to her.'});
+A('s','Yamuna','यमुना','Yamunā','Ya-mu-naa','girl','River goddess; daughter of Sūrya','uncertain','The river Yamunā is a daughter of Sūrya in Purāṇic tradition.','Purity.','PU','Purāṇas (specific Purāṇa not verified)','Chapter not verified',true,'modern','NU',{v:'Yamuna, Jamuna',sun:4,kind:'Mythological figure',assoc:'Daughter of Sūrya in tradition.',note:'In the Ṛgveda Yamunā is simply a river.'});
+A('s','Jyoti','ज्योति','Jyoti','Jyo-ti','girl','Light, flame','√dyut','Light.','Inner light.','SI','','',false,'modern','LW',{v:'Jyothi, Jyoti',sun:6,kind:'Solar concept',assoc:'General word for light.'});
+A('s','Deepti','दीप्ति','Dīpti','Deep-ti','girl','Brilliance, flame','√dīp','Blazing.','Brilliance.','SI','','',false,'modern','L',{v:'Dipti, Deepti',sun:6,kind:'Solar concept',assoc:'General word for brilliance.'});
+A('s','Dyuti','द्युति','Dyuti','Dyu-ti','girl','Splendour, lustre','√dyut','Radiance.','Splendour.','SI','','',false,'uncommon','L',{v:'Dyuti',sun:6,kind:'Solar concept',assoc:'General word for radiance.'});
+A('s','Ruchi','रुचि','Ruci','Ru-chi','girl','Radiance; liking, taste','√ruc','Brightness; also liking.','Radiance.','SI','','',false,'modern','LB',{v:'Ruchi',sun:6,kind:'Solar concept',assoc:'General word for brightness.',note:'Also means appetite.'});
+A('s','Kanti','कान्ति','Kānti','Kaan-ti','girl','Lustre, beauty','traditional: √kam','Radiance and beauty.','Radiance.','SI','','',false,'modern','BL',{v:'Kanti, Kaanti',sun:6,kind:'Solar concept',assoc:'General word for lustre.'});
+A('s','Abha','आभा','Ābhā','Aa-bhaa','girl','Lustre, sheen','ā + √bhā','Lustre.','Radiance.','SI','','',false,'modern','L',{v:'Aabha, Abha',sun:6,kind:'Solar concept',assoc:'General word for lustre.'});
+A('s','Arushi','अरुषी','Aruṣī','A-ru-shee','girl','Ruddy, bright','aruṣa (ruddy)','A Vedic adjective for the dawn’s bright forms.','Dawn.','VE','','',false,'modern','L',{v:'Arushi',sun:5,kind:'Solar concept',assoc:'Used of bright, reddish dawn; passage not verified.'});
+A('s','Arunima','अरुणिमा','Aruṇimā','A-ru-ni-maa','girl','Redness of dawn','aruṇa + -imā','Abstract noun from aruṇa.','Dawn colour.','SI','','',false,'modern','L',{v:'Arunima',sun:5,kind:'Solar concept',assoc:'Dawn colour.'});
+A('s','Ujjvala','उज्ज्वला','Ujjvalā','Uj-jva-laa','girl','Bright, blazing','ud + √jval','Bright.','Brightness.','SI','','',false,'modern','L',{v:'Ujjwala',sun:6,kind:'Solar concept',assoc:'General word for brightness.'});
+A('s','Tejaswini','तेजस्विनी','Tejasvinī','Tay-jas-vi-nee','girl','Radiant, full of tejas','tejas + -vin','Possessing radiant energy.','Radiance.','SI','','',false,'modern','LC',{v:'Tejaswini',sun:6,kind:'Solar concept',assoc:'General word for radiant energy.'});
+A('s','Prachi','प्राची','Prācī','Praa-chee','girl','East; the quarter of sunrise','prāc (east)','The eastern direction.','Sunrise.','SI','','',false,'modern','LN',{v:'Prachi',sun:5,kind:'Solar concept',assoc:'Geographic: the east where the Sun rises; not scriptural.'});
+
+/* ===== APPLICATION ===== */
+(function(){
+'use strict';
+const THEME_LABEL={L:'Light & radiance',S:'Sun & fire',W:'Wisdom & knowledge',P:'Prosperity & abundance',C:'Strength & courage',B:'Beauty & grace',K:'Compassion & kindness',U:'Purity & auspiciousness',R:'Protection & leadership',N:'Nature & cosmic energy',D:'Devotion & spirituality',V:'Victory & success'};
+const GLAB={boy:'Boy',girl:'Girl',unisex:'Unisex',epithet:'Deity epithet (no clear modern gender convention)'};
+const SRCLAB={LS:'Lalitha Sahasranamam',LK:'Lakshmi tradition',VE:'Vedic literature',PU:'Puranas & epics',SU:'Surya-related texts',SI:'Sanskrit-inspired'};
+const SUNCAT={1:'Direct names of Sūrya',2:'Ādityas & Āditya epithets',3:'Solar deities in Vedic literature',4:'Mythological figures with a solar connection',5:'Sunlight, dawn, radiance & warmth',6:'Sanskrit solar concepts for modern children'};
+const MODLAB={modern:'Modern / commonly recognisable',traditional:'Traditional',uncommon:'Uncommon'};
+const MODUSE={modern:'Commonly recognisable and in everyday use as a name today (editorial assessment — no popularity statistics were used).',traditional:'Traditional and recognisable to many families, though less common for newborns today (editorial assessment).',uncommon:'Uncommon or rare as a personal name — distinctive, but may need explaining (editorial assessment).'};
+const KEY='hindu-baby-name-explorer.v1';
+const TXT={
+ lal:{label:'Lalitha Sahasranamam',intro:'Names of the Goddess Lalitā Tripurasundarī from the thousand-name hymn (Lalitā Sahasranāma), recited in the Śrīvidyā tradition.',src:'Source: the Lalitā Sahasranāma, traditionally part of the Lalitopākhyāna of the Brahmāṇḍa Purāṇa. Entries marked “Attested” are standalone names that I recall from the standard text; their name numbers have not been verified here, so please cross-check with a printed edition. Entries marked “Derived” are shorter forms or name elements and are not claimed to appear verbatim.'},
+ lak:{label:'Lakshmi tradition',intro:'Names and epithets of Goddess Lakṣmī suitable as personal names.',src:'Important: this collection is NOT a verified Lakṣmī Sahasranāma. There are several Lakṣmī thousand-name texts and I did not identify or verify one. Entries come from the widely recited Lakṣmī Aṣṭottaraśatanāmāvalī (108 names; versions differ), the Śrī Sūkta, and a few widely used epithets whose source is marked “not verified”.'},
+ sunboy:{label:'Sun-inspired boys',intro:'Boy (and unisex) names linked to Sūrya, the Ādityas, solar figures and light.',src:'Sources: the Ṛgveda, Ādityahṛdayam, the Sūrya Namaskāra twelve-name set, epics and Purāṇas. Categories (direct name, Āditya, Vedic deity, mythological figure, solar concept) are kept apart on each card.'},
+ sungirl:{label:'Sun-inspired girls',intro:'Girl (and unisex) names linked to dawn, radiance and Sūrya’s family.',src:'Sources as for boys. I avoided inventing feminine forms of masculine names; names built from ordinary Sanskrit words for light are labelled Sanskrit-inspired, not scriptural.'},
+ all:{label:'All names',intro:'Every name in the explorer, each listed once even if it belongs to more than one tradition.',src:'Each card states its own source and how well the reference is verified.'}
+};
+const COLLS={
+ all:{test:function(){return true;}},
+ lal:{test:function(n){return n.cols.indexOf('l')>=0;}},
+ lak:{test:function(n){return n.cols.indexOf('k')>=0;}},
+ sunboy:{test:function(n){return n.cols.indexOf('s')>=0&&(n.g==='boy'||n.g==='unisex');}},
+ sungirl:{test:function(n){return n.cols.indexOf('s')>=0&&(n.g==='girl'||n.g==='unisex');}}
+};
+const ADITYA_TXT='The Ādityas are sons of Aditi. The Ṛgveda names a small group (commonly Mitra, Varuṇa, Aryaman, Bhaga, Dakṣa and Aṃśa; lists vary between hymns). Later texts speak of twelve, one for each month, and lists differ; one commonly cited Purāṇic list is Dhātṛ, Aryaman, Mitra, Varuṇa, Indra, Vivasvān, Pūṣan, Parjanya, Aṃśa, Bhaga, Tvaṣṭṛ and Viṣṇu. Sūrya (as Vivasvān or Savitṛ) is counted among them or identified with the group, but most Ādityas (for example Varuṇa, Aryaman, Bhaga) are not solar deities, so they are not presented here as synonyms for Sūrya. Check the list against the text you follow. Karṇa (Mahābhārata) and Sugrīva (Rāmāyaṇa) are sons of Sūrya in the epics; Revanta is described as his son in Purāṇic tradition, with the source not verified.';
+
+/* ---------- derived data ---------- */
+const BYID=new Map();
+function fold(s){return String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+function sylls(s){const m=String(s).toLowerCase().match(/[aāiīuūṛṝḷeo]+/g);return m?m.length:1;}
+NAMES.forEach(function(n,i){
+  let base=n.en.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''),id=base,k=2;
+  while(BYID.has(id)){id=base+'-'+k++;}
+  n.id=id;n.ord=i;BYID.set(id,n);
+  n.len=n.en.replace(/[^A-Za-z]/g,'').length;
+  n.syl=sylls(n.iast);
+  const rare=(n.iast.match(/[ṅñḥṭḍṝḷ]/g)||[]).length;
+  n.diff=(n.syl>=5||rare>=2)?3:(n.syl===4||rare===1)?2:1;
+  n.deity=n.deity||(n.cols.indexOf('l')>=0?'Lalitā Tripurasundarī':n.cols.indexOf('k')>=0?'Lakṣmī':'Sūrya / solar tradition');
+  n.thl=n.th.split('').map(function(c){return THEME_LABEL[c];});
+  n.hay=fold([n.en,n.iast,n.dev,n.v,n.mean,n.root,n.def,n.spirit,n.src,n.ref,n.note,n.assoc,n.deity,n.kind,SRCLAB[n.srcCat],n.thl.join(' '),n.sun?SUNCAT[n.sun]:''].join(' | '));
+});
+const ALL=NAMES;
+
+/* ---------- state ---------- */
+function defF(){return {q:'',genders:[],src:'',theme:'',styles:[],len:'',diff:'',verified:false,pos:false,showHidden:false,coll:'all',sunCat:0,sort:'default'};}
+function defaultState(){return {v:1,meta:{},order:[],lead:null,compare:[],prefs:{theme:'auto',weights:{auth:3,pron:2,uniq:2,use:3,rate:5},score:false},filters:{discover:defF(),lal:defF(),lak:defF(),sun:defF()},ui:{tab:'discover',sort:'manual',finalOnly:false}};}
+let S=defaultState();
+const RT={open:new Set(),filterOpen:{},curOpen:new Set(),curAll:new Set(),warnDismissed:false,storageOK:true,modal:[]};
+const EMPTY=Object.freeze({});
+const M=function(id){return S.meta[id]||EMPTY;};
+const TABS=[['discover','Discover'],['lal','Lalitha'],['lak','Lakshmi'],['sun','Sun-inspired'],['curated','Curated'],['shortlist','My Shortlist'],['data','Backup & About']];
+const VIEWKEYS=['discover','lal','lak','sun'];
+
+function str(v,max){return (typeof v==='string')?v.slice(0,max):'';}
+function sanitize(raw){
+  const out=defaultState();
+  if(!raw||typeof raw!=='object')return out;
+  if(raw.meta&&typeof raw.meta==='object'){
+    Object.keys(raw.meta).forEach(function(id){
+      if(!BYID.has(id))return;
+      const r=raw.meta[id];if(!r||typeof r!=='object')return;
+      const o={};
+      if(r.short===true)o.short=true;
+      if(r.fav===true)o.fav=true;
+      if(r.hidden===true)o.hidden=true;
+      if(r.final===true&&r.short===true)o.final=true;
+      const rt=parseInt(r.rating,10);if(rt>=1&&rt<=5)o.rating=rt;
+      const nt=str(r.note,2000);if(nt)o.note=nt;
+      const rs=str(r.reason,1000);if(rs)o.reason=rs;
+      if(Object.keys(o).length)out.meta[id]=o;
+    });
+  }
+  const seen=new Set();
+  if(Array.isArray(raw.order))raw.order.forEach(function(id){if(typeof id==='string'&&out.meta[id]&&out.meta[id].short&&!seen.has(id)){seen.add(id);out.order.push(id);}});
+  Object.keys(out.meta).forEach(function(id){if(out.meta[id].short&&!seen.has(id)){seen.add(id);out.order.push(id);}});
+  if(typeof raw.lead==='string'&&seen.has(raw.lead))out.lead=raw.lead;
+  if(Array.isArray(raw.compare)){raw.compare.forEach(function(id){if(typeof id==='string'&&BYID.has(id)&&out.compare.indexOf(id)<0&&out.compare.length<5)out.compare.push(id);});}
+  if(raw.prefs&&typeof raw.prefs==='object'){
+    if(['auto','light','dark'].indexOf(raw.prefs.theme)>=0)out.prefs.theme=raw.prefs.theme;
+    out.prefs.score=raw.prefs.score===true;
+    if(raw.prefs.weights&&typeof raw.prefs.weights==='object'){
+      Object.keys(out.prefs.weights).forEach(function(k){const w=Number(raw.prefs.weights[k]);if(isFinite(w)&&w>=0&&w<=5)out.prefs.weights[k]=Math.round(w);});
+    }
+  }
+  if(raw.filters&&typeof raw.filters==='object'){
+    VIEWKEYS.forEach(function(k){
+      const f=raw.filters[k];if(!f||typeof f!=='object')return;
+      const d=out.filters[k];
+      d.q=str(f.q,100);
+      if(Array.isArray(f.genders))d.genders=f.genders.filter(function(g){return ['boy','girl','unisex','epithet'].indexOf(g)>=0;});
+      if(Object.keys(SRCLAB).indexOf(f.src)>=0)d.src=f.src;
+      if(THEME_LABEL[f.theme])d.theme=f.theme;
+      if(Array.isArray(f.styles))d.styles=f.styles.filter(function(s){return ['modern','traditional','uncommon','short'].indexOf(s)>=0;});
+      if(['','1','2','3','4'].indexOf(String(f.len))>=0)d.len=String(f.len);
+      if(['','1','2','3'].indexOf(String(f.diff))>=0)d.diff=String(f.diff);
+      d.verified=f.verified===true;d.pos=f.pos===true;d.showHidden=f.showHidden===true;
+      if(COLLS[f.coll])d.coll=f.coll;
+      const sc=parseInt(f.sunCat,10);if(sc>=0&&sc<=6)d.sunCat=sc;
+      if(['default','az','short'].indexOf(f.sort)>=0)d.sort=f.sort;
+    });
+  }
+  if(raw.ui&&typeof raw.ui==='object'){
+    if(TABS.some(function(t){return t[0]===raw.ui.tab;}))out.ui.tab=raw.ui.tab;
+    if(['manual','rating','name','meaning','source'].indexOf(raw.ui.sort)>=0)out.ui.sort=raw.ui.sort;
+    out.ui.finalOnly=raw.ui.finalOnly===true;
+  }
+  return out;
+}
+let saveT=null;
+function saveNow(){
+  clearTimeout(saveT);saveT=null;
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){RT.storageOK=false;showStorageWarn();}
+}
+function saveSoon(){clearTimeout(saveT);saveT=setTimeout(saveNow,250);}
+function loadState(){
+  try{localStorage.setItem(KEY+'.t','1');localStorage.removeItem(KEY+'.t');}catch(e){RT.storageOK=false;}
+  try{const s=localStorage.getItem(KEY);if(s)S=sanitize(JSON.parse(s));}catch(e){}
+}
+
+/* ---------- helpers ---------- */
+const $=function(s,r){return (r||document).querySelector(s);};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.className='show';clearTimeout(toast.t);toast.t=setTimeout(function(){t.className='';},2600);}
+function showStorageWarn(){const b=$('#storageWarn');if(b)b.hidden=false;}
+function setM(id,patch){
+  const m=Object.assign({},S.meta[id]||{},patch);
+  Object.keys(m).forEach(function(k){if(m[k]===false||m[k]===''||m[k]===0||m[k]==null)delete m[k];});
+  if(Object.keys(m).length)S.meta[id]=m;else delete S.meta[id];
+  saveSoon();
+}
+function authLabel(n){
+  if(n.auth)return n.auth;
+  if(n.att&&n.ref&&/not verified/i.test(n.ref)===false)return 'Attested in named text (locator given)';
+  if(n.att)return 'Attested in named text (verse / number not verified)';
+  if(n.srcCat==='SI')return 'Sanskrit-inspired — not a scriptural name';
+  if(!n.src)return 'Source reference not verified';
+  return 'Derived / short form — not claimed as verbatim';
+}
+function authScore(n){
+  if(n.att&&n.ref&&!/not verified/i.test(n.ref))return 5;
+  if(n.att)return 4;
+  if(n.auth)return 2;
+  if(n.srcCat==='SI')return 1;
+  return n.src?2:1;
+}
+function diffLabel(n){return n.diff===1?'Easy':n.diff===2?'Moderate':'Challenging';}
+function uniqLabel(n){return n.mod==='modern'?'Widely used (editorial)':n.mod==='traditional'?'Moderately distinctive (editorial)':'Distinctive / rare (editorial)';}
+function refText(n){
+  if(!n.src)return 'Source reference not verified';
+  return n.src+' — '+(n.ref?n.ref:'verse / number not verified');
+}
+function uniqScore(n){return n.mod==='modern'?2:n.mod==='traditional'?3:5;}
+function useScore(n){return n.mod==='modern'?5:n.mod==='traditional'?3:2;}
+function pronScore(n){return n.diff===1?5:n.diff===2?3:1;}
+function scoreOf(n){
+  const w=S.prefs.weights,m=M(n.id);
+  const parts=[['auth',authScore(n)],['pron',pronScore(n)],['uniq',uniqScore(n)],['use',useScore(n)],['rate',m.rating||0]];
+  let num=0,den=0;
+  parts.forEach(function(p){num+=w[p[0]]*p[1];den+=w[p[0]]*5;});
+  return den?Math.round(num/den*100):null;
+}
+
+/* ---------- filtering ---------- */
+function preset(key,f){
+  if(key==='lal')return COLLS.lal.test;
+  if(key==='lak')return COLLS.lak.test;
+  if(key==='sun')return function(n){return n.cols.indexOf('s')>=0&&(!f.sunCat||n.sun===f.sunCat);};
+  return COLLS[f.coll].test;
+}
+function matches(n,f,key){
+  if(!preset(key,f)(n))return false;
+  if(!f.showHidden&&M(n.id).hidden)return false;
+  if(f.genders.length&&f.genders.indexOf(n.g)<0)return false;
+  if(f.src&&n.srcCat!==f.src)return false;
+  if(f.theme&&n.th.indexOf(f.theme)<0)return false;
+  const mods=f.styles.filter(function(s){return s!=='short';});
+  if(mods.length&&mods.indexOf(n.mod)<0)return false;
+  if(f.styles.indexOf('short')>=0&&n.len>5)return false;
+  if(f.len==='1'&&n.len>4)return false;
+  if(f.len==='2'&&(n.len<5||n.len>6))return false;
+  if(f.len==='3'&&(n.len<7||n.len>8))return false;
+  if(f.len==='4'&&n.len<9)return false;
+  if(f.diff&&String(n.diff)!==f.diff)return false;
+  if(f.verified&&!n.att)return false;
+  if(f.pos&&n.th.length<2)return false;
+  if(f.q){
+    const toks=fold(f.q).split(/\s+/).filter(Boolean);
+    for(let i=0;i<toks.length;i++){if(n.hay.indexOf(toks[i])<0)return false;}
+  }
+  return true;
+}
+function activeCount(f){return f.genders.length+f.styles.length+(f.src?1:0)+(f.theme?1:0)+(f.len?1:0)+(f.diff?1:0)+(f.verified?1:0)+(f.pos?1:0)+(f.showHidden?1:0);}
+function sortList(list,mode){
+  const a=list.slice();
+  if(mode==='az')a.sort(function(x,y){return x.en.localeCompare(y.en);});
+  else if(mode==='short')a.sort(function(x,y){return x.len-y.len||x.en.localeCompare(y.en);});
+  return a;
+}
+function collCount(k){return ALL.filter(COLLS[k].test).length;}
+
+/* ---------- cards ---------- */
+function ratingHTML(id){
+  const r=M(id).rating||0;
+  let h='<div class="stars" role="group" aria-label="Personal rating">';
+  for(let i=1;i<=5;i++)h+='<button class="btn alt'+(r>=i?' on':'')+'" data-act="rate" data-id="'+esc(id)+'" data-val="'+i+'" aria-label="Rate '+i+' of 5" aria-pressed="'+(r===i)+'">'+(r>=i?'★':'☆')+'</button>';
+  h+=r?'<button class="btn alt" data-act="rate" data-id="'+esc(id)+'" data-val="0">Clear</button>':'';
+  return h+'</div>';
+}
+function badgesHTML(n){
+  const ok=n.att;
+  return '<div class="badges"><span class="b g">'+esc(GLAB[n.g]||n.g)+'</span><span class="b">'+esc(SRCLAB[n.srcCat])+'</span><span class="b '+(ok?'ok':'warn')+'">'+esc(authLabel(n))+'</span><span class="b">'+esc(MODLAB[n.mod])+'</span></div>';
+}
+function dd(label,val){return val?'<dt>'+esc(label)+'</dt><dd>'+esc(val)+'</dd>':'';}
+function detailHTML(n){
+  const m=M(n.id);
+  let h='<div class="more"><dl>';
+  h+=dd('Sanskrit form',n.dev+' ('+n.iast+')');
+  h+=dd('IAST transliteration',n.iast);
+  h+=dd('Pronunciation (simple guide)',n.pron+' · difficulty: '+diffLabel(n));
+  h+=dd('Gender suitability',GLAB[n.g]||n.g);
+  h+=dd('Primary (literal) meaning',n.mean);
+  h+=dd('Detailed definition & root',n.def+(n.root?' Root / derivation: '+n.root+'.':''));
+  h+=dd('Spiritual / traditional significance',n.spirit);
+  h+=dd('Scriptural origin',refText(n));
+  h+=dd('Source category',SRCLAB[n.srcCat]+' — '+authLabel(n));
+  h+=dd('Associated deity / tradition',n.deity);
+  if(n.sun){h+=dd('Sun-inspired category',SUNCAT[n.sun]);h+=dd('Refers to',n.kind||'');h+=dd('Nature of the association with the Sun',n.assoc||'');}
+  h+=dd('Contemporary suitability',MODUSE[n.mod]);
+  h+=dd('Common spelling variants (genuine only)',n.v);
+  h+=dd('Suggested nicknames (not historical)',n.nk);
+  h+=dd('Notes & limitations',n.note);
+  h+='</dl><div class="panel"><b>Your notes</b><div style="margin:6px 0">'+ratingHTML(n.id)+'</div>'+
+    '<label>Personal note<textarea data-note="'+esc(n.id)+'" maxlength="2000" placeholder="Add a note…">'+esc(m.note||'')+'</textarea></label></div></div>';
+  return h;
+}
+function card(n){
+  const m=M(n.id),open=RT.open.has(n.id),cmp=S.compare.indexOf(n.id)>=0,id=esc(n.id);
+  return '<article class="card'+(m.hidden?' is-hidden':'')+(open?' open':'')+'" data-id="'+id+'">'+
+  '<div class="ch"><div class="names"><h3>'+esc(n.en)+'<span class="dev" lang="sa">'+esc(n.dev)+'</span></h3><div class="pron">'+esc(n.pron)+' · IAST '+esc(n.iast)+'</div></div></div>'+
+  '<p class="mean">'+esc(n.mean)+'</p>'+badgesHTML(n)+
+  '<div class="actions">'+
+   '<button class="btn'+(m.short?' on':' alt')+'" data-act="short" data-id="'+id+'" aria-pressed="'+!!m.short+'">'+(m.short?'★ Shortlisted':'☆ Shortlist')+'</button>'+
+   '<button class="btn'+(m.fav?' on':' alt')+'" data-act="fav" data-id="'+id+'" aria-pressed="'+!!m.fav+'">'+(m.fav?'♥ Favourite':'♡ Favourite')+'</button>'+
+   '<button class="btn'+(cmp?' on':' alt')+'" data-act="cmp" data-id="'+id+'" aria-pressed="'+cmp+'">'+(cmp?'✓ Comparing':'⇄ Compare')+'</button>'+
+   '<button class="btn alt" data-act="hide" data-id="'+id+'">'+(m.hidden?'Unhide':'Hide')+'</button>'+
+   '<button class="btn alt" data-act="details" data-id="'+id+'" aria-expanded="'+open+'">'+(open?'Close details':'Details & notes')+'</button>'+
+  '</div>'+(open?detailHTML(n):'')+'</article>';
+}
+
+/* ---------- browse views ---------- */
+let V={key:'discover'};
+function mountBrowse(key){
+  V.key=key;
+  $('#view').innerHTML='<div id="bhead"></div><div id="bctl"></div><div id="bres"></div>';
+  drawHead();drawCtl();drawRes();
+}
+function panelFor(k){const t=TXT[k];return '<div class="panel"><h3>'+esc(t.label)+'</h3><p>'+esc(t.intro)+'</p><p class="src">'+esc(t.src)+'</p></div>';}
+function drawHead(){
+  const f=S.filters[V.key];let h='';
+  if(V.key==='discover'){
+    h+='<h2>Discover names</h2><div class="chips" role="group" aria-label="Collection">'+Object.keys(COLLS).map(function(k){return '<button class="chip'+(f.coll===k?' on':'')+'" data-act="coll" data-val="'+k+'" aria-pressed="'+(f.coll===k)+'">'+esc(TXT[k].label)+' <span class="cnt">'+collCount(k)+'</span></button>';}).join('')+'</div>'+panelFor(f.coll);
+  }else if(V.key==='lal'){
+    h+='<h2>Lalitha Sahasranamam explorer</h2>'+panelFor('lal')+'<div class="panel"><p><b>How to read this:</b> “Attested” means the name is listed in the text as recalled; “Derived” marks shorter forms or elements that I am not claiming appear verbatim. The literal meaning is separate from the traditional theological significance on each card.</p></div>';
+  }else if(V.key==='lak'){
+    h+='<h2>Lakshmi names explorer</h2>'+panelFor('lak')+'<div class="panel"><p><b>How to read this:</b> literal Sanskrit meaning (for example lotus, gold, fortune) is shown separately from the traditional theological reading. Names marked “not verified” are widely used epithets whose exact text I could not identify.</p></div>';
+  }else{
+    h+='<h2>Sun-inspired names</h2><div class="panel"><h3>Boys, girls and unisex</h3><p>Names linked to Sūrya, the Ādityas, Vedic solar deities, mythological figures and Sanskrit words for light.</p><p class="src">'+esc(TXT.sungirl.src)+'</p></div>'+
+    '<details class="dd"><summary>The Ādityas and the Sun — read first</summary><p>'+esc(ADITYA_TXT)+'</p></details>'+
+    '<div class="chips" role="group" aria-label="Sun category"><button class="chip'+(!f.sunCat?' on':'')+'" data-act="sunCat" data-val="0">All <span class="cnt">'+ALL.filter(function(n){return n.cols.indexOf('s')>=0;}).length+'</span></button>'+
+    [1,2,3,4,5,6].map(function(c){return '<button class="chip'+(f.sunCat===c?' on':'')+'" data-act="sunCat" data-val="'+c+'">'+c+'. '+esc(SUNCAT[c])+' <span class="cnt">'+ALL.filter(function(n){return n.sun===c;}).length+'</span></button>';}).join('')+'</div>';
+  }
+  $('#bhead').innerHTML=h;
+}
+function chipBtn(field,val,label,list){const on=list.indexOf(val)>=0;return '<button class="chip'+(on?' on':'')+'" data-act="chip" data-f="'+field+'" data-val="'+val+'" aria-pressed="'+on+'">'+esc(label)+'</button>';}
+function selHTML(field,label,opts,cur){return '<label>'+esc(label)+'<select data-f="'+field+'">'+opts.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(cur)===String(o[0])?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>';}
+function drawCtl(){
+  const f=S.filters[V.key],n=activeCount(f),open=!!RT.filterOpen[V.key];
+  let h='<div class="search"><input id="q" type="search" placeholder="Search name, Devanagari, meaning, root, deity, source, virtue…" value="'+esc(f.q)+'" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search names"><button class="btn alt" data-act="ftoggle" aria-expanded="'+open+'">Filters'+(n?' ('+n+')':'')+'</button></div>';
+  h+='<div class="fpanel"'+(open?'':' hidden')+'>';
+  h+='<fieldset><legend>Gender</legend><div class="chips">'+['boy','girl','unisex','epithet'].map(function(g){return chipBtn('genders',g,g==='epithet'?'Deity epithet':GLAB[g],f.genders);}).join('')+'</div></fieldset>';
+  h+='<fieldset><legend>Style</legend><div class="chips">'+chipBtn('styles','modern','Modern',f.styles)+chipBtn('styles','traditional','Traditional',f.styles)+chipBtn('styles','uncommon','Uncommon',f.styles)+chipBtn('styles','short','Short (5 letters or fewer)',f.styles)+'</div></fieldset>';
+  h+='<div class="row2">';
+  if(V.key!=='lal'&&V.key!=='lak')h+=selHTML('src','Source',[['','Any source']].concat(Object.keys(SRCLAB).map(function(k){return [k,SRCLAB[k]];})),f.src);
+  h+=selHTML('theme','Meaning / theme',[['','Any theme']].concat(Object.keys(THEME_LABEL).map(function(k){return [k,THEME_LABEL[k]];})),f.theme);
+  h+=selHTML('len','Name length',[['','Any length'],['1','4 letters or fewer'],['2','5–6 letters'],['3','7–8 letters'],['4','9 letters or more']],f.len);
+  h+=selHTML('diff','Pronunciation',[['','Any difficulty'],['1','Easy'],['2','Moderate'],['3','Challenging']],f.diff);
+  h+=selHTML('sort','Sort',[['default','Default order'],['az','A–Z'],['short','Shortest first']],f.sort);
+  h+='</div>';
+  h+='<label class="chk"><input type="checkbox" data-fb="verified"'+(f.verified?' checked':'')+'> Attested in a named text (verse number may be unverified)</label>';
+  h+='<label class="chk"><input type="checkbox" data-fb="pos"'+(f.pos?' checked':'')+'> Multiple positive meaning themes (editorial)</label>';
+  h+='<label class="chk"><input type="checkbox" data-fb="showHidden"'+(f.showHidden?' checked':'')+'> Show names I hid</label>';
+  h+='<button class="btn alt" data-act="clear">Clear all filters</button></div>';
+  $('#bctl').innerHTML=h;
+}
+function drawRes(){
+  const f=S.filters[V.key];
+  const list=sortList(ALL.filter(function(n){return matches(n,f,V.key);}),f.sort);
+  let h='<div class="rhead"><div aria-live="polite"><b>'+list.length+'</b> name'+(list.length===1?'':'s')+' shown</div><button class="btn alt" data-act="clear">Clear all filters</button></div>';
+  if(!list.length)h+='<div class="empty"><p>No names match these filters.</p><button class="btn" data-act="clear">Clear all filters</button></div>';
+  else h+='<div class="list">'+list.map(card).join('')+'</div>';
+  $('#bres').innerHTML=h;
+}
+
+/* ---------- curated ---------- */
+const CUR=[
+ {id:'short',t:'Best short names',c:'Five letters or fewer in English spelling and easy to pronounce.',f:function(n){return n.len<=5&&n.diff===1;}},
+ {id:'mt',t:'Modern yet traditional',c:'Attested in a named text and commonly recognisable today (editorial assessment).',f:function(n){return n.mod==='modern'&&n.att;}},
+ {id:'prof',t:'Profound spiritual meanings',c:'Attested in a named text, with a devotion or wisdom theme and at least two themes in total.',f:function(n){return n.att&&n.th.length>=2&&(n.th.indexOf('D')>=0||n.th.indexOf('W')>=0);}},
+ {id:'easy',t:'Easy to pronounce in India and internationally',c:'Easy pronunciation grade (no rare letters, at most three syllables).',f:function(n){return n.diff===1&&n.syl<=3;}},
+ {id:'rare',t:'Rare but meaningful',c:'Editorially uncommon, with at least two meaning themes. Rarity is a subjective assessment, not measured.',f:function(n){return n.mod==='uncommon'&&n.th.length>=2;}},
+ {id:'wis',t:'Associated with wisdom',c:'Tagged with the wisdom and knowledge theme.',f:function(n){return n.th.indexOf('W')>=0;}},
+ {id:'pro',t:'Associated with prosperity',c:'Tagged with the prosperity and abundance theme.',f:function(n){return n.th.indexOf('P')>=0;}},
+ {id:'lig',t:'Associated with light and radiance',c:'Tagged with the light and radiance theme.',f:function(n){return n.th.indexOf('L')>=0;}},
+ {id:'att',t:'Directly attested in scripture',c:'Names listed in a named text. Verse or name numbers are not verified unless stated on the card.',f:function(n){return n.att;}},
+ {id:'use',t:'Strong contemporary usability',c:'Editorially modern and easy to pronounce.',f:function(n){return n.mod==='modern'&&n.diff===1;}},
+ {id:'sur',t:'Work well with a typical Indian surname',c:'Two or three syllables, up to seven letters, easy pronunciation. This is a subjective rule of thumb; your surname is not assumed.',f:function(n){return n.syl>=2&&n.syl<=3&&n.len<=7&&n.diff===1;}}
+];
+function drawCurated(){
+  let h='<h2>Curated recommendations</h2><div class="panel"><p>These collections are generated automatically from the rules shown. Popularity is not measured; terms such as modern or rare are subjective editorial assessments. No surname, language, caste or nakshatra is assumed.</p></div>';
+  CUR.forEach(function(c){
+    const list=ALL.filter(function(n){return c.f(n)&&!M(n.id).hidden;}).sort(function(a,b){return a.en.localeCompare(b.en);});
+    const open=RT.curOpen.has(c.id),all=RT.curAll.has(c.id),shown=all?list:list.slice(0,12);
+    h+='<div class="panel"><button class="btn alt" style="width:100%;text-align:left" data-act="curopen" data-val="'+c.id+'" aria-expanded="'+open+'">'+(open?'▾ ':'▸ ')+esc(c.t)+' ('+list.length+')</button>';
+    if(open){
+      h+='<p class="src"><b>Selection criteria:</b> '+esc(c.c)+'</p>';
+      h+=list.length?'<div class="list">'+shown.map(card).join('')+'</div>':'<div class="empty">No names currently match.</div>';
+      if(list.length>12)h+='<button class="btn alt" data-act="curall" data-val="'+c.id+'">'+(all?'Show fewer':'Show all '+list.length)+'</button>';
+    }
+    h+='</div>';
+  });
+  $('#view').innerHTML=h;
+}
+
+/* ---------- shortlist ---------- */
+function shortIds(){return S.order.filter(function(id){return M(id).short;});}
+function sortedShort(){
+  let ids=shortIds();
+  const mode=S.ui.sort;
+  if(S.ui.finalOnly)ids=ids.filter(function(id){return M(id).final;});
+  const by=BYID;
+  if(mode==='rating')ids.sort(function(a,b){return (M(b).rating||0)-(M(a).rating||0)||by.get(a).en.localeCompare(by.get(b).en);});
+  else if(mode==='name')ids.sort(function(a,b){return by.get(a).en.localeCompare(by.get(b).en);});
+  else if(mode==='meaning')ids.sort(function(a,b){return by.get(a).mean.localeCompare(by.get(b).mean);});
+  else if(mode==='source')ids.sort(function(a,b){return SRCLAB[by.get(a).srcCat].localeCompare(SRCLAB[by.get(b).srcCat])||by.get(a).en.localeCompare(by.get(b).en);});
+  return ids;
+}
+function stars(r){return r?'★'.repeat(r)+'☆'.repeat(5-r):'Not rated';}
+function slCard(id,i,manual){
+  const n=BYID.get(id),m=M(id),e=esc(id),cmp=S.compare.indexOf(id)>=0;
+  return '<article class="card'+(m.final?' final':'')+'" data-id="'+e+'"><div class="ch"><div style="display:flex;gap:10px"><span class="rank">'+(i+1)+'</span><div class="names"><h3>'+esc(n.en)+'<span class="dev" lang="sa">'+esc(n.dev)+'</span></h3><div class="pron">'+esc(n.pron)+'</div></div></div>'+(S.lead===id?'<span class="b ok">★ Leading candidate</span>':'')+'</div>'+
+   '<p class="mean">'+esc(n.mean)+'</p><div class="badges"><span class="b g">'+esc(GLAB[n.g])+'</span><span class="b">'+esc(SRCLAB[n.srcCat])+'</span><span class="b">'+esc(stars(m.rating||0))+'</span>'+(m.fav?'<span class="b g">♥ Favourite</span>':'')+(m.final?'<span class="b ok">Final round</span>':'')+'<span class="b '+(n.att?'ok':'warn')+'">'+esc(authLabel(n))+'</span></div>'+
+   '<div class="actions">'+
+   '<button class="btn alt" data-act="up" data-id="'+e+'"'+(manual&&i>0?'':' disabled')+' aria-label="Move up">▲</button>'+
+   '<button class="btn alt" data-act="down" data-id="'+e+'"'+(manual&&i<shortIds().length-1?'':' disabled')+' aria-label="Move down">▼</button>'+
+   '<button class="btn'+(m.final?' on':' alt')+'" data-act="final" data-id="'+e+'">'+(m.final?'In final round':'Move to final round')+'</button>'+
+   '<button class="btn'+(S.lead===id?' on':' alt')+'" data-act="lead" data-id="'+e+'">'+(S.lead===id?'Leading ★':'Make leading')+'</button>'+
+   '<button class="btn'+(m.fav?' on':' alt')+'" data-act="fav" data-id="'+e+'">'+(m.fav?'♥':'♡')+' Favourite</button>'+
+   '<button class="btn'+(cmp?' on':' alt')+'" data-act="cmp" data-id="'+e+'">'+(cmp?'✓ Comparing':'⇄ Compare')+'</button>'+
+   '<button class="btn danger" data-act="remove" data-id="'+e+'">Remove</button></div>'+
+   '<div style="margin:8px 0">'+ratingHTML(id)+'</div>'+
+   '<label>Personal note<textarea data-note="'+e+'" maxlength="2000">'+esc(m.note||'')+'</textarea></label>'+
+   '<label>Reason for choosing or rejecting<textarea data-reason="'+e+'" maxlength="1000">'+esc(m.reason||'')+'</textarea></label></article>';
+}
+function compareHTML(){
+  const ids=S.compare;
+  if(!ids.length)return '<div class="empty">Tap “Compare” on up to five names to see them side by side.</div>';
+  const rows=[['Name',function(n){return n.en+' ('+n.dev+')';}],['Gender',function(n){return GLAB[n.g];}],['Meaning',function(n){return n.mean;}],['Definition',function(n){return n.def;}],['Source',function(n){return refText(n);}],['Scriptural authenticity',authLabel],['Pronunciation',function(n){return n.pron+' ('+diffLabel(n)+')';}],['Uniqueness',uniqLabel],['Contemporary usability',function(n){return MODLAB[n.mod];}],['Personal rating',function(n){return stars(M(n.id).rating||0);}],['Notes',function(n){return M(n.id).note||'—';}]];
+  let h='<div class="tscroll"><table><thead><tr><th></th>'+ids.map(function(id){return '<th>'+esc(BYID.get(id).en)+'<br><button class="btn alt" data-act="cmp" data-id="'+esc(id)+'">Remove</button></th>';}).join('')+'</tr></thead><tbody>';
+  rows.forEach(function(r){h+='<tr><th scope="row">'+esc(r[0])+'</th>'+ids.map(function(id){return '<td>'+esc(r[1](BYID.get(id)))+'</td>';}).join('')+'</tr>';});
+  return h+'</tbody></table></div><button class="btn alt" data-act="cmpclear">Clear comparison</button>';
+}
+function finalList(){
+  const all=shortIds(),fin=all.filter(function(id){return M(id).final;});
+  return {ids:fin.length?fin:all,isFinal:fin.length>0};
+}
+function finalTableHTML(){
+  const fl=finalList();
+  if(!fl.ids.length)return '<div class="empty">Shortlist some names to build the comparison table.</div>';
+  const sc=S.prefs.score;
+  let h='<p class="src">'+(fl.isFinal?'Showing your final-round names.':'No final-round names yet, so showing your whole shortlist.')+'</p><div class="tscroll"><table><thead><tr><th>Name</th><th>Meaning</th><th>Scriptural authenticity</th><th>Pronunciation</th><th>Uniqueness</th><th>Contemporary usability</th><th>Personal rating</th><th>Notes</th>'+(sc?'<th>Decision-aid score</th>':'')+'</tr></thead><tbody>';
+  fl.ids.forEach(function(id){
+    const n=BYID.get(id),m=M(id);
+    h+='<tr><td><b>'+esc(n.en)+'</b>'+(S.lead===id?' ★':'')+'<br><span class="dev">'+esc(n.dev)+'</span></td><td>'+esc(n.mean)+'</td><td>'+esc(authLabel(n))+'</td><td>'+esc(n.pron+' ('+diffLabel(n)+')')+'</td><td>'+esc(uniqLabel(n))+'</td><td>'+esc(MODLAB[n.mod])+'</td><td>'+esc(stars(m.rating||0))+'</td><td>'+esc(m.note||m.reason||'—')+'</td>'+(sc?'<td>'+(scoreOf(n)==null?'—':scoreOf(n)+'/100')+'</td>':'')+'</tr>';
+  });
+  return h+'</tbody></table></div>';
+}
+function weightsHTML(){
+  const w=S.prefs.weights,L={auth:'Scriptural authenticity',pron:'Ease of pronunciation',uniq:'Uniqueness',use:'Contemporary usability',rate:'Personal rating'};
+  let h='<details class="dd"'+(RT.wopen?' open':'')+' id="wdet"><summary>Optional decision-aid score</summary><p class="src">This is only a decision aid, not an authoritative quality score. Meaning and the uniqueness and usability grades are subjective editorial assessments. Set the weights to reflect what matters to you (0 ignores a factor).</p><label class="chk"><input type="checkbox" data-fb="score"'+(S.prefs.score?' checked':'')+'> Show score column</label>';
+  Object.keys(L).forEach(function(k){h+='<label>'+esc(L[k])+': <b id="wv-'+k+'">'+w[k]+'</b><input type="range" min="0" max="5" step="1" value="'+w[k]+'" data-weight="'+k+'" style="width:100%"></label>';});
+  return h+'</details>';
+}
+function drawShortlist(){
+  const ids=sortedShort(),manual=S.ui.sort==='manual'&&!S.ui.finalOnly,total=shortIds().length;
+  let h='<h2>My shortlist <span class="cnt">('+total+')</span></h2>';
+  if(!RT.warnDismissed)h+='<div class="bar">Your shortlist is saved only in this browser, for this web address. Clearing site data or opening the file from a different address can lose it. Use Export Backup (Backup & About tab) regularly. <button class="btn alt" data-act="dismisswarn">Dismiss</button></div>';
+  if(!total)h+='<div class="empty"><p>Your shortlist is empty.</p><button class="btn" data-act="tab" data-val="discover">Discover names</button></div>';
+  else{
+    h+='<div class="row2">'+selHTML('slsort','Sort by',[['manual','My order'],['rating','Rating'],['name','Name'],['meaning','Meaning'],['source','Source']],S.ui.sort)+'<label class="chk"><input type="checkbox" data-fb="finalOnly"'+(S.ui.finalOnly?' checked':'')+'> Final round only</label></div>';
+    if(!manual)h+='<p class="src">Reordering is available when sorted by “My order” with the final-round filter off.</p>';
+    h+=ids.length?'<div class="list">'+ids.map(function(id,i){return slCard(id,i,manual);}).join('')+'</div>':'<div class="empty">No names in the final round yet.</div>';
+  }
+  h+='<h2>Compare side by side</h2>'+compareHTML();
+  h+='<h2>Final comparison table</h2>'+weightsHTML()+'<div id="finalTable">'+finalTableHTML()+'</div>';
+  const hid=ALL.filter(function(n){return M(n.id).hidden;});
+  if(hid.length){h+='<h2>Hidden names</h2><div class="panel">'+hid.map(function(n){return '<div style="margin:8px 0"><b>'+esc(n.en)+'</b> <span class="dev">'+esc(n.dev)+'</span> <button class="btn alt" data-act="hide" data-id="'+esc(n.id)+'">Unhide</button><label>Reason for rejecting<textarea data-reason="'+esc(n.id)+'" maxlength="1000">'+esc(M(n.id).reason||'')+'</textarea></label></div>';}).join('')+'</div>';}
+  h+='<h2>Export</h2><div class="actions"><button class="btn" data-act="csv">Export CSV</button><button class="btn" data-act="report">Download report (HTML)</button><button class="btn" data-act="print">Print / save as PDF</button></div>';
+  $('#view').innerHTML=h;
+}
+
+/* ---------- exports ---------- */
+function download(name,text,type){
+  const b=new Blob([text],{type:type});const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(u);a.remove();},1000);
+}
+function csvCell(v,user){let s=String(v==null?'':v);if(user&&/^[=+\-@\t\r]/.test(s))s="'"+s;if(/[",\r\n]/.test(s))s='"'+s.replace(/"/g,'""')+'"';return s;}
+function exportCSV(){
+  const ids=shortIds();if(!ids.length){toast('Your shortlist is empty');return;}
+  const head=['Rank','Name','Devanagari','Gender','Meaning','Source category','Scriptural reference','Authenticity','Pronunciation','Personal rating','Favourite','Final round','Leading candidate','Note','Reason'];
+  const rows=[head.join(',')];
+  ids.forEach(function(id,i){
+    const n=BYID.get(id),m=M(id);
+    rows.push([i+1,n.en,n.dev,GLAB[n.g],n.mean,SRCLAB[n.srcCat],refText(n),authLabel(n),n.pron,m.rating||'',m.fav?'Yes':'No',m.final?'Yes':'No',S.lead===id?'Yes':'No',m.note||'',m.reason||''].map(function(v,k){return csvCell(v,k>=13);}).join(','));
+  });
+  download('baby-name-shortlist.csv','﻿'+rows.join('\r\n'),'text/csv;charset=utf-8');
+  toast('CSV downloaded');
+}
+function reportBody(){
+  const ids=shortIds().sort(function(a,b){return (M(b).final?1:0)-(M(a).final?1:0);});
+  let h='<h1>Baby name shortlist</h1><p>Generated '+esc(new Date().toLocaleDateString())+' · '+ids.length+' names. Decision aid only; meanings are summarised from the explorer’s embedded dataset, and verse numbers are not verified unless stated.</p>';
+  ids.forEach(function(id,i){
+    const n=BYID.get(id),m=M(id);
+    h+='<div class="it"><b>'+(i+1)+'. '+esc(n.en)+'</b> — '+esc(n.dev)+' ('+esc(n.iast)+')'+(S.lead===id?' ★ Leading candidate':'')+(m.final?' · Final round':'')+(m.fav?' · ♥ Favourite':'')+'<br>'+esc(n.mean)+'<br>Gender: '+esc(GLAB[n.g])+' · Source: '+esc(SRCLAB[n.srcCat])+' · '+esc(authLabel(n))+'<br>Pronunciation: '+esc(n.pron)+' · Rating: '+esc(stars(m.rating||0))+(m.note?'<br>Note: '+esc(m.note):'')+(m.reason?'<br>Reason: '+esc(m.reason):'')+'</div>';
+  });
+  h+='<h2>Comparison</h2><table><tr><th>Name</th><th>Meaning</th><th>Scriptural authenticity</th><th>Pronunciation</th><th>Uniqueness</th><th>Contemporary usability</th><th>Rating</th><th>Notes</th></tr>';
+  ids.forEach(function(id){const n=BYID.get(id),m=M(id);h+='<tr><td>'+esc(n.en)+'</td><td>'+esc(n.mean)+'</td><td>'+esc(authLabel(n))+'</td><td>'+esc(n.pron)+'</td><td>'+esc(uniqLabel(n))+'</td><td>'+esc(MODLAB[n.mod])+'</td><td>'+esc(stars(m.rating||0))+'</td><td>'+esc(m.note||'')+'</td></tr>';});
+  return h+'</table>';
+}
+function exportReport(){
+  if(!shortIds().length){toast('Your shortlist is empty');return;}
+  const css=(document.getElementById('printCss')||{textContent:''}).textContent;
+  const html='<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Baby name shortlist</title><style>body{font-family:Georgia,serif;margin:16px;color:#222}.it{border:1px solid #ccc;border-radius:8px;padding:8px 12px;margin:8px 0}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}h1{color:#6b1f2a}'+css+'</style></head><body>'+reportBody()+'</body></html>';
+  download('baby-name-shortlist-report.html',html,'text/html;charset=utf-8');
+  toast('Report downloaded');
+}
+function printReport(){
+  if(!shortIds().length){toast('Your shortlist is empty');return;}
+  $('#printArea').innerHTML='<div class="rep">'+reportBody()+'</div>';
+  window.print();
+}
+function backupJSON(){return JSON.stringify({app:'hindu-baby-name-explorer',version:1,exported:new Date().toISOString(),data:{meta:S.meta,order:S.order,lead:S.lead,compare:S.compare,prefs:S.prefs,filters:S.filters,ui:S.ui}},null,2);}
+function exportBackup(){download('baby-name-backup-'+new Date().toISOString().slice(0,10)+'.json',backupJSON(),'application/json');toast('Backup downloaded');}
+function importBackupText(text){
+  let obj;
+  try{obj=JSON.parse(text);}catch(e){toast('That file is not valid JSON');return;}
+  if(!obj||obj.app!=='hindu-baby-name-explorer'||obj.version!==1||!obj.data||typeof obj.data!=='object'){toast('Not a valid backup from this app');return;}
+  const next=sanitize(obj.data);
+  const cnt=Object.keys(next.meta).filter(function(id){return next.meta[id].short;}).length;
+  showModal('Restore backup?','This replaces your current data with the backup ('+cnt+' shortlisted names). Export a backup of the current data first if you want to keep it.',[{label:'Cancel',cls:'alt'},{label:'Restore',cls:'',fn:function(){S=next;saveNow();applyTheme();toast('Backup restored');goTab(S.ui.tab);}}]);
+}
+function doReset(){
+  showModal('Reset all data?','This permanently deletes your shortlist, favourites, ratings, notes, hidden names and preferences from this browser. This cannot be undone. Export a backup first if unsure.',[{label:'Cancel',cls:'alt'},{label:'Yes, reset everything',cls:'danger',fn:function(){try{localStorage.removeItem(KEY);}catch(e){}S=defaultState();RT.open.clear();applyTheme();toast('All data reset');goTab('data');}}]);
+}
+
+/* ---------- modal / theme / tabs ---------- */
+function showModal(title,body,actions){
+  RT.modal=actions;
+  $('#modal').innerHTML='<div class="modal-back"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><h3 id="mt">'+esc(title)+'</h3><p>'+esc(body)+'</p><div class="actions">'+actions.map(function(a,i){return '<button class="btn '+(a.cls||'')+'" data-act="modal" data-val="'+i+'">'+esc(a.label)+'</button>';}).join('')+'</div></div></div>';
+  const b=$('#modal .btn');if(b)b.focus();
+}
+function closeModal(){$('#modal').innerHTML='';RT.modal=[];}
+function applyTheme(){const t=S.prefs.theme,r=document.documentElement;if(t==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',t);const b=$('#themeBtn');if(b)b.textContent='Theme: '+t;}
+function drawTabs(){
+  $('#tabs').innerHTML=TABS.map(function(t){const c=t[0]==='shortlist'?' ('+shortIds().length+')':'';return '<button class="tab" role="tab" data-act="tab" data-val="'+t[0]+'" aria-selected="'+(S.ui.tab===t[0])+'">'+esc(t[1])+c+'</button>';}).join('');
+}
+function drawCompareBar(){
+  const b=$('#compareBar'),n=S.compare.length;
+  if(!n){b.className='';b.innerHTML='';return;}
+  b.className='show';b.innerHTML='<span>Comparing '+n+' of 5</span><button class="btn" data-act="cmpgo">View comparison</button><button class="btn alt" data-act="cmpclear">Clear</button>';
+}
+function drawData(){
+  const unv=ALL.filter(function(n){return !n.att;}).length;
+  const cnt={l:ALL.filter(COLLS.lal.test).length,k:ALL.filter(COLLS.lak.test).length,b:collCount('sunboy'),g:collCount('sungirl')};
+  $('#view').innerHTML='<h2>Backup & About</h2>'+
+  '<div class="bar" id="storageWarn"'+(RT.storageOK?' hidden':'')+'>Browser storage is unavailable here (for example in a private window), so changes will not persist. Use Export Backup.</div>'+
+  '<div class="panel"><h3>Where your data lives</h3><p>Everything is saved automatically in this browser’s local storage, on this device only. Nothing is sent to any server. Local storage belongs to the web address (origin) the page is opened from: if you clear site data, switch browsers, or open the file from a different address (or a different copy of the file), your shortlist will not appear. If the file is hosted on a website, storage is tied to that site’s origin. Export a backup regularly.</p></div>'+
+  '<div class="panel"><h3>Backup</h3><div class="actions"><button class="btn" data-act="backup">Export Backup (JSON)</button><button class="btn alt" data-act="importbtn">Import Backup</button><button class="btn danger" data-act="reset">Reset Data</button></div><input type="file" id="importFile" accept="application/json,.json" hidden></div>'+
+  '<div class="panel"><h3>Appearance</h3><button class="btn alt" data-act="theme" id="themeBtn">Theme: '+esc(S.prefs.theme)+'</button></div>'+
+  '<div class="panel"><h3>About the data and its accuracy</h3><p>The dataset has '+ALL.length+' names ('+cnt.l+' Lalitha, '+cnt.k+' Lakshmi, '+cnt.b+' Sun-inspired boys/unisex, '+cnt.g+' Sun-inspired girls/unisex; some appear in more than one). It is far below the 100 / 100 / 50 / 50 research targets because I preferred fewer names whose status I could label honestly over padding.</p><ul><li>Names were compiled from recalled standard texts; I did not check them against printed editions or live sources in this build. Verse and name numbers are therefore “not verified” unless a locator is shown.</li><li>The Lakṣmī collection is not a verified Sahasranāma. Its names come from the 108-name Aṣṭottara list, the Śrī Sūkta and widely used epithets.</li><li>'+unv+' entries are not attested in a named text (derived forms, regional epithets or Sanskrit-inspired words) and are labelled as such on their cards.</li><li>Roots and etymologies are traditional or standard dictionary-style readings; where uncertain the card says so. “Modern”, “traditional”, “uncommon”, uniqueness and usability are subjective editorial assessments, not popularity data.</li><li>Please confirm any name you shortlist with a pandit or a printed edition before finalising.</li></ul></div>';
+  $('#importFile').addEventListener('change',function(e){
+    const f=e.target.files&&e.target.files[0];if(!f)return;
+    if(f.size>2000000){toast('File is too large to be a backup');return;}
+    const r=new FileReader();r.onload=function(){importBackupText(String(r.result));};r.readAsText(f);e.target.value='';
+  });
+}
+function goTab(t){
+  S.ui.tab=t;saveSoon();drawTabs();drawCompareBar();
+  if(VIEWKEYS.indexOf(t)>=0)mountBrowse(t);
+  else if(t==='curated')drawCurated();
+  else if(t==='shortlist')drawShortlist();
+  else drawData();
+  window.scrollTo(0,0);
+}
+function refresh(){
+  drawTabs();drawCompareBar();
+  const t=S.ui.tab;
+  if(VIEWKEYS.indexOf(t)>=0)drawRes();
+  else if(t==='curated')drawCurated();
+  else if(t==='shortlist')drawShortlist();
+}
+
+/* ---------- actions ---------- */
+function curF(){return S.filters[V.key];}
+const H={
+ tab:function(id,v){goTab(v);},
+ coll:function(id,v){curF().coll=v;saveSoon();mountBrowse(V.key);},
+ sunCat:function(id,v){curF().sunCat=parseInt(v,10);saveSoon();drawHead();drawRes();},
+ chip:function(id,v,b){const f=curF(),k=b.dataset.f,i=f[k].indexOf(v);if(i>=0)f[k].splice(i,1);else f[k].push(v);saveSoon();drawCtl();drawRes();},
+ ftoggle:function(){RT.filterOpen[V.key]=!RT.filterOpen[V.key];drawCtl();},
+ clear:function(){const f=curF(),c=f.coll,s=f.sunCat;S.filters[V.key]=Object.assign(defF(),{coll:c,sunCat:s});saveSoon();drawCtl();drawRes();},
+ details:function(id){if(RT.open.has(id))RT.open.delete(id);else RT.open.add(id);refresh();},
+ short:function(id){
+  const m=M(id);
+  if(m.short){setM(id,{short:false,final:false});S.order=S.order.filter(function(x){return x!==id;});if(S.lead===id)S.lead=null;toast('Removed from shortlist');}
+  else{setM(id,{short:true});if(S.order.indexOf(id)<0)S.order.push(id);toast('Added to shortlist');}
+  refresh();
+ },
+ fav:function(id){setM(id,{fav:!M(id).fav});refresh();},
+ hide:function(id){const h=!M(id).hidden;setM(id,{hidden:h});toast(h?'Hidden from recommendations':'Unhidden');refresh();},
+ cmp:function(id){
+  const i=S.compare.indexOf(id);
+  if(i>=0)S.compare.splice(i,1);
+  else if(S.compare.length>=5){toast('You can compare up to five names');return;}
+  else S.compare.push(id);
+  saveSoon();refresh();
+ },
+ cmpclear:function(){S.compare=[];saveSoon();refresh();},
+ cmpgo:function(){goTab('shortlist');},
+ rate:function(id,v){setM(id,{rating:parseInt(v,10)});refresh();},
+ up:function(id){const i=S.order.indexOf(id);if(i>0){const t=S.order[i-1];S.order[i-1]=id;S.order[i]=t;saveSoon();refresh();}},
+ down:function(id){const i=S.order.indexOf(id);if(i>=0&&i<S.order.length-1){const t=S.order[i+1];S.order[i+1]=id;S.order[i]=t;saveSoon();refresh();}},
+ final:function(id){setM(id,{final:!M(id).final});refresh();},
+ lead:function(id){S.lead=(S.lead===id)?null:id;saveSoon();refresh();},
+ remove:function(id){H.short(id);},
+ curopen:function(id,v){if(RT.curOpen.has(v))RT.curOpen.delete(v);else RT.curOpen.add(v);drawCurated();},
+ curall:function(id,v){if(RT.curAll.has(v))RT.curAll.delete(v);else RT.curAll.add(v);drawCurated();},
+ dismisswarn:function(){RT.warnDismissed=true;drawShortlist();},
+ csv:exportCSV,report:exportReport,print:printReport,backup:exportBackup,
+ importbtn:function(){$('#importFile').click();},
+ reset:doReset,
+ theme:function(){const o=['auto','light','dark'];S.prefs.theme=o[(o.indexOf(S.prefs.theme)+1)%3];saveSoon();applyTheme();},
+ modal:function(id,v){const a=RT.modal[parseInt(v,10)];closeModal();if(a&&a.fn)a.fn();}
+};
+document.addEventListener('click',function(e){
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const fn=H[b.dataset.act];if(fn)fn(b.dataset.id,b.dataset.val,b,e);
+});
+document.addEventListener('input',function(e){
+  const t=e.target;
+  if(t.id==='q'){curF().q=t.value.slice(0,100);saveSoon();drawRes();}
+  else if(t.dataset&&t.dataset.note){setM(t.dataset.note,{note:t.value.slice(0,2000)});}
+  else if(t.dataset&&t.dataset.reason){setM(t.dataset.reason,{reason:t.value.slice(0,1000)});}
+  else if(t.dataset&&t.dataset.weight){S.prefs.weights[t.dataset.weight]=parseInt(t.value,10);$('#wv-'+t.dataset.weight).textContent=t.value;saveSoon();RT.wopen=true;$('#finalTable').innerHTML=finalTableHTML();}
+});
+document.addEventListener('change',function(e){
+  const t=e.target;
+  if(t.dataset&&t.dataset.f==='slsort'){S.ui.sort=t.value;saveSoon();drawShortlist();}
+  else if(t.dataset&&t.dataset.f&&t.tagName==='SELECT'){curF()[t.dataset.f]=t.value;saveSoon();drawRes();}
+  else if(t.dataset&&t.dataset.fb){
+    const k=t.dataset.fb;
+    if(k==='score'){S.prefs.score=t.checked;saveSoon();RT.wopen=true;$('#finalTable').innerHTML=finalTableHTML();}
+    else if(k==='finalOnly'){S.ui.finalOnly=t.checked;saveSoon();drawShortlist();}
+    else{curF()[k]=t.checked;saveSoon();drawCtl();drawRes();}
+  }
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&RT.modal.length)closeModal();});
+window.addEventListener('pagehide',saveNow);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')saveNow();});
+
+/* ---------- boot ---------- */
+loadState();
+applyTheme();
+goTab(S.ui.tab);
+window.__hbne={S:function(){return S;},NAMES:NAMES,sanitize:sanitize,goTab:goTab};
+})();
+
+</script>
+</body>
+</html>
