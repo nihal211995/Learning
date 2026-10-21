@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probability Distributions — Data Science & Product Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #0e0f11;
+  --bg2: #14161a;
+  --bg3: #1c1f26;
+  --bg4: #22262f;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8e9ec;
+  --text2: #9da3b0;
+  --text3: #6b7280;
+  --accent: #4f8ef7;
+  --accent2: #7dd3c0;
+  --accent3: #f9a94b;
+  --accent4: #e87d96;
+  --accent5: #a78bfa;
+  --discrete: #4f8ef7;
+  --continuous: #7dd3c0;
+  --font-display: 'DM Serif Display', serif;
+  --font-body: 'Sora', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --sidebar-w: 260px;
+  --transition: 0.2s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; font-size: 15px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ─────────────────────────────── */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.sidebar-logo {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-logo .logo-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--text);
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.sidebar-logo .logo-sub {
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sidebar-nav { padding: 16px 12px; flex: 1; }
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 12px 8px 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--text2);
+  font-size: 13px;
+  text-decoration: none;
+  transition: var(--transition);
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: rgba(79,142,247,0.12); color: var(--accent); }
+
+.nav-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.nav-dot.discrete { background: var(--discrete); }
+.nav-dot.continuous { background: var(--continuous); }
+.nav-dot.meta { background: var(--text3); }
+
+/* ── MAIN CONTENT ─────────────────────────── */
+.main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  padding: 0 0 80px;
+}
+
+/* ── HERO ─────────────────────────────────── */
+.hero {
+  padding: 64px 56px 48px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(79,142,247,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 42px;
+  line-height: 1.15;
+  color: var(--text);
+  margin-bottom: 16px;
+  max-width: 620px;
+}
+
+.hero-title em { font-style: italic; color: var(--accent2); }
+
+.hero-desc {
+  font-size: 15px;
+  color: var(--text2);
+  max-width: 560px;
+  line-height: 1.7;
+  margin-bottom: 28px;
+}
+
+.hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  background: var(--bg3);
+}
+
+.badge.discrete { border-color: rgba(79,142,247,0.4); color: var(--discrete); background: rgba(79,142,247,0.08); }
+.badge.continuous { border-color: rgba(125,211,192,0.4); color: var(--continuous); background: rgba(125,211,192,0.08); }
+
+/* ── SECTIONS ─────────────────────────────── */
+.content-section {
+  padding: 48px 56px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.section-lead {
+  font-size: 15px;
+  color: var(--text2);
+  max-width: 640px;
+  margin-bottom: 32px;
+  line-height: 1.7;
+}
+
+/* ── INTRO CARDS ──────────────────────────── */
+.intro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.intro-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: var(--transition);
+}
+
+.intro-card:hover { border-color: var(--border2); }
+
+.intro-card-icon {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.intro-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.intro-card-text {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+/* ── TYPE EXPLAINER ───────────────────────── */
+.type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.type-card {
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  border: 1px solid;
+}
+
+.type-card.discrete {
+  background: rgba(79,142,247,0.05);
+  border-color: rgba(79,142,247,0.2);
+}
+
+.type-card.continuous {
+  background: rgba(125,211,192,0.05);
+  border-color: rgba(125,211,192,0.2);
+}
+
+.type-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.type-label.discrete { color: var(--discrete); }
+.type-label.continuous { color: var(--continuous); }
+
+.type-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.type-desc { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 10px; }
+.type-examples { font-size: 11px; color: var(--text3); font-style: italic; }
+
+/* ── FORMULA TYPES ────────────────────────── */
+.formula-types-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.formula-type-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.ft-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent3);
+  margin-bottom: 6px;
+}
+
+.ft-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.ft-desc { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+/* ── WHY IT MATTERS ───────────────────────── */
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.why-item {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.why-topic {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent2);
+  margin-bottom: 4px;
+}
+
+.why-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+/* ── DISTRIBUTION CARDS ───────────────────── */
+.dist-section {
+  padding: 48px 56px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dist-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.dist-type-pill {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.dist-type-pill.discrete { background: rgba(79,142,247,0.15); color: var(--discrete); }
+.dist-type-pill.continuous { background: rgba(125,211,192,0.15); color: var(--continuous); }
+
+.dist-title-block .dist-number {
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.dist-name {
+  font-family: var(--font-display);
+  font-size: 32px;
+  color: var(--text);
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.dist-tagline { font-size: 14px; color: var(--text2); }
+
+.dist-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.dist-body-full {
+  grid-column: 1 / -1;
+}
+
+.block {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+
+.block-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+
+.block-text { font-size: 13px; color: var(--text2); line-height: 1.65; }
+.block-text strong { color: var(--text); font-weight: 600; }
+
+/* ── FORMULA BLOCK ────────────────────────── */
+.formula-block {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent2);
+  line-height: 2;
+  white-space: pre-line;
+  margin-bottom: 8px;
+}
+
+.formula-comment { color: var(--text3); font-size: 12px; }
+
+/* ── STATS ROW ────────────────────────────── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.stat-pill {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.stat-pill-label { font-size: 10px; color: var(--text3); margin-bottom: 3px; }
+.stat-pill-value { font-size: 13px; font-weight: 500; color: var(--text); font-family: var(--font-mono); }
+
+/* ── CHART ────────────────────────────────── */
+.chart-container {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 8px;
+}
+
+.chart-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.chart-title { font-size: 12px; font-weight: 500; color: var(--text2); }
+.chart-params { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
+
+.chart-wrap { position: relative; height: 180px; width: 100%; }
+
+/* ── EXAMPLE BOX ──────────────────────────── */
+.example-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent3);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.example-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent3);
+  margin-bottom: 8px;
+}
+
+.example-item {
+  font-size: 13px;
+  color: var(--text2);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.5;
+}
+
+.example-item:last-child { border-bottom: none; }
+.example-item strong { color: var(--text); font-weight: 500; }
+
+/* ── MENTAL MODEL ─────────────────────────── */
+.mental-box {
+  background: rgba(167,139,250,0.06);
+  border: 1px solid rgba(167,139,250,0.2);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.mental-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent5);
+  margin-bottom: 8px;
+}
+
+.mental-text { font-size: 13px; color: var(--text2); line-height: 1.65; }
+.mental-trigger {
+  display: inline-block;
+  font-size: 11px;
+  background: rgba(167,139,250,0.12);
+  color: var(--accent5);
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin: 4px 4px 0 0;
+}
+
+/* ── ASSUMPTIONS ──────────────────────────── */
+.assumption-list {
+  list-style: none;
+  padding: 0;
+}
+
+.assumption-list li {
+  font-size: 13px;
+  color: var(--text2);
+  padding: 4px 0 4px 18px;
+  position: relative;
+}
+
+.assumption-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--accent2);
+  font-size: 11px;
+  font-weight: 600;
+  top: 5px;
+}
+
+/* ── COMPARISON TABLE ─────────────────────── */
+.comparison-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+thead tr {
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border2);
+}
+
+th {
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: var(--transition);
+}
+
+tbody tr:hover { background: var(--bg2); }
+tbody tr:last-child { border-bottom: none; }
+
+td {
+  padding: 11px 14px;
+  color: var(--text2);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+td:first-child { color: var(--text); font-weight: 500; }
+
+.td-pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.td-pill.discrete { background: rgba(79,142,247,0.15); color: var(--discrete); }
+.td-pill.continuous { background: rgba(125,211,192,0.15); color: var(--continuous); }
+
+td code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent2);
+}
+
+/* ── CHEAT SHEET ──────────────────────────── */
+.cheat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.cheat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: var(--transition);
+}
+
+.cheat-card:hover { border-color: var(--border2); }
+
+.cheat-q {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.cheat-a {
+  font-size: 12px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  margin-bottom: 4px;
+}
+
+.cheat-why { font-size: 11px; color: var(--text3); line-height: 1.5; }
+
+/* ── FLOWCHART ────────────────────────────── */
+.flowchart {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  overflow-x: auto;
+}
+
+.flow-node {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 10px 14px;
+  line-height: 1.3;
+}
+
+.flow-start { background: rgba(79,142,247,0.15); border: 1px solid rgba(79,142,247,0.3); color: var(--discrete); }
+.flow-q { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 50px; }
+.flow-result-d { background: rgba(79,142,247,0.1); border: 1px solid rgba(79,142,247,0.25); color: var(--discrete); }
+.flow-result-c { background: rgba(125,211,192,0.1); border: 1px solid rgba(125,211,192,0.25); color: var(--continuous); }
+
+/* ── MISTAKES ─────────────────────────────── */
+.mistake-list { display: flex; flex-direction: column; gap: 12px; }
+
+.mistake-item {
+  display: flex;
+  gap: 14px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent4);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.mistake-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.mistake-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.mistake-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.mistake-fix { font-size: 12px; color: var(--accent2); margin-top: 5px; font-style: italic; }
+
+/* ── SCROLLSPY INDICATOR ──────────────────── */
+.sidebar-progress {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.progress-label { font-size: 10px; color: var(--text3); margin-bottom: 6px; }
+.progress-bar-bg { background: var(--bg3); border-radius: 4px; height: 3px; }
+.progress-bar-fill { background: var(--accent); border-radius: 4px; height: 3px; transition: width 0.3s ease; width: 0%; }
+
+/* ── RESPONSIVE ───────────────────────────── */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .hero, .content-section, .dist-section { padding: 32px 20px; }
+  .dist-body { grid-template-columns: 1fr; }
+  .type-grid { grid-template-columns: 1fr; }
+  .formula-types-grid { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .hero-title { font-size: 28px; }
+}
+
+/* ── ANIMATIONS ───────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dist-section { animation: fadeUp 0.4s ease both; }
+
+/* ── SCROLLBAR ────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-title">Probability Distributions</div>
+    <div class="logo-sub">Data Science & Product Analytics</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Foundation</div>
+    <a class="nav-item active" href="#intro">
+      <span class="nav-dot meta"></span> Introduction
+    </a>
+    <a class="nav-item" href="#types">
+      <span class="nav-dot meta"></span> Types & Formulas
+    </a>
+
+    <div class="nav-section-label">Discrete</div>
+    <a class="nav-item" href="#bernoulli">
+      <span class="nav-dot discrete"></span> Bernoulli
+    </a>
+    <a class="nav-item" href="#binomial">
+      <span class="nav-dot discrete"></span> Binomial
+    </a>
+    <a class="nav-item" href="#geometric">
+      <span class="nav-dot discrete"></span> Geometric
+    </a>
+    <a class="nav-item" href="#poisson">
+      <span class="nav-dot discrete"></span> Poisson
+    </a>
+
+    <div class="nav-section-label">Continuous</div>
+    <a class="nav-item" href="#uniform">
+      <span class="nav-dot continuous"></span> Uniform
+    </a>
+    <a class="nav-item" href="#normal">
+      <span class="nav-dot continuous"></span> Normal
+    </a>
+    <a class="nav-item" href="#exponential">
+      <span class="nav-dot continuous"></span> Exponential
+    </a>
+    <a class="nav-item" href="#beta">
+      <span class="nav-dot continuous"></span> Beta
+    </a>
+
+    <div class="nav-section-label">Reference</div>
+    <a class="nav-item" href="#comparison">
+      <span class="nav-dot meta"></span> Comparison Table
+    </a>
+    <a class="nav-item" href="#cheatsheet">
+      <span class="nav-dot meta"></span> Cheat Sheet
+    </a>
+    <a class="nav-item" href="#flowchart">
+      <span class="nav-dot meta"></span> Selection Flowchart
+    </a>
+    <a class="nav-item" href="#mistakes">
+      <span class="nav-dot meta"></span> Common Mistakes
+    </a>
+  </div>
+  <div class="sidebar-progress">
+    <div class="progress-label">Reading progress</div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- HERO -->
+<section class="hero" id="intro">
+  <div class="hero-eyebrow">Study Guide · Interview Prep · Product Analytics</div>
+  <h1 class="hero-title">Probability Distributions for <em>Data Science</em> & Product Analytics</h1>
+  <p class="hero-desc">A comprehensive refresher covering the 8 core distributions used in A/B testing, user behavior modeling, experimentation, and growth analytics. Built for product data scientists preparing for roles at Google, Meta, and similar companies.</p>
+  <div class="hero-badges">
+    <span class="badge discrete">4 Discrete Distributions</span>
+    <span class="badge continuous">4 Continuous Distributions</span>
+    <span class="badge">Product Examples</span>
+    <span class="badge">Interactive Charts</span>
+    <span class="badge">Cheat Sheet</span>
+    <span class="badge">A/B Testing Focus</span>
+  </div>
+</section>
+
+<!-- INTRO -->
+<section class="content-section" id="types">
+  <div class="section-eyebrow">Foundation</div>
+  <h2 class="section-title">What is a Probability Distribution?</h2>
+  <p class="section-lead">A probability distribution describes how the values of a random variable are spread — it tells you the likelihood of each possible outcome. In product analytics, distributions are the mathematical backbone of experimentation, modeling user behavior, and making decisions under uncertainty.</p>
+
+  <div class="type-grid">
+    <div class="type-card discrete">
+      <div class="type-label discrete">Discrete distributions</div>
+      <div class="type-title">Countable outcomes</div>
+      <div class="type-desc">The random variable can only take specific, countable values (integers). You count events, not measure them continuously.</div>
+      <div class="type-examples">Examples: number of clicks, installs, crashes, conversions, sessions</div>
+    </div>
+    <div class="type-card continuous">
+      <div class="type-label continuous">Continuous distributions</div>
+      <div class="type-title">Measurable outcomes</div>
+      <div class="type-desc">The random variable can take any value within a range. You measure time, duration, revenue, or probability.</div>
+      <div class="type-examples">Examples: session duration, time-to-churn, ARPU, conversion rate</div>
+    </div>
+  </div>
+
+  <div class="formula-types-grid">
+    <div class="formula-type-card">
+      <div class="ft-label">PMF</div>
+      <div class="ft-name">Probability Mass Function</div>
+      <div class="ft-desc">For <strong>discrete</strong> distributions. Gives exact probability P(X = k) for each value k. All probabilities sum to 1.</div>
+    </div>
+    <div class="formula-type-card">
+      <div class="ft-label">PDF</div>
+      <div class="ft-name">Probability Density Function</div>
+      <div class="ft-desc">For <strong>continuous</strong> distributions. P(X = x) = 0 for any exact value. Area under curve = 1. Use for ranges: P(a ≤ X ≤ b).</div>
+    </div>
+    <div class="formula-type-card">
+      <div class="ft-label">CDF</div>
+      <div class="ft-name">Cumulative Distribution Function</div>
+      <div class="ft-desc">F(x) = P(X ≤ x). Works for both. Used to answer "probability of AT MOST x" — critical for p-values and confidence intervals.</div>
+    </div>
+  </div>
+
+  <div class="section-eyebrow" style="margin-top: 8px;">Why It Matters in Product Analytics</div>
+  <div class="why-grid" style="margin-top: 12px;">
+    <div class="why-item">
+      <div class="why-topic">A/B Testing</div>
+      <div class="why-text">Binomial models conversions; Normal approximation powers z-tests; Beta models CTR posteriors</div>
+    </div>
+    <div class="why-item">
+      <div class="why-topic">User Behavior</div>
+      <div class="why-text">Geometric: sessions until purchase. Poisson: crashes/day. Exponential: time between sessions</div>
+    </div>
+    <div class="why-item">
+      <div class="why-topic">Retention</div>
+      <div class="why-text">Exponential & Geometric model time-to-churn. Survival analysis builds on these foundations</div>
+    </div>
+    <div class="why-item">
+      <div class="why-topic">Revenue Metrics</div>
+      <div class="why-text">Normal approximates ARPU distributions. Log-normal models revenue (right-skewed)</div>
+    </div>
+    <div class="why-item">
+      <div class="why-topic">Bayesian Testing</div>
+      <div class="why-text">Beta distribution is the conjugate prior for Bernoulli/Binomial — updates with each observation</div>
+    </div>
+    <div class="why-item">
+      <div class="why-topic">Risk Estimation</div>
+      <div class="why-text">Model rare failure events with Poisson. Use Exponential for time-to-failure in reliability</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  BERNOULLI                              -->
+<!-- ═══════════════════════════════════════ -->
+<section class="dist-section" id="bernoulli">
+  <div class="dist-header">
+    <div>
+      <div class="dist-type-pill discrete">Discrete · 01</div>
+    </div>
+    <div class="dist-title-block">
+      <div class="dist-name">Bernoulli</div>
+      <div class="dist-tagline">A single trial with exactly two outcomes: success (1) or failure (0).</div>
+    </div>
+  </div>
+
+  <div class="dist-body">
+    <div class="block">
+      <div class="block-label">Definition & When to Use</div>
+      <div class="block-text">Models a <strong>single binary event</strong>. The building block of all other discrete distributions. Use when you have one trial with yes/no, click/no-click, convert/bounce outcomes.<br><br>Think of it as the "atom" — Binomial is just n repeated Bernoulli trials.</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Assumptions</div>
+      <ul class="assumption-list">
+        <li>Exactly one trial</li>
+        <li>Only two possible outcomes (success / failure)</li>
+        <li>Constant probability p of success</li>
+        <li>Outcome is binary (1 or 0)</li>
+      </ul>
+    </div>
+    <div class="block dist-body-full">
+      <div class="block-label">Formula (PMF)</div>
+      <div class="formula-block">P(X = 1) = p          <span class="formula-comment">← probability of success</span>
+P(X = 0) = 1 − p      <span class="formula-comment">← probability of failure</span>
+
+Or compactly:
+P(X = k) = pᵏ · (1−p)^(1−k)   where k ∈ {0, 1}</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Key Statistics</div>
+      <div class="stats-row">
+        <div class="stat-pill"><div class="stat-pill-label">Mean</div><div class="stat-pill-value">p</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Variance</div><div class="stat-pill-value">p(1−p)</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Std Dev</div><div class="stat-pill-value">√p(1−p)</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Shape</div><div class="stat-pill-value">2 bars</div></div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title-row">
+        <div class="chart-title">PMF — Bernoulli(p = 0.25)</div>
+        <div class="chart-params">n=1, p=0.25</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-bernoulli" role="img" aria-label="Bernoulli PMF bar chart with p=0.25 showing P(0)=0.75 and P(1)=0.25"></canvas></div>
+    </div>
+    <div class="example-box">
+      <div class="example-label">Product & Google Examples</div>
+      <div class="example-item"><strong>Ad Click:</strong> Did user click the Google ad? p = CTR (e.g. 2%)</div>
+      <div class="example-item"><strong>App Install:</strong> Did user install the recommended Play Store app? p = install rate</div>
+      <div class="example-item"><strong>Conversion:</strong> Did user purchase after viewing a promotion? p = conversion rate</div>
+      <div class="example-item"><strong>A/B Test Unit:</strong> Each user's binary outcome (converted / not) is a Bernoulli trial</div>
+    </div>
+    <div class="mental-box">
+      <div class="mental-label">Mental Model — Recognize it when...</div>
+      <div class="mental-text">You hear <em>"did the user..."</em> or <em>"binary outcome"</em>. Any single yes/no event. It's the default starting point before you scale to n trials (Binomial).</div>
+      <div style="margin-top: 8px;">
+        <span class="mental-trigger">single trial</span>
+        <span class="mental-trigger">click / no-click</span>
+        <span class="mental-trigger">convert / bounce</span>
+        <span class="mental-trigger">binary outcome</span>
+        <span class="mental-trigger">success / failure</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  BINOMIAL                              -->
+<!-- ═══════════════════════════════════════ -->
+<section class="dist-section" id="binomial">
+  <div class="dist-header">
+    <div><div class="dist-type-pill discrete">Discrete · 02</div></div>
+    <div class="dist-title-block">
+      <div class="dist-name">Binomial</div>
+      <div class="dist-tagline">Number of successes in n independent Bernoulli trials.</div>
+    </div>
+  </div>
+
+  <div class="dist-body">
+    <div class="block">
+      <div class="block-label">Definition & When to Use</div>
+      <div class="block-text">The Binomial is <strong>n repeated Bernoulli trials</strong>. Use when: you run a fixed number of trials, each trial is independent, success probability p is constant, and you're counting how many successes occurred.<br><br>This is the workhorse of A/B testing with binary outcomes.</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Assumptions</div>
+      <ul class="assumption-list">
+        <li>Fixed number of trials n</li>
+        <li>Each trial independent</li>
+        <li>Constant probability p per trial</li>
+        <li>Binary outcome per trial</li>
+        <li>Counting total successes X</li>
+      </ul>
+    </div>
+    <div class="block dist-body-full">
+      <div class="block-label">Formula (PMF)</div>
+      <div class="formula-block">P(X = k) = C(n, k) · pᵏ · (1−p)^(n−k)
+
+where C(n, k) = n! / (k! · (n−k)!)   <span class="formula-comment">← "n choose k"</span>
+n = number of trials
+p = probability of success per trial
+k = number of successes (0 ≤ k ≤ n)</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Key Statistics</div>
+      <div class="stats-row">
+        <div class="stat-pill"><div class="stat-pill-label">Mean</div><div class="stat-pill-value">np</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Variance</div><div class="stat-pill-value">np(1−p)</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Std Dev</div><div class="stat-pill-value">√np(1−p)</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Shape</div><div class="stat-pill-value">Bell-like</div></div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title-row">
+        <div class="chart-title">PMF — Binomial(n=20, p=0.30)</div>
+        <div class="chart-params">E[X]=6, Var=4.2</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-binomial" role="img" aria-label="Binomial distribution PMF bar chart with n=20 trials and p=0.30"></canvas></div>
+    </div>
+    <div class="example-box">
+      <div class="example-label">Product & Google Examples</div>
+      <div class="example-item"><strong>A/B Test:</strong> Out of 1,000 users shown new feature, how many convert? n=1000, p=conversion rate</div>
+      <div class="example-item"><strong>Play Store:</strong> Of 50 users who see app recommendation, how many install? n=50, p=0.15</div>
+      <div class="example-item"><strong>Email Campaign:</strong> Of 10,000 users emailed, how many open it? n=10000, p=open rate</div>
+      <div class="example-item"><strong>Retention:</strong> Of 500 users from Jan cohort, how many are active in Feb?</div>
+    </div>
+    <div class="mental-box">
+      <div class="mental-label">Mental Model — Recognize it when...</div>
+      <div class="mental-text">You hear <em>"out of N users, how many..."</em>. Fixed sample size, binary per-user outcome. If n is large and p is small, Poisson is a useful approximation (λ = np).</div>
+      <div style="margin-top: 8px;">
+        <span class="mental-trigger">n trials fixed</span>
+        <span class="mental-trigger">how many out of N</span>
+        <span class="mental-trigger">A/B conversion</span>
+        <span class="mental-trigger">retention count</span>
+        <span class="mental-trigger">install count</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  GEOMETRIC                             -->
+<!-- ═══════════════════════════════════════ -->
+<section class="dist-section" id="geometric">
+  <div class="dist-header">
+    <div><div class="dist-type-pill discrete">Discrete · 03</div></div>
+    <div class="dist-title-block">
+      <div class="dist-name">Geometric</div>
+      <div class="dist-tagline">Number of trials until the first success. Memoryless.</div>
+    </div>
+  </div>
+
+  <div class="dist-body">
+    <div class="block">
+      <div class="block-label">Definition & When to Use</div>
+      <div class="block-text">Use when you're asking <strong>"how long until the first success?"</strong> The key property is <strong>memorylessness</strong>: past failures don't change future probability. Each trial is a fresh start.<br><br>The discrete counterpart to the Exponential distribution.</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Assumptions</div>
+      <ul class="assumption-list">
+        <li>Trials are independent</li>
+        <li>Constant probability p per trial</li>
+        <li>Counting trials until first success</li>
+        <li>Memoryless: P(X > m+n | X > m) = P(X > n)</li>
+      </ul>
+    </div>
+    <div class="block dist-body-full">
+      <div class="block-label">Formula (PMF)</div>
+      <div class="formula-block">P(X = k) = (1−p)^(k−1) · p     <span class="formula-comment">← k trials until first success</span>
+
+where k = 1, 2, 3, ...
+p = probability of success on each trial
+
+CDF: P(X ≤ k) = 1 − (1−p)ᵏ</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Key Statistics</div>
+      <div class="stats-row">
+        <div class="stat-pill"><div class="stat-pill-label">Mean</div><div class="stat-pill-value">1/p</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Variance</div><div class="stat-pill-value">(1−p)/p²</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Std Dev</div><div class="stat-pill-value">√(1−p)/p</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Shape</div><div class="stat-pill-value">Decreasing</div></div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title-row">
+        <div class="chart-title">PMF — Geometric(p = 0.25)</div>
+        <div class="chart-params">E[X]=4, decreasing probability</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-geometric" role="img" aria-label="Geometric distribution PMF bar chart with p=0.25 showing decreasing probabilities"></canvas></div>
+    </div>
+    <div class="example-box">
+      <div class="example-label">Product & Google Examples</div>
+      <div class="example-item"><strong>First Purchase:</strong> How many app sessions until user makes their first in-app purchase?</div>
+      <div class="example-item"><strong>Feature Discovery:</strong> How many Play Store visits until user discovers the subscription feature?</div>
+      <div class="example-item"><strong>Ad Conversion:</strong> How many ad impressions before the first click? p = CTR</div>
+      <div class="example-item"><strong>Support:</strong> How many chatbot interactions until user's issue is resolved?</div>
+    </div>
+    <div class="mental-box">
+      <div class="mental-label">Mental Model — Recognize it when...</div>
+      <div class="mental-text">You hear <em>"how many attempts until the first..."</em>. Think waiting, retrying, time-to-first-event in discrete steps. If the unit is time (not discrete tries), switch to Exponential.</div>
+      <div style="margin-top: 8px;">
+        <span class="mental-trigger">first success</span>
+        <span class="mental-trigger">how many until</span>
+        <span class="mental-trigger">sessions to purchase</span>
+        <span class="mental-trigger">memoryless</span>
+        <span class="mental-trigger">waiting time (discrete)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  POISSON                               -->
+<!-- ═══════════════════════════════════════ -->
+<section class="dist-section" id="poisson">
+  <div class="dist-header">
+    <div><div class="dist-type-pill discrete">Discrete · 04</div></div>
+    <div class="dist-title-block">
+      <div class="dist-name">Poisson</div>
+      <div class="dist-tagline">Number of rare events in a fixed time/space interval.</div>
+    </div>
+  </div>
+
+  <div class="dist-body">
+    <div class="block">
+      <div class="block-label">Definition & When to Use</div>
+      <div class="block-text">Models <strong>rare, independent events occurring at a constant average rate</strong> λ over a fixed interval. Unique property: <strong>mean equals variance</strong> (both = λ). Great approximation for Binomial when n is large and p is small (λ = np).</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Assumptions</div>
+      <ul class="assumption-list">
+        <li>Events are independent</li>
+        <li>Constant average rate λ per interval</li>
+        <li>Two events can't occur simultaneously</li>
+        <li>Fixed observation interval</li>
+        <li>Events are relatively rare</li>
+      </ul>
+    </div>
+    <div class="block dist-body-full">
+      <div class="block-label">Formula (PMF)</div>
+      <div class="formula-block">P(X = k) = (e^(−λ) · λᵏ) / k!
+
+where λ = average number of events per interval (rate)
+k = number of events (0, 1, 2, ...)
+e ≈ 2.71828 (Euler's number)
+
+<span class="formula-comment">Note: Mean = Variance = λ (diagnostic check!)</span></div>
+    </div>
+    <div class="block">
+      <div class="block-label">Key Statistics</div>
+      <div class="stats-row">
+        <div class="stat-pill"><div class="stat-pill-label">Mean</div><div class="stat-pill-value">λ</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Variance</div><div class="stat-pill-value">λ</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Std Dev</div><div class="stat-pill-value">√λ</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Shape</div><div class="stat-pill-value">Right-skewed</div></div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title-row">
+        <div class="chart-title">PMF — Poisson(λ = 4)</div>
+        <div class="chart-params">Mean=Variance=4</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-poisson" role="img" aria-label="Poisson distribution PMF bar chart with lambda=4"></canvas></div>
+    </div>
+    <div class="example-box">
+      <div class="example-label">Product & Google Examples</div>
+      <div class="example-item"><strong>App Crashes:</strong> Number of app crashes per hour on Google Play. λ = avg crashes/hour</div>
+      <div class="example-item"><strong>Server Requests:</strong> API calls arriving per second to a Google Maps endpoint</div>
+      <div class="example-item"><strong>Bug Reports:</strong> Number of critical bug reports received per day</div>
+      <div class="example-item"><strong>Rare Events:</strong> Number of users hitting rate limits per minute</div>
+    </div>
+    <div class="mental-box">
+      <div class="mental-label">Mental Model — Recognize it when...</div>
+      <div class="mental-text">You hear <em>"events per unit time/space"</em> or <em>"rare occurrences"</em>. The signature: you know the rate λ, you're counting events, and mean ≈ variance. If variance >> mean, use Negative Binomial.</div>
+      <div style="margin-top: 8px;">
+        <span class="mental-trigger">events per hour/day</span>
+        <span class="mental-trigger">crashes per session</span>
+        <span class="mental-trigger">rare events</span>
+        <span class="mental-trigger">fixed interval</span>
+        <span class="mental-trigger">mean = variance</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  UNIFORM                               -->
+<!-- ═══════════════════════════════════════ -->
+<section class="dist-section" id="uniform">
+  <div class="dist-header">
+    <div><div class="dist-type-pill continuous">Continuous · 05</div></div>
+    <div class="dist-title-block">
+      <div class="dist-name">Uniform</div>
+      <div class="dist-tagline">Every value in [a, b] is equally likely. Maximum uncertainty.</div>
+    </div>
+  </div>
+
+  <div class="dist-body">
+    <div class="block">
+      <div class="block-label">Definition & When to Use</div>
+      <div class="block-text">The simplest continuous distribution: <strong>flat probability across a range</strong>. Used when you have no prior information favoring any value over another. Also the default "uninformed prior" in Bayesian analysis: Beta(1,1) = Uniform(0,1).</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Assumptions</div>
+      <ul class="assumption-list">
+        <li>Continuous outcomes within bounded range [a, b]</li>
+        <li>All values equally likely</li>
+        <li>No information favoring any value</li>
+        <li>Strict bounds (a and b are known)</li>
+      </ul>
+    </div>
+    <div class="block dist-body-full">
+      <div class="block-label">Formula (PDF & CDF)</div>
+      <div class="formula-block">PDF: f(x) = 1/(b − a)    for a ≤ x ≤ b
+     f(x) = 0           otherwise
+
+CDF: F(x) = (x − a)/(b − a)   for a ≤ x ≤ b
+     F(x) = 0                  for x &lt; a
+     F(x) = 1                  for x > b</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Key Statistics</div>
+      <div class="stats-row">
+        <div class="stat-pill"><div class="stat-pill-label">Mean</div><div class="stat-pill-value">(a+b)/2</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Variance</div><div class="stat-pill-value">(b−a)²/12</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Std Dev</div><div class="stat-pill-value">(b−a)/√12</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Shape</div><div class="stat-pill-value">Flat / Rectangular</div></div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title-row">
+        <div class="chart-title">PDF — Uniform(a=0, b=1)</div>
+        <div class="chart-params">Mean=0.5, flat density</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-uniform" role="img" aria-label="Uniform distribution PDF showing flat constant probability density between 0 and 1"></canvas></div>
+    </div>
+    <div class="example-box">
+      <div class="example-label">Product & Google Examples</div>
+      <div class="example-item"><strong>Bayesian Prior:</strong> Before running an A/B test, assume CTR is equally likely to be anywhere in [0%, 100%] — use Uniform as uninformed prior (= Beta(1,1))</div>
+      <div class="example-item"><strong>Random Assignment:</strong> A/B test group assignment uses Uniform(0,1) to randomly assign users to control/treatment</div>
+      <div class="example-item"><strong>Simulation:</strong> Monte Carlo methods use Uniform random variables as the base for generating other distributions</div>
+    </div>
+    <div class="mental-box">
+      <div class="mental-label">Mental Model — Recognize it when...</div>
+      <div class="mental-text">You hear <em>"equally likely"</em> or <em>"no prior information"</em>. Also appears as a building block: random numbers are Uniform, and you transform them to simulate other distributions.</div>
+      <div style="margin-top: 8px;">
+        <span class="mental-trigger">equally likely</span>
+        <span class="mental-trigger">no prior info</span>
+        <span class="mental-trigger">random assignment</span>
+        <span class="mental-trigger">uninformed prior</span>
+        <span class="mental-trigger">simulation base</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  NORMAL                                -->
+<!-- ═══════════════════════════════════════ -->
+<section class="dist-section" id="normal">
+  <div class="dist-header">
+    <div><div class="dist-type-pill continuous">Continuous · 06</div></div>
+    <div class="dist-title-block">
+      <div class="dist-name">Normal (Gaussian)</div>
+      <div class="dist-tagline">The bell curve. Symmetric, defined by μ and σ. The backbone of classical statistics.</div>
+    </div>
+  </div>
+
+  <div class="dist-body">
+    <div class="block">
+      <div class="block-label">Definition & When to Use</div>
+      <div class="block-text">The most important distribution in statistics. Use when data is <strong>symmetrically distributed around a mean</strong>. By the <strong>Central Limit Theorem (CLT)</strong>: sample means of any distribution approach Normal as n → ∞. This is why z-tests work for large samples.</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Assumptions & Key Facts</div>
+      <ul class="assumption-list">
+        <li>Continuous, symmetric around μ</li>
+        <li>68% of data within ±1σ</li>
+        <li>95% of data within ±2σ</li>
+        <li>99.7% of data within ±3σ</li>
+        <li>Standard Normal: μ=0, σ=1 (z-scores)</li>
+      </ul>
+    </div>
+    <div class="block dist-body-full">
+      <div class="block-label">Formula (PDF)</div>
+      <div class="formula-block">f(x) = (1 / (σ · √(2π))) · exp(−(x − μ)² / (2σ²))
+
+μ = mean (center of distribution)
+σ = standard deviation (spread)
+σ² = variance
+
+Z-score: z = (x − μ) / σ    <span class="formula-comment">← standardize to N(0,1)</span></div>
+    </div>
+    <div class="block">
+      <div class="block-label">Key Statistics</div>
+      <div class="stats-row">
+        <div class="stat-pill"><div class="stat-pill-label">Mean</div><div class="stat-pill-value">μ</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Variance</div><div class="stat-pill-value">σ²</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Std Dev</div><div class="stat-pill-value">σ</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Shape</div><div class="stat-pill-value">Symmetric bell</div></div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title-row">
+        <div class="chart-title">PDF — Normal(μ=0, σ=1) — Standard Normal</div>
+        <div class="chart-params">68-95-99.7 rule applies</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-normal" role="img" aria-label="Standard normal distribution bell curve PDF with mean 0 and standard deviation 1"></canvas></div>
+    </div>
+    <div class="example-box">
+      <div class="example-label">Product & Google Examples</div>
+      <div class="example-item"><strong>ARPU:</strong> Average Revenue Per User across a large user base approximates Normal by CLT. Use for hypothesis testing revenue lift.</div>
+      <div class="example-item"><strong>Session Duration:</strong> User session durations cluster around a mean. Compare treatment vs control using a z-test or t-test.</div>
+      <div class="example-item"><strong>A/B Test Results:</strong> Sample means of conversion rates approximate Normal (CLT). Foundation of z-tests for significance.</div>
+      <div class="example-item"><strong>Model Residuals:</strong> Linear regression assumes normally distributed residuals — diagnostic check in modeling.</div>
+    </div>
+    <div class="mental-box">
+      <div class="mental-label">Mental Model — Recognize it when...</div>
+      <div class="mental-text">You hear <em>"average metric"</em>, <em>"compare means"</em>, or large sample sizes. CLT means almost any mean of a large enough sample becomes Normal. Also: if you're using z-tests or t-tests, you're implicitly assuming Normal.</div>
+      <div style="margin-top: 8px;">
+        <span class="mental-trigger">bell curve</span>
+        <span class="mental-trigger">symmetric</span>
+        <span class="mental-trigger">CLT applies</span>
+        <span class="mental-trigger">z-test / t-test</span>
+        <span class="mental-trigger">compare means</span>
+        <span class="mental-trigger">large n</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  EXPONENTIAL                           -->
+<!-- ═══════════════════════════════════════ -->
+<section class="dist-section" id="exponential">
+  <div class="dist-header">
+    <div><div class="dist-type-pill continuous">Continuous · 07</div></div>
+    <div class="dist-title-block">
+      <div class="dist-name">Exponential</div>
+      <div class="dist-tagline">Time between events in a Poisson process. Continuous & memoryless.</div>
+    </div>
+  </div>
+
+  <div class="dist-body">
+    <div class="block">
+      <div class="block-label">Definition & When to Use</div>
+      <div class="block-text">Models <strong>time until the next event</strong> when events arrive at a constant Poisson rate λ. Key property: <strong>memoryless</strong> — the probability of an event in the next t minutes doesn't depend on how long you've already been waiting.<br><br>Think of it as the continuous analog of the Geometric distribution.</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Assumptions</div>
+      <ul class="assumption-list">
+        <li>Continuous time variable (not discrete counts)</li>
+        <li>Events arrive at constant rate λ</li>
+        <li>Memoryless: P(T > s+t | T > s) = P(T > t)</li>
+        <li>Events are independent</li>
+        <li>Right-skewed: most wait times short, few very long</li>
+      </ul>
+    </div>
+    <div class="block dist-body-full">
+      <div class="block-label">Formula (PDF & CDF)</div>
+      <div class="formula-block">PDF: f(x) = λ · e^(−λx)    for x ≥ 0
+                           <span class="formula-comment">λ = rate (events per unit time)</span>
+
+CDF: F(x) = 1 − e^(−λx)   <span class="formula-comment">← P(event happens within time x)</span>
+
+Mean = 1/λ   (average wait time)
+Var  = 1/λ²</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Key Statistics</div>
+      <div class="stats-row">
+        <div class="stat-pill"><div class="stat-pill-label">Mean</div><div class="stat-pill-value">1/λ</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Variance</div><div class="stat-pill-value">1/λ²</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Std Dev</div><div class="stat-pill-value">1/λ</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Shape</div><div class="stat-pill-value">Right-skewed</div></div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title-row">
+        <div class="chart-title">PDF — Exponential(λ = 0.5)</div>
+        <div class="chart-params">Mean wait = 1/λ = 2 units</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-exponential" role="img" aria-label="Exponential distribution PDF curve showing right-skewed decay with lambda=0.5"></canvas></div>
+    </div>
+    <div class="example-box">
+      <div class="example-label">Product & Google Examples</div>
+      <div class="example-item"><strong>Time to Churn:</strong> Days until a user becomes inactive. λ = churn rate per day. P(churn within 7 days) = 1 − e^(−7λ)</div>
+      <div class="example-item"><strong>Session Gap:</strong> Time between consecutive user sessions on Google Play. Model inter-session time as Exponential.</div>
+      <div class="example-item"><strong>Server Latency:</strong> Time until next API request to a backend server — foundational for queuing theory and load modeling.</div>
+      <div class="example-item"><strong>Survival Analysis:</strong> Combined with Poisson, drives Cox proportional hazard models for user lifecycle analysis.</div>
+    </div>
+    <div class="mental-box">
+      <div class="mental-label">Mental Model — Recognize it when...</div>
+      <div class="mental-text">You hear <em>"time until..."</em>, <em>"days before..."</em>, or <em>"how long until churn/purchase"</em>. Continuous time, single event. If counting events (not time), use Poisson. If discrete trials (not continuous), use Geometric.</div>
+      <div style="margin-top: 8px;">
+        <span class="mental-trigger">time until event</span>
+        <span class="mental-trigger">days to churn</span>
+        <span class="mental-trigger">inter-arrival time</span>
+        <span class="mental-trigger">survival analysis</span>
+        <span class="mental-trigger">memoryless</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  BETA                                  -->
+<!-- ═══════════════════════════════════════ -->
+<section class="dist-section" id="beta">
+  <div class="dist-header">
+    <div><div class="dist-type-pill continuous">Continuous · 08</div></div>
+    <div class="dist-title-block">
+      <div class="dist-name">Beta</div>
+      <div class="dist-tagline">Distribution over probabilities [0,1]. The engine of Bayesian A/B testing.</div>
+    </div>
+  </div>
+
+  <div class="dist-body">
+    <div class="block">
+      <div class="block-label">Definition & When to Use</div>
+      <div class="block-text">The Beta distribution models <strong>unknown probabilities and proportions</strong>. Defined on [0,1]. It's the <strong>conjugate prior</strong> for Bernoulli/Binomial — meaning: if your prior is Beta(α, β) and you observe s successes and f failures, your posterior is Beta(α + s, β + f). Updates beautifully.</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Assumptions & Bayesian Role</div>
+      <ul class="assumption-list">
+        <li>Outcome is a probability or proportion ∈ [0,1]</li>
+        <li>Shape controlled by α (successes) and β (failures)</li>
+        <li>α=β=1 → Uniform (completely uninformed prior)</li>
+        <li>Larger α+β → more concentrated (more certainty)</li>
+        <li>Conjugate prior: Beta prior × Binomial likelihood = Beta posterior</li>
+      </ul>
+    </div>
+    <div class="block dist-body-full">
+      <div class="block-label">Formula (PDF)</div>
+      <div class="formula-block">f(x; α, β) = x^(α−1) · (1−x)^(β−1) / B(α, β)
+
+where B(α, β) = Γ(α)·Γ(β) / Γ(α+β)   <span class="formula-comment">← normalizing constant</span>
+α = shape (successes + 1 with uniform prior)
+β = shape (failures + 1 with uniform prior)
+
+Bayesian update rule:
+  Prior:     Beta(α, β)
+  Observe:   s successes, f failures
+  Posterior: Beta(α + s, β + f)</div>
+    </div>
+    <div class="block">
+      <div class="block-label">Key Statistics</div>
+      <div class="stats-row">
+        <div class="stat-pill"><div class="stat-pill-label">Mean</div><div class="stat-pill-value">α/(α+β)</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Variance</div><div class="stat-pill-value">αβ/(α+β)²(α+β+1)</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Mode</div><div class="stat-pill-value">(α−1)/(α+β−2)</div></div>
+        <div class="stat-pill"><div class="stat-pill-label">Shape</div><div class="stat-pill-value">Flexible</div></div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title-row">
+        <div class="chart-title">PDF — Beta with varying α, β parameters</div>
+        <div class="chart-params">Shape changes with data observed</div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-beta" role="img" aria-label="Beta distribution PDF showing multiple curves with different alpha and beta parameters"></canvas></div>
+    </div>
+    <div class="example-box">
+      <div class="example-label">Product & Google Examples</div>
+      <div class="example-item"><strong>Bayesian A/B Testing:</strong> Model CTR as Beta. Control: 100 conversions / 1000 views → Beta(101, 901). Posterior mean = 10%. Directly compare distributions to get P(Treatment > Control).</div>
+      <div class="example-item"><strong>Conversion Rate Estimate:</strong> Early in an experiment, prior Beta(1,1) (uninformed). After 50 conversions from 200 → posterior Beta(51, 151). Mean = 25%.</div>
+      <div class="example-item"><strong>Bandits:</strong> Thompson Sampling for multi-armed bandits uses Beta posteriors to balance explore/exploit in feature rollouts.</div>
+      <div class="example-item"><strong>CTR Estimation:</strong> Ads team models expected CTR per ad using Beta priors updated from historical impressions/clicks.</div>
+    </div>
+    <div class="mental-box">
+      <div class="mental-label">Mental Model — Recognize it when...</div>
+      <div class="mental-text">You're modeling an <em>unknown rate or probability</em> (not an observed count). In Bayesian A/B testing, you never model "how many clicked" (that's Binomial) — you model "what is the true CTR?" (that's Beta). As data accumulates, Beta narrows and concentrates.</div>
+      <div style="margin-top: 8px;">
+        <span class="mental-trigger">unknown probability</span>
+        <span class="mental-trigger">Bayesian A/B test</span>
+        <span class="mental-trigger">CTR posterior</span>
+        <span class="mental-trigger">proportion ∈ [0,1]</span>
+        <span class="mental-trigger">Thompson sampling</span>
+        <span class="mental-trigger">conjugate prior</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  COMPARISON TABLE                      -->
+<!-- ═══════════════════════════════════════ -->
+<section class="content-section" id="comparison">
+  <div class="section-eyebrow">Reference</div>
+  <h2 class="section-title">Comparison Table</h2>
+  <p class="section-lead">Side-by-side view of all 8 distributions — scan to quickly identify which distribution fits your problem.</p>
+
+  <div class="comparison-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Distribution</th>
+          <th>Type</th>
+          <th>Data</th>
+          <th>Mean</th>
+          <th>Variance</th>
+          <th>Key Product Use Case</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Bernoulli</td>
+          <td><span class="td-pill discrete">Discrete</span></td>
+          <td>Binary (0/1)</td>
+          <td><code>p</code></td>
+          <td><code>p(1−p)</code></td>
+          <td>Single ad click, one user conversion event</td>
+        </tr>
+        <tr>
+          <td>Binomial</td>
+          <td><span class="td-pill discrete">Discrete</span></td>
+          <td>Count of successes</td>
+          <td><code>np</code></td>
+          <td><code>np(1−p)</code></td>
+          <td>Installs out of N users shown recommendation</td>
+        </tr>
+        <tr>
+          <td>Geometric</td>
+          <td><span class="td-pill discrete">Discrete</span></td>
+          <td>Trial count (integer)</td>
+          <td><code>1/p</code></td>
+          <td><code>(1−p)/p²</code></td>
+          <td>Sessions until first in-app purchase</td>
+        </tr>
+        <tr>
+          <td>Poisson</td>
+          <td><span class="td-pill discrete">Discrete</span></td>
+          <td>Event count (integer)</td>
+          <td><code>λ</code></td>
+          <td><code>λ</code></td>
+          <td>App crashes per hour, API calls per second</td>
+        </tr>
+        <tr>
+          <td>Uniform</td>
+          <td><span class="td-pill continuous">Continuous</span></td>
+          <td>Value in [a,b]</td>
+          <td><code>(a+b)/2</code></td>
+          <td><code>(b−a)²/12</code></td>
+          <td>Uninformed prior, random A/B assignment</td>
+        </tr>
+        <tr>
+          <td>Normal</td>
+          <td><span class="td-pill continuous">Continuous</span></td>
+          <td>Real number</td>
+          <td><code>μ</code></td>
+          <td><code>σ²</code></td>
+          <td>ARPU, session duration, z-test for A/B means</td>
+        </tr>
+        <tr>
+          <td>Exponential</td>
+          <td><span class="td-pill continuous">Continuous</span></td>
+          <td>Time (positive real)</td>
+          <td><code>1/λ</code></td>
+          <td><code>1/λ²</code></td>
+          <td>Days until churn, time between sessions</td>
+        </tr>
+        <tr>
+          <td>Beta</td>
+          <td><span class="td-pill continuous">Continuous</span></td>
+          <td>Probability [0,1]</td>
+          <td><code>α/(α+β)</code></td>
+          <td><code>αβ/(α+β)²(α+β+1)</code></td>
+          <td>Bayesian A/B test CTR posterior, Thompson sampling</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  CHEAT SHEET                           -->
+<!-- ═══════════════════════════════════════ -->
+<section class="content-section" id="cheatsheet">
+  <div class="section-eyebrow">Reference</div>
+  <h2 class="section-title">Choosing the Right Distribution</h2>
+  <p class="section-lead">Scan these trigger questions to quickly identify which distribution your problem calls for.</p>
+
+  <div class="cheat-grid">
+    <div class="cheat-card">
+      <div class="cheat-q">Did the user click / convert / install? (One event)</div>
+      <div class="cheat-a">→ Bernoulli(p)</div>
+      <div class="cheat-why">Single binary outcome. p = known or estimated probability.</div>
+    </div>
+    <div class="cheat-card">
+      <div class="cheat-q">How many users out of N converted?</div>
+      <div class="cheat-a">→ Binomial(n, p)</div>
+      <div class="cheat-why">Fixed n, binary outcome per user, counting successes.</div>
+    </div>
+    <div class="cheat-card">
+      <div class="cheat-q">How many sessions until the first purchase?</div>
+      <div class="cheat-a">→ Geometric(p)</div>
+      <div class="cheat-why">Counting discrete trials to first success. Mean = 1/p.</div>
+    </div>
+    <div class="cheat-card">
+      <div class="cheat-q">How many crashes/errors per hour?</div>
+      <div class="cheat-a">→ Poisson(λ)</div>
+      <div class="cheat-why">Rare events at constant rate over fixed interval.</div>
+    </div>
+    <div class="cheat-card">
+      <div class="cheat-q">No prior info — every value equally plausible?</div>
+      <div class="cheat-a">→ Uniform(a, b)</div>
+      <div class="cheat-why">Uninformed prior or random generation base.</div>
+    </div>
+    <div class="cheat-card">
+      <div class="cheat-q">Comparing average revenue or session duration?</div>
+      <div class="cheat-a">→ Normal(μ, σ²)</div>
+      <div class="cheat-why">CLT: large-sample means are Normal. Use z-test.</div>
+    </div>
+    <div class="cheat-card">
+      <div class="cheat-q">How many days until a user churns?</div>
+      <div class="cheat-a">→ Exponential(λ)</div>
+      <div class="cheat-why">Continuous time until event. Memoryless property.</div>
+    </div>
+    <div class="cheat-card">
+      <div class="cheat-q">What is the true conversion rate in a Bayesian A/B test?</div>
+      <div class="cheat-a">→ Beta(α, β)</div>
+      <div class="cheat-why">Modeling an unknown probability. Updates with data.</div>
+    </div>
+    <div class="cheat-card">
+      <div class="cheat-q">n is very large, p is very small (rare event)?</div>
+      <div class="cheat-a">→ Poisson(λ=np)</div>
+      <div class="cheat-why">Binomial approximation when n→∞, p→0, np constant.</div>
+    </div>
+    <div class="cheat-card">
+      <div class="cheat-q">Mean ≈ Variance in count data?</div>
+      <div class="cheat-a">→ Poisson(λ)</div>
+      <div class="cheat-why">Diagnostic signature of Poisson. If Var >> Mean, use Negative Binomial.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  FLOWCHART                             -->
+<!-- ═══════════════════════════════════════ -->
+<section class="content-section" id="flowchart">
+  <div class="section-eyebrow">Reference</div>
+  <h2 class="section-title">Distribution Selection Flowchart</h2>
+  <p class="section-lead">Follow the decision tree to identify the right distribution for any product analytics problem.</p>
+
+  <div class="flowchart">
+    <svg viewBox="0 0 860 540" style="width:100%;font-family:'Sora',sans-serif;font-size:12px;" aria-label="Distribution selection flowchart">
+      <!-- START -->
+      <rect x="330" y="10" width="200" height="40" rx="20" fill="rgba(79,142,247,0.2)" stroke="rgba(79,142,247,0.5)" stroke-width="1"/>
+      <text x="430" y="35" text-anchor="middle" fill="#4f8ef7" font-weight="600">What are you modeling?</text>
+
+      <!-- Arrow down -->
+      <line x1="430" y1="50" x2="430" y2="80" stroke="#444" stroke-width="1"/>
+      <polygon points="425,78 435,78 430,88" fill="#444"/>
+
+      <!-- Q1: Discrete or Continuous -->
+      <rect x="300" y="88" width="260" height="38" rx="19" fill="#22262f" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <text x="430" y="112" text-anchor="middle" fill="#e8e9ec">Discrete (counts) or Continuous (time/rate)?</text>
+
+      <!-- Left branch: Discrete -->
+      <line x1="300" y1="107" x2="140" y2="107" stroke="#444" stroke-width="1"/>
+      <line x1="140" y1="107" x2="140" y2="150" stroke="#444" stroke-width="1"/>
+      <polygon points="135,148 145,148 140,158" fill="#444"/>
+      <text x="215" y="100" text-anchor="middle" fill="#6b7280" font-size="11">Discrete</text>
+
+      <!-- Right branch: Continuous -->
+      <line x1="560" y1="107" x2="720" y2="107" stroke="#444" stroke-width="1"/>
+      <line x1="720" y1="107" x2="720" y2="150" stroke="#444" stroke-width="1"/>
+      <polygon points="715,148 725,148 720,158" fill="#444"/>
+      <text x="640" y="100" text-anchor="middle" fill="#6b7280" font-size="11">Continuous</text>
+
+      <!-- Discrete Q -->
+      <rect x="50" y="158" width="180" height="38" rx="19" fill="#22262f" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <text x="140" y="176" text-anchor="middle" fill="#e8e9ec">How many</text>
+      <text x="140" y="190" text-anchor="middle" fill="#e8e9ec">trials/events?</text>
+
+      <!-- Continuous Q -->
+      <rect x="630" y="158" width="180" height="38" rx="19" fill="#22262f" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <text x="720" y="176" text-anchor="middle" fill="#e8e9ec">Measuring time</text>
+      <text x="720" y="190" text-anchor="middle" fill="#e8e9ec">or a probability?</text>
+
+      <!-- Discrete branches -->
+      <!-- 1 trial -->
+      <line x1="50" y1="177" x2="20" y2="177" stroke="#444" stroke-width="1"/>
+      <line x1="20" y1="177" x2="20" y2="260" stroke="#444" stroke-width="1"/>
+      <polygon points="15,258 25,258 20,268" fill="#444"/>
+      <text x="35" y="223" fill="#6b7280" font-size="10">1 trial</text>
+      <rect x="0" y="268" width="108" height="30" rx="6" fill="rgba(79,142,247,0.12)" stroke="rgba(79,142,247,0.3)" stroke-width="1"/>
+      <text x="54" y="288" text-anchor="middle" fill="#4f8ef7" font-weight="500">Bernoulli</text>
+
+      <!-- n trials -->
+      <line x1="140" y1="196" x2="140" y2="240" stroke="#444" stroke-width="1"/>
+      <polygon points="135,238 145,238 140,248" fill="#444"/>
+      <text x="158" y="223" fill="#6b7280" font-size="10">n trials</text>
+      <rect x="80" y="248" width="120" height="30" rx="6" fill="rgba(79,142,247,0.12)" stroke="rgba(79,142,247,0.3)" stroke-width="1"/>
+      <text x="140" y="268" text-anchor="middle" fill="#4f8ef7" font-weight="500">Binomial(n, p)</text>
+
+      <!-- Until first -->
+      <line x1="230" y1="177" x2="270" y2="177" stroke="#444" stroke-width="1"/>
+      <line x1="270" y1="177" x2="270" y2="260" stroke="#444" stroke-width="1"/>
+      <polygon points="265,258 275,258 270,268" fill="#444"/>
+      <text x="250" y="155" fill="#6b7280" font-size="10">Until 1st</text>
+
+      <!-- Poisson -->
+      <line x1="140" y1="278" x2="140" y2="320" stroke="#444" stroke-width="1"/>
+      <text x="158" y="305" fill="#6b7280" font-size="10">Events/interval</text>
+      <rect x="80" y="328" width="120" height="30" rx="6" fill="rgba(79,142,247,0.12)" stroke="rgba(79,142,247,0.3)" stroke-width="1"/>
+      <text x="140" y="348" text-anchor="middle" fill="#4f8ef7" font-weight="500">Poisson(λ)</text>
+
+      <rect x="210" y="268" width="120" height="30" rx="6" fill="rgba(79,142,247,0.12)" stroke="rgba(79,142,247,0.3)" stroke-width="1"/>
+      <text x="270" y="288" text-anchor="middle" fill="#4f8ef7" font-weight="500">Geometric(p)</text>
+
+      <!-- Continuous branches -->
+      <!-- Time -->
+      <line x1="630" y1="177" x2="580" y2="177" stroke="#444" stroke-width="1"/>
+      <line x1="580" y1="177" x2="580" y2="260" stroke="#444" stroke-width="1"/>
+      <polygon points="575,258 585,258 580,268" fill="#444"/>
+      <text x="604" y="155" fill="#6b7280" font-size="10">Time</text>
+
+      <line x1="580" y1="268" x2="580" y2="290" stroke="#444" stroke-width="1"/>
+      <!-- Large n? -->
+      <rect x="500" y="290" width="160" height="38" rx="19" fill="#22262f" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <text x="580" y="308" text-anchor="middle" fill="#e8e9ec">Symmetric &amp;</text>
+      <text x="580" y="322" text-anchor="middle" fill="#e8e9ec">large n?</text>
+
+      <line x1="500" y1="309" x2="450" y2="309" stroke="#444" stroke-width="1"/>
+      <line x1="450" y1="309" x2="450" y2="370" stroke="#444" stroke-width="1"/>
+      <polygon points="445,368 455,368 450,378" fill="#444"/>
+      <text x="474" y="350" fill="#6b7280" font-size="10">Yes</text>
+      <rect x="380" y="378" width="140" height="30" rx="6" fill="rgba(125,211,192,0.12)" stroke="rgba(125,211,192,0.3)" stroke-width="1"/>
+      <text x="450" y="398" text-anchor="middle" fill="#7dd3c0" font-weight="500">Normal(μ, σ²)</text>
+
+      <line x1="660" y1="309" x2="700" y2="309" stroke="#444" stroke-width="1"/>
+      <line x1="700" y1="309" x2="700" y2="370" stroke="#444" stroke-width="1"/>
+      <polygon points="695,368 705,368 700,378" fill="#444"/>
+      <text x="682" y="350" fill="#6b7280" font-size="10">No (right-skewed)</text>
+      <rect x="630" y="378" width="160" height="30" rx="6" fill="rgba(125,211,192,0.12)" stroke="rgba(125,211,192,0.3)" stroke-width="1"/>
+      <text x="710" y="398" text-anchor="middle" fill="#7dd3c0" font-weight="500">Exponential(λ)</text>
+
+      <!-- Probability -->
+      <line x1="810" y1="177" x2="830" y2="177" stroke="#444" stroke-width="1"/>
+      <line x1="830" y1="177" x2="830" y2="430" stroke="#444" stroke-width="1"/>
+      <polygon points="825,428 835,428 830,438" fill="#444"/>
+      <text x="818" y="155" fill="#6b7280" font-size="10">Probability</text>
+      <rect x="760" y="438" width="100" height="30" rx="6" fill="rgba(125,211,192,0.12)" stroke="rgba(125,211,192,0.3)" stroke-width="1"/>
+      <text x="810" y="458" text-anchor="middle" fill="#7dd3c0" font-weight="500">Beta(α, β)</text>
+
+      <!-- Unknown / equal -->
+      <line x1="810" y1="177" x2="810" y2="200" stroke="#444" stroke-width="1"/>
+      <text x="818" y="195" fill="#6b7280" font-size="10">Equal prob</text>
+      <rect x="750" y="248" width="120" height="30" rx="6" fill="rgba(125,211,192,0.12)" stroke="rgba(125,211,192,0.3)" stroke-width="1"/>
+      <text x="810" y="268" text-anchor="middle" fill="#7dd3c0" font-weight="500">Uniform(a, b)</text>
+      <line x1="810" y1="196" x2="810" y2="248" stroke="#444" stroke-width="1"/>
+      <polygon points="805,246 815,246 810,256" fill="#444"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  COMMON MISTAKES                       -->
+<!-- ═══════════════════════════════════════ -->
+<section class="content-section" id="mistakes">
+  <div class="section-eyebrow">Reference</div>
+  <h2 class="section-title">Common Mistakes</h2>
+  <p class="section-lead">Mistakes that analysts make when applying probability distributions in product and experimentation contexts.</p>
+
+  <div class="mistake-list">
+    <div class="mistake-item">
+      <div class="mistake-icon">⚠</div>
+      <div>
+        <div class="mistake-title">Using Normal for small samples</div>
+        <div class="mistake-text">Applying z-tests when sample sizes are small (n &lt; 30). The CLT hasn't kicked in, and the Normal approximation can be poor — especially for binary metrics with extreme p values.</div>
+        <div class="mistake-fix">Fix: Use t-test for small continuous samples. For binary outcomes with small n, use exact Binomial test or Fisher's exact test.</div>
+      </div>
+    </div>
+    <div class="mistake-item">
+      <div class="mistake-icon">⚠</div>
+      <div>
+        <div class="mistake-title">Forgetting Poisson requires Mean ≈ Variance</div>
+        <div class="mistake-text">Fitting a Poisson model to over-dispersed count data where Variance >> Mean (common in user behavior data). This produces underestimated standard errors and inflated significance.</div>
+        <div class="mistake-fix">Fix: Check Var/Mean ratio (called the Dispersion Index). If >> 1, use Negative Binomial distribution instead.</div>
+      </div>
+    </div>
+    <div class="mistake-item">
+      <div class="mistake-icon">⚠</div>
+      <div>
+        <div class="mistake-title">Confusing Geometric (discrete) and Exponential (continuous)</div>
+        <div class="mistake-text">Geometric counts discrete trials (sessions, clicks); Exponential models continuous time (days, minutes). Using one when the other is appropriate leads to wrong parameter estimation.</div>
+        <div class="mistake-fix">Fix: Ask — "Is the unit a countable event or a continuous time measure?" Discrete → Geometric. Continuous → Exponential.</div>
+      </div>
+    </div>
+    <div class="mistake-item">
+      <div class="mistake-icon">⚠</div>
+      <div>
+        <div class="mistake-title">Treating A/B test metrics as independent when they're not</div>
+        <div class="mistake-text">Each user may have multiple sessions/events. Treating each event as an independent Bernoulli trial when they're correlated (same user) violates independence assumptions and inflates sample size.</div>
+        <div class="mistake-fix">Fix: Use user-level randomization (not event-level). Analyze at the user grain, not the event grain.</div>
+      </div>
+    </div>
+    <div class="mistake-item">
+      <div class="mistake-icon">⚠</div>
+      <div>
+        <div class="mistake-title">Peeking at A/B test results before reaching sample size</div>
+        <div class="mistake-text">Running significance tests repeatedly as data comes in dramatically inflates false positive rates. With α=0.05, peeking 10 times → true false positive rate ≈ 40%.</div>
+        <div class="mistake-fix">Fix: Pre-specify sample size and test duration. Use sequential testing methods (e.g., SPRT) if early stopping is genuinely needed.</div>
+      </div>
+    </div>
+    <div class="mistake-item">
+      <div class="mistake-icon">⚠</div>
+      <div>
+        <div class="mistake-title">Ignoring the difference between p-value and effect size</div>
+        <div class="mistake-text">At Google's scale (millions of users), trivially small effects (0.001% lift) can achieve p &lt; 0.05. Statistical significance ≠ practical significance. Shipping a 0.001% CTR improvement may cost more than the revenue gained.</div>
+        <div class="mistake-fix">Fix: Always define a Minimum Detectable Effect (MDE) and calculate business impact. Report confidence intervals alongside p-values.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ── CHART RENDERING ──────────────────────────────────
+const COLORS = {
+  blue: '#4f8ef7',
+  teal: '#7dd3c0',
+  amber: '#f9a94b',
+  pink: '#e87d96',
+  purple: '#a78bfa',
+  gray: '#6b7280'
+};
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#1c1f26',
+      borderColor: 'rgba(255,255,255,0.1)',
+      borderWidth: 1,
+      titleColor: '#9da3b0',
+      bodyColor: '#e8e9ec',
+      padding: 10
+    }
+  },
+  scales: {
+    x: {
+      grid: { color: 'rgba(255,255,255,0.04)' },
+      ticks: { color: '#6b7280', font: { size: 10, family: 'DM Mono' } }
+    },
+    y: {
+      grid: { color: 'rgba(255,255,255,0.04)' },
+      ticks: { color: '#6b7280', font: { size: 10, family: 'DM Mono' } }
+    }
+  }
+};
+
+function factorial(n) {
+  if (n <= 1) return 1;
+  return n * factorial(n - 1);
+}
+
+function binomCoeff(n, k) {
+  if (k === 0 || k === n) return 1;
+  let r = 1;
+  for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1);
+  return r;
+}
+
+function mkBar(id, labels, data, color) {
+  new Chart(document.getElementById(id), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: color + '88',
+        borderColor: color,
+        borderWidth: 1.5,
+        borderRadius: 3
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      plugins: { ...chartDefaults.plugins, tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: c => 'P = ' + c.parsed.y.toFixed(4) } } }
+    }
+  });
+}
+
+function mkLine(id, labels, datasets) {
+  new Chart(document.getElementById(id), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      ...chartDefaults,
+      elements: { point: { radius: 0 } },
+      plugins: { ...chartDefaults.plugins, legend: { display: datasets.length > 1, labels: { color: '#9da3b0', font: { size: 10 }, boxWidth: 12 } } }
+    }
+  });
+}
+
+// Bernoulli
+mkBar('chart-bernoulli', ['Failure (0)', 'Success (1)'], [0.75, 0.25], COLORS.blue);
+
+// Binomial
+(function() {
+  const n = 20, p = 0.30, labels = [], data = [];
+  for (let k = 0; k <= n; k++) {
+    labels.push(k);
+    data.push(parseFloat((binomCoeff(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k)).toFixed(5)));
+  }
+  mkBar('chart-binomial', labels, data, COLORS.blue);
+})();
+
+// Geometric
+(function() {
+  const p = 0.25, labels = [], data = [];
+  for (let k = 1; k <= 15; k++) {
+    labels.push(k);
+    data.push(parseFloat((Math.pow(1 - p, k - 1) * p).toFixed(5)));
+  }
+  mkBar('chart-geometric', labels, data, COLORS.teal);
+})();
+
+// Poisson
+(function() {
+  const lambda = 4, labels = [], data = [];
+  for (let k = 0; k <= 14; k++) {
+    labels.push(k);
+    data.push(parseFloat((Math.exp(-lambda) * Math.pow(lambda, k) / factorial(k)).toFixed(5)));
+  }
+  mkBar('chart-poisson', labels, data, COLORS.amber);
+})();
+
+// Uniform
+(function() {
+  const labels = [], data = [];
+  for (let x = 0; x <= 1; x += 0.05) {
+    labels.push(x.toFixed(2));
+    data.push(1.0);
+  }
+  mkLine('chart-uniform', labels, [{
+    data,
+    borderColor: COLORS.gray,
+    backgroundColor: COLORS.gray + '22',
+    fill: true,
+    tension: 0,
+    borderWidth: 2
+  }]);
+})();
+
+// Normal
+(function() {
+  const labels = [], data = [];
+  for (let x = -4; x <= 4; x += 0.1) {
+    labels.push(x.toFixed(1));
+    const y = (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * x * x);
+    data.push(parseFloat(y.toFixed(5)));
+  }
+  mkLine('chart-normal', labels, [{
+    data,
+    borderColor: COLORS.purple,
+    backgroundColor: COLORS.purple + '22',
+    fill: true,
+    tension: 0.4,
+    borderWidth: 2
+  }]);
+})();
+
+// Exponential
+(function() {
+  const lambda = 0.5, labels = [], data = [];
+  for (let x = 0; x <= 8; x += 0.2) {
+    labels.push(x.toFixed(1));
+    data.push(parseFloat((lambda * Math.exp(-lambda * x)).toFixed(5)));
+  }
+  mkLine('chart-exponential', labels, [{
+    data,
+    borderColor: COLORS.pink,
+    backgroundColor: COLORS.pink + '22',
+    fill: true,
+    tension: 0.4,
+    borderWidth: 2
+  }]);
+})();
+
+// Beta — multiple curves
+(function() {
+  const configs = [
+    { alpha: 1, beta: 1, color: COLORS.gray, label: 'α=1, β=1 (Uniform prior)' },
+    { alpha: 2, beta: 5, color: COLORS.blue, label: 'α=2, β=5 (low CTR)' },
+    { alpha: 5, beta: 2, color: COLORS.teal, label: 'α=5, β=2 (high CTR)' },
+    { alpha: 10, beta: 10, color: COLORS.amber, label: 'α=10, β=10 (50% CTR, confident)' }
+  ];
+
+  function betaFn(a, b) {
+    let logG = x => { let s = 0; for (let i = 0; i < x - 1; i++) s += Math.log(i + 1); return s; };
+    return Math.exp(logG(a) + logG(b) - logG(a + b));
+  }
+
+  const labels = [];
+  for (let x = 0.01; x < 1; x += 0.02) labels.push(x.toFixed(2));
+
+  const datasets = configs.map(cfg => {
+    const B = betaFn(cfg.alpha, cfg.beta);
+    return {
+      label: cfg.label,
+      data: labels.map(x => {
+        const xv = parseFloat(x);
+        const val = Math.pow(xv, cfg.alpha - 1) * Math.pow(1 - xv, cfg.beta - 1) / B;
+        return parseFloat(Math.min(val, 8).toFixed(4));
+      }),
+      borderColor: cfg.color,
+      backgroundColor: 'transparent',
+      fill: false,
+      tension: 0.4,
+      borderWidth: 2
+    };
+  });
+
+  mkLine('chart-beta', labels, datasets);
+})();
+
+// ── SCROLL SPY ────────────────────────────────────────
+const sections = document.querySelectorAll('section[id]');
+const navItems = document.querySelectorAll('.nav-item');
+const progressBar = document.getElementById('progressBar');
+
+function onScroll() {
+  const scrollY = window.scrollY;
+  const docH = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = Math.min(100, (scrollY / docH) * 100).toFixed(1) + '%';
+
+  let current = '';
+  sections.forEach(s => {
+    if (scrollY >= s.offsetTop - 100) current = s.id;
+  });
+
+  navItems.forEach(item => {
+    const href = item.getAttribute('href');
+    item.classList.toggle('active', href === '#' + current);
+  });
+}
+
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+</script>
+</body>
+</html>

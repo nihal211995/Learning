@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bayesian Statistics — Quick Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, 'Times New Roman', serif; background: #f9f7f4; color: #1a1a1a; padding: 40px 20px; }
+  .container { max-width: 860px; margin: 0 auto; }
+
+  h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; color: #111; }
+  .subtitle { font-size: 15px; color: #888; margin-bottom: 40px; font-family: 'Courier New', monospace; }
+  h2 { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999; margin-bottom: 16px; }
+  h3 { font-size: 17px; font-weight: 700; color: #111; margin-bottom: 10px; }
+
+  .section { margin-bottom: 48px; }
+  .divider { border: none; border-top: 1px solid #e8e4de; margin: 40px 0; }
+
+  /* Core idea box */
+  .core-box { background: #111; color: #f0ede8; border-radius: 12px; padding: 28px 32px; margin-bottom: 32px; }
+  .core-box p { font-size: 20px; line-height: 1.6; font-style: italic; }
+  .core-box span { color: #f0c060; }
+
+  /* Steps */
+  .steps { display: flex; flex-direction: column; gap: 14px; }
+  .step { display: flex; gap: 16px; align-items: flex-start; background: #fff; border: 1px solid #e8e4de; border-radius: 10px; padding: 16px 20px; }
+  .step-num { min-width: 32px; height: 32px; border-radius: 50%; background: #111; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; font-family: 'Courier New', monospace; flex-shrink: 0; }
+  .step-label { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 4px; font-family: 'Courier New', monospace; }
+  .step-desc { font-size: 14px; color: #555; line-height: 1.6; }
+
+  /* Formula */
+  .formula-box { background: #1e1e2e; color: #cdd6f4; border-radius: 10px; padding: 24px 28px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 2; margin-bottom: 20px; overflow-x: auto; }
+  .formula-box .hl { color: #f9e2af; }
+  .formula-box .hl2 { color: #89dceb; }
+  .formula-box .comment { color: #6c7086; }
+
+  /* Sensitivity/Specificity table */
+  .ss-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .ss-card { background: #fff; border: 1px solid #e8e4de; border-radius: 10px; padding: 14px 18px; }
+  .ss-card.danger { border-left: 3px solid #e24b4b; }
+  .ss-card.safe { border-left: 3px solid #3b9e4f; }
+  .ss-title { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #999; margin-bottom: 6px; }
+  .ss-formula { font-family: 'Courier New', monospace; font-size: 13px; color: #111; font-weight: 600; margin-bottom: 4px; }
+  .ss-desc { font-size: 12px; color: #777; line-height: 1.5; }
+
+  /* Examples */
+  .example-card { background: #fff; border: 1px solid #e8e4de; border-radius: 12px; padding: 24px 28px; margin-bottom: 16px; }
+  .example-tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; margin-bottom: 12px; font-family: 'Courier New', monospace; }
+  .tag-easy { background: #e6f4ea; color: #2d7d3a; }
+  .tag-medium { background: #fff3e0; color: #c56a00; }
+  .tag-hard { background: #fce8e6; color: #c5221f; }
+  .example-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 6px; }
+  .example-setup { font-size: 13px; color: #666; margin-bottom: 14px; line-height: 1.6; background: #f9f7f4; padding: 10px 14px; border-radius: 8px; }
+  .calc-box { font-family: 'Courier New', monospace; font-size: 13px; background: #1e1e2e; color: #cdd6f4; padding: 14px 18px; border-radius: 8px; line-height: 1.9; margin-bottom: 12px; overflow-x: auto; }
+  .calc-box .hl { color: #f9e2af; }
+  .insight { border-left: 3px solid #f0c060; padding: 10px 14px; background: #fffdf5; border-radius: 0 8px 8px 0; }
+  .insight-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #c8960a; margin-bottom: 4px; }
+  .insight-text { font-size: 13px; color: #555; line-height: 1.6; }
+
+  /* Base rate fallacy */
+  .brf-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .brf-card { background: #fff; border: 1px solid #e8e4de; border-radius: 10px; padding: 16px; text-align: center; }
+  .brf-prior { font-size: 12px; color: #999; font-family: 'Courier New', monospace; margin-bottom: 8px; }
+  .brf-posterior { font-size: 28px; font-weight: 700; color: #111; margin-bottom: 4px; }
+  .brf-desc { font-size: 12px; color: #777; }
+
+  /* Do / Don't */
+  .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cheat-card { border-radius: 10px; padding: 20px 24px; }
+  .cheat-do { background: #e6f4ea; border: 1px solid #b7dfbb; }
+  .cheat-dont { background: #fce8e6; border: 1px solid #f4b8b5; }
+  .cheat-title { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+  .cheat-do .cheat-title { color: #2d7d3a; }
+  .cheat-dont .cheat-title { color: #c5221f; }
+  .cheat-item { font-size: 13px; color: #333; line-height: 1.7; display: flex; gap: 8px; margin-bottom: 4px; }
+  .cheat-item::before { flex-shrink: 0; }
+  .cheat-do .cheat-item::before { content: "✓"; color: #2d7d3a; font-weight: 700; }
+  .cheat-dont .cheat-item::before { content: "✗"; color: #c5221f; font-weight: 700; }
+
+  /* Pitfalls */
+  .pitfall { background: #fff; border: 1px solid #e8e4de; border-left: 3px solid #e24b4b; border-radius: 0 10px 10px 0; padding: 14px 18px; margin-bottom: 10px; }
+  .pitfall-title { font-size: 14px; font-weight: 700; color: #c5221f; margin-bottom: 4px; }
+  .pitfall-desc { font-size: 13px; color: #555; line-height: 1.5; }
+
+  /* Flow diagram */
+  .flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: 20px 0; }
+  .flow-box { background: #fff; border: 1px solid #e8e4de; border-radius: 8px; padding: 10px 16px; text-align: center; min-width: 110px; }
+  .flow-box-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+  .flow-box-val { font-size: 13px; font-weight: 700; color: #111; font-family: 'Courier New', monospace; }
+  .flow-arrow { font-size: 20px; color: #ccc; padding: 0 8px; }
+  .flow-box.highlight-box { background: #111; border-color: #111; }
+  .flow-box.highlight-box .flow-box-label { color: #888; }
+  .flow-box.highlight-box .flow-box-val { color: #f0c060; }
+
+  @media (max-width: 600px) {
+    .ss-grid, .brf-grid, .cheat-grid { grid-template-columns: 1fr; }
+    .flow { flex-direction: column; align-items: flex-start; }
+    .flow-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Bayesian Statistics</h1>
+  <p class="subtitle">Google Data Scientist Interview — Quick Reference Guide</p>
+
+  <!-- Core Idea -->
+  <div class="section">
+    <h2>The Core Idea</h2>
+    <div class="core-box">
+      <p>Start with a <span>prior belief</span> → update it with <span>new evidence</span> → arrive at a <span>posterior belief</span> → make a <span>decision</span></p>
+    </div>
+
+    <!-- Flow -->
+    <div class="flow">
+      <div class="flow-box">
+        <div class="flow-box-label">Prior</div>
+        <div class="flow-box-val">Historical rate</div>
+      </div>
+      <div class="flow-arrow">+</div>
+      <div class="flow-box">
+        <div class="flow-box-label">Evidence</div>
+        <div class="flow-box-val">New signal</div>
+      </div>
+      <div class="flow-arrow">+</div>
+      <div class="flow-box">
+        <div class="flow-box-label">Likelihood</div>
+        <div class="flow-box-val">From data</div>
+      </div>
+      <div class="flow-arrow">=</div>
+      <div class="flow-box highlight-box">
+        <div class="flow-box-label">Posterior</div>
+        <div class="flow-box-val">Updated belief</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">
+        <div class="flow-box-label">Decision</div>
+        <div class="flow-box-val">Recommend!</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 6 Steps -->
+  <div class="section">
+    <h2>The 6-Step Mental Map</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-label">Identify the world states</div>
+          <div class="step-desc">What are the two possible truths? e.g. "Game IS a hit" vs "Game is NOT a hit". "Review IS spam" vs "Review is NOT spam".</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-label">Identify the Prior — P(State)</div>
+          <div class="step-desc">What did you believe <em>before</em> seeing evidence? Always comes from historical data. Never assume — ask for it. e.g. "Historically 10% of games become hits → Prior = 0.10"</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-label">Identify the Evidence</div>
+          <div class="step-desc">What new information are you observing? e.g. "200K downloads in 7 days" or "model flagged this review as spam".</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-label">Identify the Likelihoods — P(Evidence | State)</div>
+          <div class="step-desc">How probable is this evidence within each world state? Must come from historical data — never invent these. If not given, say: "I'd need historical data to estimate P(E|Hit) and P(E|Not Hit) accurately."</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div>
+          <div class="step-label">Compute the Posterior — P(State | Evidence)</div>
+          <div class="step-desc">Use Bayes' theorem. Calculate the denominator P(Evidence) first, then divide. This is your updated belief.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div>
+          <div class="step-label">Make a Decision and Recommend</div>
+          <div class="step-desc">Don't just report the number. Say what you'd do with it. e.g. "Given a 48% posterior, I'd route flagged reviews to human verification rather than auto-deleting." State what data you'd collect next.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Formula -->
+  <div class="section">
+    <h2>The Formula</h2>
+    <div class="formula-box">
+<span class="hl">P(State | Evidence)</span>  =   <span class="hl2">P(Evidence | State) × P(State)</span>
+                       ─────────────────────────────────
+                                <span class="hl2">P(Evidence)</span>
+
+<span class="comment">where:</span>
+<span class="hl2">P(Evidence)</span>  =  P(E | True)  × P(True)
+              +  P(E | False) × P(False)
+
+<span class="comment">In plain English: Posterior = Likelihood × Prior / Evidence</span>
+    </div>
+
+    <h3 style="margin-top: 24px; margin-bottom: 14px;">Sensitivity vs Specificity — Always Confusing</h3>
+    <div class="ss-grid">
+      <div class="ss-card safe">
+        <div class="ss-title">Sensitivity</div>
+        <div class="ss-formula">P(Positive | Disease)</div>
+        <div class="ss-desc">How well the test catches TRUE positives. If 90% sensitive → 90% of sick people test positive.</div>
+      </div>
+      <div class="ss-card safe">
+        <div class="ss-title">Specificity</div>
+        <div class="ss-formula">P(Negative | No Disease)</div>
+        <div class="ss-desc">How well the test rejects FALSE positives. If 95% specific → 95% of healthy people test negative.</div>
+      </div>
+      <div class="ss-card danger">
+        <div class="ss-title">False Positive Rate</div>
+        <div class="ss-formula">1 − Specificity = P(Positive | No Disease)</div>
+        <div class="ss-desc">How often healthy people are wrongly flagged. If 95% specific → FPR = 5%.</div>
+      </div>
+      <div class="ss-card danger">
+        <div class="ss-title">False Negative Rate</div>
+        <div class="ss-formula">1 − Sensitivity = P(Negative | Disease)</div>
+        <div class="ss-desc">How often sick people are wrongly cleared. If 90% sensitive → FNR = 10%.</div>
+      </div>
+    </div>
+
+    <div style="background: #fffdf5; border: 1px solid #f0c060; border-radius: 10px; padding: 14px 18px; margin-top: 16px;">
+      <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #c8960a; margin-bottom: 6px;">Critical Rule</div>
+      <div style="font-size: 13px; color: #555; line-height: 1.6;">P(Evidence | True) and P(Evidence | False) do NOT need to sum to 1. They are probabilities within two different populations. What sums to 1: P(Positive | Disease) + P(Negative | Disease) = 1.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Worked Examples -->
+  <div class="section">
+    <h2>Worked Examples</h2>
+
+    <div class="example-card">
+      <div class="example-tag tag-easy">Example 1 — Easy</div>
+      <div class="example-title">Disease Testing</div>
+      <div class="example-setup">
+        2% of the population has a disease. A test has 95% sensitivity and 90% specificity. A person tests positive. What's the probability they actually have the disease?
+      </div>
+      <div class="calc-box">
+Prior:       P(Disease) = 0.02,  P(No Disease) = 0.98
+
+Likelihoods: P(Positive | Disease)    = 0.95  ← sensitivity
+             P(Positive | No Disease) = 0.10  ← 1 - specificity
+
+Denominator: P(Positive) = (0.95 × 0.02) + (0.10 × 0.98)
+                         = 0.019 + 0.098 = 0.117
+
+Posterior:   P(Disease | Positive) = 0.019 / 0.117 ≈ <span class="hl">16.2%</span>
+      </div>
+      <div class="insight">
+        <div class="insight-label">Business Insight</div>
+        <div class="insight-text">Despite testing positive, only 16.2% chance of actually having the disease. The low prior (2%) dominates. The doctor should recommend a confirmatory second test before diagnosis — never act on a single positive alone when the base rate is this low.</div>
+      </div>
+    </div>
+
+    <div class="example-card">
+      <div class="example-tag tag-medium">Example 2 — Medium</div>
+      <div class="example-title">Email Spam Filter</div>
+      <div class="example-setup">
+        1% of emails are spam. The spam filter has 99% sensitivity and 99% specificity. An email is flagged as spam. What's the probability it actually is spam?
+      </div>
+      <div class="calc-box">
+Prior:       P(Spam) = 0.01,  P(Not Spam) = 0.99
+
+Likelihoods: P(Flagged | Spam)     = 0.99  ← sensitivity
+             P(Flagged | Not Spam) = 0.01  ← 1 - specificity
+
+Denominator: P(Flagged) = (0.99 × 0.01) + (0.01 × 0.99)
+                        = 0.0099 + 0.0099 = 0.0198
+
+Posterior:   P(Spam | Flagged) = 0.0099 / 0.0198 = <span class="hl">50.0%</span>
+      </div>
+      <div class="insight">
+        <div class="insight-label">Business Insight</div>
+        <div class="insight-text">Even with a 99% accurate filter, a flagged email is only 50% likely to actually be spam. Moving flagged emails to trash would delete 1 in 2 legitimate emails. Route to a spam folder where users can review — don't auto-delete.</div>
+      </div>
+    </div>
+
+    <div class="example-card">
+      <div class="example-tag tag-hard">Example 3 — Hard (Google Play)</div>
+      <div class="example-title">Google Play Review Spam Detection</div>
+      <div class="example-setup">
+        5% of Google Play reviews are spam. Your spam detection model has 90% sensitivity and 95% specificity. A review is flagged as spam. What's the probability it actually is spam?
+      </div>
+      <div class="calc-box">
+Prior:       P(Spam) = 0.05,  P(Not Spam) = 0.95
+
+Likelihoods: P(Flagged | Spam)     = 0.90  ← sensitivity
+             P(Flagged | Not Spam) = 0.05  ← 1 - specificity
+
+Denominator: P(Flagged) = (0.90 × 0.05) + (0.05 × 0.95)
+                        = 0.045 + 0.0475 = 0.0925
+
+Posterior:   P(Spam | Flagged) = 0.045 / 0.0925 ≈ <span class="hl">48.65%</span>
+      </div>
+      <div class="insight">
+        <div class="insight-label">Business Insight</div>
+        <div class="insight-text">Barely better than a coin flip — even with a good model. I would not auto-delete flagged reviews. Instead, route to a human review queue or raise the model's decision threshold to improve precision at the cost of some recall.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Base Rate Fallacy -->
+  <div class="section">
+    <h2>The Base Rate Fallacy — Key Interview Insight</h2>
+    <p style="font-size: 14px; color: #555; line-height: 1.7; margin-bottom: 16px;">Even highly accurate models produce unreliable results when the event is rare. The prior dominates when the base rate is low. Always sanity-check your posterior against your prior — rare events require overwhelming evidence to shift the posterior significantly.</p>
+    <div class="brf-grid">
+      <div class="brf-card">
+        <div class="brf-prior">Prior = 2% (very rare)</div>
+        <div class="brf-posterior" style="color: #c5221f;">16%</div>
+        <div class="brf-desc">Posterior even with a 95%/90% test. Low prior dominates.</div>
+      </div>
+      <div class="brf-card">
+        <div class="brf-prior">Prior = 5% (rare)</div>
+        <div class="brf-posterior" style="color: #c56a00;">49%</div>
+        <div class="brf-desc">Posterior with 90%/95% model. Still a coin flip!</div>
+      </div>
+      <div class="brf-card">
+        <div class="brf-prior">Prior = 50% (common)</div>
+        <div class="brf-posterior" style="color: #2d7d3a;">95%+</div>
+        <div class="brf-desc">High prior → high posterior. Prior does the heavy lifting.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Common Pitfalls -->
+  <div class="section">
+    <h2>Common Pitfalls to Avoid</h2>
+    <div class="pitfall">
+      <div class="pitfall-title">Making up likelihoods</div>
+      <div class="pitfall-desc">Never invent P(Evidence | State) without data. If not given, say: "I'd need historical data to estimate this likelihood. Can you share what % of past hit games reached 200K in 7 days?" If asked to assume, state it explicitly and move on.</div>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">P(E|True) + P(E|False) = 1 is WRONG</div>
+      <div class="pitfall-desc">These are probabilities within two different populations. They do not need to sum to 1. What does sum to 1: P(E|True) + P(not E|True) = 1.</div>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Ignoring the prior (Base Rate Fallacy)</div>
+      <div class="pitfall-desc">Never jump to conclusions from a model flag alone. A 90% accurate model flagging a rare event is far less reliable than it sounds. Always incorporate the prior.</div>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Confusing sensitivity with specificity</div>
+      <div class="pitfall-desc">Sensitivity → P(Positive | Disease). Specificity → P(Negative | No Disease). The false positive rate you plug into the formula is 1 − Specificity, not 1 − Sensitivity.</div>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Not making a recommendation</div>
+      <div class="pitfall-desc">Google always wants a decision. Don't just compute a number — say what you'd do with it, what guardrails you'd set, and what additional data you'd collect to refine your estimate.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Google Interview Cheat Sheet -->
+  <div class="section">
+    <h2>Google Interview Cheat Sheet</h2>
+    <div class="cheat-grid">
+      <div class="cheat-card cheat-do">
+        <div class="cheat-title">Say this</div>
+        <div class="cheat-item">"My prior is X based on historical data"</div>
+        <div class="cheat-item">"I'd need data to estimate the likelihood accurately"</div>
+        <div class="cheat-item">"This updates my belief from X% to Y%"</div>
+        <div class="cheat-item">"I'd set a checkpoint at Day 14 to re-evaluate"</div>
+        <div class="cheat-item">"Based on this, I'd recommend..."</div>
+        <div class="cheat-item">"I'm assuming X, but would validate with data"</div>
+      </div>
+      <div class="cheat-card cheat-dont">
+        <div class="cheat-title">Never say this</div>
+        <div class="cheat-item">Made-up likelihoods presented as facts</div>
+        <div class="cheat-item">"P(E|True) + P(E|False) must be 1"</div>
+        <div class="cheat-item">Posterior without a decision or recommendation</div>
+        <div class="cheat-item">Ignoring the prior entirely</div>
+        <div class="cheat-item">Confusing sensitivity with specificity</div>
+        <div class="cheat-item">"The model says 90% so we should ship it"</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Mapping to Google Questions -->
+  <div class="section">
+    <h2>Mapping to Google Interview Questions</h2>
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="background: #111; color: #fff;">
+          <th style="padding: 12px 16px; text-align: left; border-radius: 8px 0 0 0;">Question type</th>
+          <th style="padding: 12px 16px; text-align: left;">Prior</th>
+          <th style="padding: 12px 16px; text-align: left;">Evidence</th>
+          <th style="padding: 12px 16px; text-align: left; border-radius: 0 8px 0 0;">Posterior</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #fff; border-bottom: 1px solid #e8e4de;">
+          <td style="padding: 12px 16px; font-weight: 600;">Feature launch success</td>
+          <td style="padding: 12px 16px; color: #555;">Historical metric baseline</td>
+          <td style="padding: 12px 16px; color: #555;">Early experiment data</td>
+          <td style="padding: 12px 16px; color: #555;">Updated success probability</td>
+        </tr>
+        <tr style="background: #f9f7f4; border-bottom: 1px solid #e8e4de;">
+          <td style="padding: 12px 16px; font-weight: 600;">Spam / fraud detection</td>
+          <td style="padding: 12px 16px; color: #555;">% spam / fraud historically</td>
+          <td style="padding: 12px 16px; color: #555;">Model flag</td>
+          <td style="padding: 12px 16px; color: #555;">% chance flagged item is real</td>
+        </tr>
+        <tr style="background: #fff; border-bottom: 1px solid #e8e4de;">
+          <td style="padding: 12px 16px; font-weight: 600;">Churn prediction</td>
+          <td style="padding: 12px 16px; color: #555;">Historical churn rate</td>
+          <td style="padding: 12px 16px; color: #555;">User behavior signal</td>
+          <td style="padding: 12px 16px; color: #555;">Updated churn probability</td>
+        </tr>
+        <tr style="background: #f9f7f4;">
+          <td style="padding: 12px 16px; font-weight: 600;">Game / product success</td>
+          <td style="padding: 12px 16px; color: #555;">% hits historically</td>
+          <td style="padding: 12px 16px; color: #555;">Early download / engagement data</td>
+          <td style="padding: 12px 16px; color: #555;">Updated hit probability</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="text-align: center; color: #bbb; font-size: 12px; font-family: 'Courier New', monospace; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e8e4de;">
+    Google Product Data Scientist Interview Prep — Nihal R
+  </div>
+
+</div>
+</body>
+</html>

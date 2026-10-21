@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML Interview Revision Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222636;
+    --border: #2e3349;
+    --accent: #4f9eff;
+    --accent2: #7c5cfc;
+    --green: #36d399;
+    --yellow: #f5c842;
+    --red: #f87272;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --code-bg: #12141c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── NAV ── */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+  .nav-brand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    padding: 1rem 1.5rem 1rem 0;
+    border-right: 1px solid var(--border);
+    margin-right: 1rem;
+    white-space: nowrap;
+  }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 1rem 0.75rem;
+    white-space: nowrap;
+    transition: color 0.2s;
+    border-bottom: 2px solid transparent;
+  }
+  nav a:hover { color: var(--text); border-bottom-color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #0f1117 0%, #1a1d27 50%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 3.5rem 2rem 2.5rem;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(79,158,255,0.1);
+    border: 1px solid rgba(79,158,255,0.3);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    letter-spacing: 0.08em;
+  }
+  .hero h1 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ── LAYOUT ── */
+  .page { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 3.5rem;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(79,158,255,0.1);
+    border: 1px solid rgba(79,158,255,0.25);
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .section-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .card h3 .dot {
+    width: 7px; height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .card p, .card li { color: var(--muted); font-size: 14px; }
+  .card ul { padding-left: 1.2rem; }
+  .card li { margin-bottom: 0.2rem; }
+
+  /* ── CODE ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    position: relative;
+  }
+  pre::before {
+    content: 'python';
+    position: absolute;
+    top: 8px; right: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #cdd6f4;
+  }
+  /* inline code */
+  p code, li code {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: var(--yellow);
+  }
+
+  /* syntax-ish coloring via span */
+  .kw  { color: #cba6f7; }  /* keywords */
+  .fn  { color: #89b4fa; }  /* functions */
+  .st  { color: #a6e3a1; }  /* strings */
+  .cm  { color: #585b70; font-style: italic; } /* comments */
+  .nm  { color: #fab387; }  /* numbers */
+  .cl  { color: #f38ba8; }  /* class names */
+
+  /* ── TABLE ── */
+  .tbl-wrap { overflow-x: auto; margin: 1rem 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  thead tr { background: var(--surface2); }
+  th {
+    text-align: left;
+    padding: 0.65rem 1rem;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  td:first-child { color: var(--text); font-weight: 600; }
+
+  /* ── PILLS / BADGES ── */
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin: 2px 2px 2px 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pill-green  { background: rgba(54,211,153,0.12); color: var(--green);  border: 1px solid rgba(54,211,153,0.25);  }
+  .pill-yellow { background: rgba(245,200,66,0.12);  color: var(--yellow); border: 1px solid rgba(245,200,66,0.25);  }
+  .pill-red    { background: rgba(248,114,114,0.12); color: var(--red);    border: 1px solid rgba(248,114,114,0.25); }
+  .pill-blue   { background: rgba(79,158,255,0.12);  color: var(--accent); border: 1px solid rgba(79,158,255,0.25); }
+  .pill-purple { background: rgba(124,92,252,0.12);  color: var(--accent2);border: 1px solid rgba(124,92,252,0.25); }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-left: 3px solid var(--yellow);
+    background: rgba(245,200,66,0.05);
+    padding: 0.75rem 1rem;
+    border-radius: 0 6px 6px 0;
+    margin: 1rem 0;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  .callout strong { color: var(--yellow); }
+  .callout-green { border-color: var(--green); background: rgba(54,211,153,0.05); }
+  .callout-green strong { color: var(--green); }
+  .callout-red { border-color: var(--red); background: rgba(248,114,114,0.05); }
+  .callout-red strong { color: var(--red); }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+
+  /* ── PARAM BLOCK ── */
+  .param-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+  }
+  .param-block h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .param-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; align-items: flex-start; }
+  .param-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--yellow);
+    background: rgba(245,200,66,0.08);
+    border: 1px solid rgba(245,200,66,0.2);
+    padding: 1px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .param-desc { font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">ml_guide.py</div>
+  <a href="#s1">Data Checks</a>
+  <a href="#s2">Reject Data</a>
+  <a href="#s3">Outliers</a>
+  <a href="#s4">Model Choice</a>
+  <a href="#s5">Feature Eng</a>
+  <a href="#s6">Parameters</a>
+  <a href="#s7">Evaluation</a>
+  <a href="#s8">Bad Performance</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">INTERVIEW PREP · DATA SCIENTIST</div>
+  <h1>ML <span>Revision</span> Guide</h1>
+  <p>Quick-reference for Linear Regression, Logistic Regression, Random Forest &amp; LightGBM — practical, no fluff.</p>
+</div>
+
+<div class="page">
+
+<!-- ══════════════════════════════════════════════
+     SECTION 1: Basic Data Checks
+══════════════════════════════════════════════ -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <span class="section-num">§ 01</span>
+    <h2>Basic Data Checks</h2>
+  </div>
+
+  <p style="color:var(--muted);margin-bottom:1.25rem;font-size:14px;">
+    Before training <em>anything</em>, understand your data. These five checks are your non-negotiables.
+  </p>
+
+  <div class="card">
+    <h3><span class="dot"></span>1. Histogram — Distribution Check</h3>
+    <p>Are values spread normally? Or is everything piled to one side? Histograms show the shape of each feature.</p>
+  </div>
+<pre><code><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+
+df = pd.<span class="fn">read_csv</span>(<span class="st">'data.csv'</span>)
+
+<span class="cm"># Plot histogram for all numeric columns</span>
+df.<span class="fn">hist</span>(figsize=(<span class="nm">14</span>, <span class="nm">10</span>), bins=<span class="nm">30</span>, color=<span class="st">'steelblue'</span>, edgecolor=<span class="st">'white'</span>)
+plt.<span class="fn">suptitle</span>(<span class="st">'Feature Distributions'</span>)
+plt.<span class="fn">tight_layout</span>()
+plt.<span class="fn">show</span>()
+
+<span class="cm"># Or for a single column with seaborn</span>
+sns.<span class="fn">histplot</span>(df[<span class="st">'target'</span>], kde=<span class="nm">True</span>)
+plt.<span class="fn">show</span>()</code></pre>
+
+  <div class="card">
+    <h3><span class="dot"></span>2. QQ Plot — Normality Check</h3>
+    <p>If points follow the diagonal line → roughly normal. Tails curving away = non-normal. Many models assume normality.</p>
+  </div>
+<pre><code><span class="kw">import</span> scipy.stats <span class="kw">as</span> stats
+
+stats.probplot(df[<span class="st">'feature'</span>], dist=<span class="st">"norm"</span>, plot=plt)
+plt.<span class="fn">title</span>(<span class="st">'QQ Plot'</span>)
+plt.<span class="fn">show</span>()
+
+<span class="cm"># Or using statsmodels</span>
+<span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+sm.qqplot(df[<span class="st">'feature'</span>], line=<span class="st">'45'</span>)
+plt.<span class="fn">show</span>()</code></pre>
+
+  <div class="card">
+    <h3><span class="dot"></span>3. Box Plot — Outlier Detection</h3>
+    <p>Points outside the whiskers = potential outliers. Great for spotting extreme values fast.</p>
+  </div>
+<pre><code>sns.<span class="fn">boxplot</span>(data=df, orient=<span class="st">'h'</span>)
+plt.<span class="fn">show</span>()
+
+<span class="cm"># For a single column</span>
+sns.<span class="fn">boxplot</span>(x=df[<span class="st">'feature'</span>])
+plt.<span class="fn">show</span>()</code></pre>
+
+  <div class="card">
+    <h3><span class="dot"></span>4. Correlation Matrix — Feature Relationships</h3>
+    <p>See which features move together. High correlation between features = multicollinearity risk. High correlation with target = good predictor.</p>
+  </div>
+<pre><code>corr = df.<span class="fn">corr</span>()
+
+plt.<span class="fn">figure</span>(figsize=(<span class="nm">10</span>, <span class="nm">8</span>))
+sns.<span class="fn">heatmap</span>(corr, annot=<span class="nm">True</span>, fmt=<span class="st">'.2f'</span>, cmap=<span class="st">'coolwarm'</span>,
+           center=<span class="nm">0</span>, linewidths=<span class="nm">0.5</span>)
+plt.<span class="fn">title</span>(<span class="st">'Correlation Matrix'</span>)
+plt.<span class="fn">show</span>()</code></pre>
+
+  <div class="card">
+    <h3><span class="dot"></span>5. Variance Inflation Factor (VIF) — Multicollinearity</h3>
+    <p>VIF &gt; 5–10 means a feature is explained by others → consider dropping it. Critical for linear/logistic regression.</p>
+  </div>
+<pre><code><span class="kw">from</span> statsmodels.stats.outliers_influence <span class="kw">import</span> variance_inflation_factor
+<span class="kw">from</span> statsmodels.tools.tools <span class="kw">import</span> add_constant
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+X = df.<span class="fn">drop</span>(columns=[<span class="st">'target'</span>])
+X = <span class="fn">add_constant</span>(X)
+
+vif_data = pd.<span class="cl">DataFrame</span>()
+vif_data[<span class="st">'Feature'</span>] = X.columns
+vif_data[<span class="st">'VIF'</span>] = [<span class="fn">variance_inflation_factor</span>(X.values, i)
+                   <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(X.shape[<span class="nm">1</span>])]
+
+<span class="fn">print</span>(vif_data.<span class="fn">sort_values</span>(<span class="st">'VIF'</span>, ascending=<span class="nm">False</span>))
+<span class="cm"># Rule of thumb: VIF > 10 → drop or combine</span></code></pre>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     SECTION 2: When to Reject Data
+══════════════════════════════════════════════ -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <span class="section-num">§ 02</span>
+    <h2>When to Reject (or Fix) Data</h2>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="dot" style="background:var(--red)"></span>Highly Skewed Data</h3>
+      <ul>
+        <li>Skewness &gt; |1| is a red flag</li>
+        <li>Linear models assume near-normality</li>
+        <li>Fix: log transform, sqrt, Box-Cox</li>
+        <li>Tree models are more tolerant</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--red)"></span>Too Many Missing Values</h3>
+      <ul>
+        <li>&gt; 40–50% missing in a column → consider dropping</li>
+        <li>Check if data is missing at random (MAR) or not</li>
+        <li>Fix: impute (mean/median/mode) or drop</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--red)"></span>Multicollinearity</h3>
+      <ul>
+        <li>VIF &gt; 10 → features overlap too much</li>
+        <li>Breaks linear/logistic regression coefficients</li>
+        <li>Fix: drop one feature, PCA, or use tree models</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--red)"></span>Target Leakage</h3>
+      <ul>
+        <li>A feature that contains info from the future</li>
+        <li>Model looks great in training, fails in production</li>
+        <li>Example: using "refund_date" to predict "churn"</li>
+        <li>Fix: strict temporal train/test split, domain check</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--red)"></span>Imbalanced Dataset (Classification)</h3>
+      <ul>
+        <li>99% class-0, 1% class-1 → model predicts all 0s</li>
+        <li>Accuracy is misleading here</li>
+        <li>Fix: SMOTE, class_weight='balanced', use F1/AUC</li>
+      </ul>
+    </div>
+  </div>
+
+<pre><code><span class="cm"># Check skewness</span>
+<span class="fn">print</span>(df.<span class="fn">skew</span>())  <span class="cm"># |value| > 1 is high skew</span>
+
+<span class="cm"># Check missing values</span>
+<span class="fn">print</span>(df.<span class="fn">isnull</span>().<span class="fn">mean</span>() * <span class="nm">100</span>)  <span class="cm"># % missing per column</span>
+
+<span class="cm"># Check class imbalance</span>
+<span class="fn">print</span>(df[<span class="st">'target'</span>].<span class="fn">value_counts</span>(normalize=<span class="nm">True</span>))</code></pre>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     SECTION 3: Handling Outliers
+══════════════════════════════════════════════ -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <span class="section-num">§ 03</span>
+    <h2>Handling Outliers</h2>
+  </div>
+
+  <div class="card" style="margin-bottom:1rem;">
+    <h3><span class="dot" style="background:var(--yellow)"></span>Remove vs Cap vs Transform — When to use what?</h3>
+    <ul>
+      <li><span class="pill pill-red">Remove</span> — When outliers are data errors (typos, sensor glitches). Small datasets only.</li>
+      <li><span class="pill pill-yellow">Cap (Winsorize)</span> — When outliers are real but extreme. Clip to a reasonable range.</li>
+      <li><span class="pill pill-green">Transform</span> — When the whole distribution is skewed. Log/sqrt compresses large values.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-bottom:0.5rem;">
+    <h3><span class="dot"></span>IQR Method — Detect Outliers</h3>
+    <p>Values below Q1 − 1.5×IQR or above Q3 + 1.5×IQR are considered outliers.</p>
+  </div>
+<pre><code>Q1 = df[<span class="st">'feature'</span>].<span class="fn">quantile</span>(<span class="nm">0.25</span>)
+Q3 = df[<span class="st">'feature'</span>].<span class="fn">quantile</span>(<span class="nm">0.75</span>)
+IQR = Q3 - Q1
+
+lower = Q1 - <span class="nm">1.5</span> * IQR
+upper = Q3 + <span class="nm">1.5</span> * IQR
+
+<span class="cm"># Remove outliers</span>
+df_clean = df[(df[<span class="st">'feature'</span>] >= lower) & (df[<span class="st">'feature'</span>] <= upper)]</code></pre>
+
+  <div class="card" style="margin-bottom:0.5rem;">
+    <h3><span class="dot"></span>Capping (Winsorizing) — Clip Extreme Values</h3>
+  </div>
+<pre><code><span class="kw">from</span> scipy.stats.mstats <span class="kw">import</span> winsorize
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># Winsorize: cap bottom 5% and top 5%</span>
+df[<span class="st">'feature_capped'</span>] = <span class="fn">winsorize</span>(df[<span class="st">'feature'</span>], limits=[<span class="nm">0.05</span>, <span class="nm">0.05</span>])
+
+<span class="cm"># Or manually clip</span>
+df[<span class="st">'feature_capped'</span>] = df[<span class="st">'feature'</span>].<span class="fn">clip</span>(lower=lower, upper=upper)</code></pre>
+
+  <div class="card" style="margin-bottom:0.5rem;">
+    <h3><span class="dot"></span>Log Transformation — Compress Skewed Data</h3>
+  </div>
+<pre><code><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># Apply log1p (handles zeros safely: log(1 + x))</span>
+df[<span class="st">'feature_log'</span>] = np.<span class="fn">log1p</span>(df[<span class="st">'feature'</span>])
+
+<span class="cm"># Sqrt transform (less aggressive than log)</span>
+df[<span class="st">'feature_sqrt'</span>] = np.<span class="fn">sqrt</span>(df[<span class="st">'feature'</span>])
+
+<span class="cm"># Check if skew improved</span>
+<span class="fn">print</span>(<span class="st">'Before:'</span>, df[<span class="st">'feature'</span>].<span class="fn">skew</span>())
+<span class="fn">print</span>(<span class="st">'After:'</span>,  df[<span class="st">'feature_log'</span>].<span class="fn">skew</span>())</code></pre>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     SECTION 4: Which Model to Use
+══════════════════════════════════════════════ -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <span class="section-num">§ 04</span>
+    <h2>Which Model to Use</h2>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="dot" style="background:var(--green)"></span>Linear Regression</h3>
+      <ul>
+        <li>Target is <strong>continuous</strong> (price, sales, time)</li>
+        <li>Relationship is roughly <strong>linear</strong></li>
+        <li>You want to explain <em>coefficients</em></li>
+        <li>Fast, interpretable, great baseline</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--accent)"></span>Logistic Regression</h3>
+      <ul>
+        <li>Target is <strong>binary</strong> (0/1, Yes/No, Churn/No)</li>
+        <li>Need probability outputs</li>
+        <li>Features are roughly linearly separable</li>
+        <li>Interpretable, fast, great baseline classifier</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--yellow)"></span>Random Forest</h3>
+      <ul>
+        <li>Non-linear relationships</li>
+        <li>Mixed feature types (numeric + categorical)</li>
+        <li>Resistant to outliers</li>
+        <li>Handles missing values better than LR</li>
+        <li>Good when you have moderate-sized data</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--red)"></span>LightGBM</h3>
+      <ul>
+        <li>Large datasets (millions of rows)</li>
+        <li>Tabular data, structured features</li>
+        <li>Need speed + accuracy</li>
+        <li>Handles missing values natively</li>
+        <li>Kaggle/production workhorse</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th><th>Target Type</th><th>Handles Non-linearity</th><th>Speed</th><th>Interpretability</th><th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Linear Regression</td>
+          <td><span class="pill pill-blue">Continuous</span></td>
+          <td>✗ No</td>
+          <td>⚡ Very Fast</td>
+          <td>★★★ High</td>
+          <td>Baseline, price prediction</td>
+        </tr>
+        <tr>
+          <td>Logistic Regression</td>
+          <td><span class="pill pill-green">Binary</span></td>
+          <td>✗ Limited</td>
+          <td>⚡ Very Fast</td>
+          <td>★★★ High</td>
+          <td>Churn, fraud (baseline)</td>
+        </tr>
+        <tr>
+          <td>Random Forest</td>
+          <td><span class="pill pill-blue">Both</span></td>
+          <td>✓ Yes</td>
+          <td>⚡⚡ Moderate</td>
+          <td>★★ Medium</td>
+          <td>General-purpose, noisy data</td>
+        </tr>
+        <tr>
+          <td>LightGBM</td>
+          <td><span class="pill pill-blue">Both</span></td>
+          <td>✓ Yes</td>
+          <td>⚡⚡⚡ Fast</td>
+          <td>★ Low</td>
+          <td>Large data, competitions</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     SECTION 5: Feature Engineering
+══════════════════════════════════════════════ -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <span class="section-num">§ 05</span>
+    <h2>Feature Engineering</h2>
+  </div>
+
+  <p style="color:var(--muted);margin-bottom:1.25rem;font-size:14px;">
+    Good features &gt; fancy models. This is often the highest-leverage step.
+  </p>
+
+  <div class="card" style="margin-bottom:0.5rem;">
+    <h3><span class="dot"></span>One-Hot Encoding — Categorical to Binary Columns</h3>
+    <p>Use for <strong>nominal</strong> categories (no natural order: city, gender, color).</p>
+  </div>
+<pre><code><span class="cm"># pandas</span>
+df_encoded = pd.<span class="fn">get_dummies</span>(df, columns=[<span class="st">'city'</span>, <span class="st">'category'</span>], drop_first=<span class="nm">True</span>)
+
+<span class="cm"># sklearn (preferred in pipelines)</span>
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> OneHotEncoder
+
+ohe = <span class="cl">OneHotEncoder</span>(drop=<span class="st">'first'</span>, sparse_output=<span class="nm">False</span>)
+encoded = ohe.<span class="fn">fit_transform</span>(df[[<span class="st">'city'</span>]])</code></pre>
+
+  <div class="card" style="margin-bottom:0.5rem;">
+    <h3><span class="dot"></span>Label Encoding — For Ordinal Categories</h3>
+    <p>Use when there's a natural order: Low → Medium → High. Don't use for nominals.</p>
+  </div>
+<pre><code><span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> LabelEncoder
+
+le = <span class="cl">LabelEncoder</span>()
+df[<span class="st">'priority_encoded'</span>] = le.<span class="fn">fit_transform</span>(df[<span class="st">'priority'</span>])
+<span class="cm"># low=0, medium=1, high=2</span></code></pre>
+
+  <div class="card" style="margin-bottom:0.5rem;">
+    <h3><span class="dot"></span>Feature Scaling — StandardScaler</h3>
+    <p>Critical for linear/logistic regression and distance-based models. Tree models don't need this.</p>
+  </div>
+<pre><code><span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+
+scaler = <span class="cl">StandardScaler</span>()  <span class="cm"># mean=0, std=1</span>
+X_train_scaled = scaler.<span class="fn">fit_transform</span>(X_train)
+X_test_scaled  = scaler.<span class="fn">transform</span>(X_test)  <span class="cm"># NEVER fit on test!</span>
+
+<span class="cm"># MinMaxScaler if you want [0, 1] range instead</span>
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> MinMaxScaler</code></pre>
+
+  <div class="card" style="margin-bottom:0.5rem;">
+    <h3><span class="dot"></span>Handling Missing Values — SimpleImputer</h3>
+  </div>
+<pre><code><span class="kw">from</span> sklearn.impute <span class="kw">import</span> SimpleImputer
+
+<span class="cm"># Numeric: fill with median (robust to outliers)</span>
+num_imputer = <span class="cl">SimpleImputer</span>(strategy=<span class="st">'median'</span>)
+X_train[num_cols] = num_imputer.<span class="fn">fit_transform</span>(X_train[num_cols])
+X_test[num_cols]  = num_imputer.<span class="fn">transform</span>(X_test[num_cols])
+
+<span class="cm"># Categorical: fill with most frequent</span>
+cat_imputer = <span class="cl">SimpleImputer</span>(strategy=<span class="st">'most_frequent'</span>)
+X_train[cat_cols] = cat_imputer.<span class="fn">fit_transform</span>(X_train[cat_cols])</code></pre>
+
+  <div class="callout">
+    <strong>Pipeline tip:</strong> Combine imputer + scaler + model in a <code>Pipeline</code> to prevent data leakage and make production deployment easier.
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     SECTION 6: Model Parameters
+══════════════════════════════════════════════ -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <span class="section-num">§ 06</span>
+    <h2>Important Model Parameters</h2>
+  </div>
+
+  <div class="grid-2">
+    <div class="param-block">
+      <h4>📐 Linear Regression</h4>
+      <div class="param-row">
+        <span class="param-name">fit_intercept</span>
+        <span class="param-desc">Whether to add a bias term. Almost always True.</span>
+      </div>
+      <div class="param-row">
+        <span class="param-name">normalize</span>
+        <span class="param-desc">Deprecated — use StandardScaler instead.</span>
+      </div>
+      <p style="color:var(--muted);font-size:13px;margin-top:0.5rem;">No tuning required. Focus on feature quality instead.</p>
+    </div>
+
+    <div class="param-block">
+      <h4>🔵 Logistic Regression</h4>
+      <div class="param-row">
+        <span class="param-name">C</span>
+        <span class="param-desc">Regularization strength. Smaller C = stronger regularization (less overfitting).</span>
+      </div>
+      <div class="param-row">
+        <span class="param-name">penalty</span>
+        <span class="param-desc">'l1' (sparse), 'l2' (default), 'elasticnet'.</span>
+      </div>
+      <div class="param-row">
+        <span class="param-name">max_iter</span>
+        <span class="param-desc">Increase if convergence warning appears.</span>
+      </div>
+      <div class="param-row">
+        <span class="param-name">class_weight</span>
+        <span class="param-desc">'balanced' for imbalanced datasets.</span>
+      </div>
+    </div>
+
+    <div class="param-block">
+      <h4>🌲 Random Forest</h4>
+      <div class="param-row">
+        <span class="param-name">n_estimators</span>
+        <span class="param-desc">Number of trees. More = better, slower. Start with 100–300.</span>
+      </div>
+      <div class="param-row">
+        <span class="param-name">max_depth</span>
+        <span class="param-desc">Max tree depth. Deeper = more complex. None = unlimited (overfit risk).</span>
+      </div>
+      <div class="param-row">
+        <span class="param-name">min_samples_split</span>
+        <span class="param-desc">Min samples needed to split a node. Higher = simpler tree.</span>
+      </div>
+      <div class="param-row">
+        <span class="param-name">max_features</span>
+        <span class="param-desc">'sqrt' for classification, 'log2' or None for regression.</span>
+      </div>
+    </div>
+
+    <div class="param-block">
+      <h4>⚡ LightGBM</h4>
+      <div class="param-row">
+        <span class="param-name">num_leaves</span>
+        <span class="param-desc">Controls complexity. Default 31. Higher = more complex (overfit risk).</span>
+      </div>
+      <div class="param-row">
+        <span class="param-name">learning_rate</span>
+        <span class="param-desc">Step size. Lower = better generalization but slower. Try 0.05–0.1.</span>
+      </div>
+      <div class="param-row">
+        <span class="param-name">n_estimators</span>
+        <span class="param-desc">Number of boosting rounds. Use early stopping to find optimum.</span>
+      </div>
+      <div class="param-row">
+        <span class="param-name">min_child_samples</span>
+        <span class="param-desc">Regularization. Higher = simpler model. Default 20.</span>
+      </div>
+    </div>
+  </div>
+
+<pre><code><span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LinearRegression, LogisticRegression
+<span class="kw">from</span> sklearn.ensemble <span class="kw">import</span> RandomForestClassifier
+<span class="kw">import</span> lightgbm <span class="kw">as</span> lgb
+
+<span class="cm"># Linear Regression</span>
+lr = <span class="cl">LinearRegression</span>(fit_intercept=<span class="nm">True</span>)
+
+<span class="cm"># Logistic Regression</span>
+logit = <span class="cl">LogisticRegression</span>(C=<span class="nm">1.0</span>, penalty=<span class="st">'l2'</span>,
+                             class_weight=<span class="st">'balanced'</span>, max_iter=<span class="nm">1000</span>)
+
+<span class="cm"># Random Forest</span>
+rf = <span class="cl">RandomForestClassifier</span>(n_estimators=<span class="nm">200</span>, max_depth=<span class="nm">10</span>,
+                              min_samples_split=<span class="nm">5</span>, random_state=<span class="nm">42</span>)
+
+<span class="cm"># LightGBM</span>
+lgbm = lgb.<span class="cl">LGBMClassifier</span>(num_leaves=<span class="nm">31</span>, learning_rate=<span class="nm">0.05</span>,
+                             n_estimators=<span class="nm">500</span>, min_child_samples=<span class="nm">20</span>)</code></pre>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     SECTION 7: Model Evaluation
+══════════════════════════════════════════════ -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <span class="section-num">§ 07</span>
+    <h2>Model Evaluation</h2>
+  </div>
+
+  <div class="callout callout-green">
+    <strong>Key rule:</strong> Always evaluate on a held-out test set you've never touched during training.
+  </div>
+
+  <div class="card" style="margin-bottom:0.5rem;">
+    <h3><span class="dot" style="background:var(--green)"></span>Regression Metrics</h3>
+    <ul>
+      <li><strong>RMSE</strong> — Root Mean Squared Error. Same units as target. Penalizes large errors.</li>
+      <li><strong>R²</strong> — % of variance explained. 1.0 = perfect, 0 = predicts mean, negative = worse than mean.</li>
+      <li><strong>MAE</strong> — Mean Absolute Error. Easier to interpret, less sensitive to outliers.</li>
+    </ul>
+  </div>
+<pre><code><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> mean_squared_error, r2_score, mean_absolute_error
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+y_pred = model.<span class="fn">predict</span>(X_test)
+
+rmse = np.<span class="fn">sqrt</span>(<span class="fn">mean_squared_error</span>(y_test, y_pred))
+r2   = <span class="fn">r2_score</span>(y_test, y_pred)
+mae  = <span class="fn">mean_absolute_error</span>(y_test, y_pred)
+
+<span class="fn">print</span>(<span class="st">f'RMSE: {rmse:.4f}'</span>)
+<span class="fn">print</span>(<span class="st">f'R²:   {r2:.4f}'</span>)
+<span class="fn">print</span>(<span class="st">f'MAE:  {mae:.4f}'</span>)</code></pre>
+
+  <div class="card" style="margin-bottom:0.5rem;">
+    <h3><span class="dot" style="background:var(--accent)"></span>Classification Metrics</h3>
+    <ul>
+      <li><strong>Accuracy</strong> — Misleading when classes are imbalanced.</li>
+      <li><strong>Precision</strong> — Of all predicted positives, how many are actually positive? (Avoid false alarms)</li>
+      <li><strong>Recall</strong> — Of all actual positives, how many did we catch? (Avoid missing positives)</li>
+      <li><strong>F1</strong> — Harmonic mean of precision &amp; recall. Use when both matter.</li>
+      <li><strong>ROC-AUC</strong> — Overall discriminability. 0.5 = random, 1.0 = perfect.</li>
+    </ul>
+  </div>
+<pre><code><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> (accuracy_score, precision_score,
+                                recall_score, f1_score,
+                                roc_auc_score, classification_report)
+
+y_pred      = model.<span class="fn">predict</span>(X_test)
+y_pred_prob = model.<span class="fn">predict_proba</span>(X_test)[:, <span class="nm">1</span>]  <span class="cm"># for ROC-AUC</span>
+
+<span class="fn">print</span>(<span class="st">f'Accuracy:  {<span class="fn">accuracy_score</span>(y_test, y_pred):.4f}'</span>)
+<span class="fn">print</span>(<span class="st">f'Precision: {<span class="fn">precision_score</span>(y_test, y_pred):.4f}'</span>)
+<span class="fn">print</span>(<span class="st">f'Recall:    {<span class="fn">recall_score</span>(y_test, y_pred):.4f}'</span>)
+<span class="fn">print</span>(<span class="st">f'F1:        {<span class="fn">f1_score</span>(y_test, y_pred):.4f}'</span>)
+<span class="fn">print</span>(<span class="st">f'ROC-AUC:   {<span class="fn">roc_auc_score</span>(y_test, y_pred_prob):.4f}'</span>)
+
+<span class="cm"># Full breakdown</span>
+<span class="fn">print</span>(<span class="fn">classification_report</span>(y_test, y_pred))</code></pre>
+
+  <div class="tbl-wrap" style="margin-top:1rem;">
+    <table>
+      <thead><tr><th>Scenario</th><th>Preferred Metric</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Balanced classes</td><td>Accuracy, F1</td><td>Reliable when classes are equal</td></tr>
+        <tr><td>Imbalanced classes</td><td>ROC-AUC, F1</td><td>Accuracy is misleading here</td></tr>
+        <tr><td>Cost of false positives high</td><td>Precision</td><td>Spam filter — don't block valid emails</td></tr>
+        <tr><td>Cost of false negatives high</td><td>Recall</td><td>Cancer detection — don't miss cases</td></tr>
+        <tr><td>Regression</td><td>RMSE + R²</td><td>RMSE penalizes big errors; R² gives context</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     SECTION 8: Bad Model Performance
+══════════════════════════════════════════════ -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <span class="section-num">§ 08</span>
+    <h2>If Model Performance is Bad</h2>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="dot" style="background:var(--yellow)"></span>Underfitting (High Bias)</h3>
+      <ul>
+        <li>Train error is also high</li>
+        <li>Model is too simple</li>
+        <li>Fixes:</li>
+        <li>→ Add more features / interactions</li>
+        <li>→ Increase model complexity (depth, leaves)</li>
+        <li>→ Train longer (more estimators)</li>
+        <li>→ Try a more powerful model (LightGBM)</li>
+        <li>→ Reduce regularization (higher C, lower lambda)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--red)"></span>Overfitting (High Variance)</h3>
+      <ul>
+        <li>Train error low, test error high</li>
+        <li>Model memorized training data</li>
+        <li>Fixes:</li>
+        <li>→ Add regularization (L1/L2, lower C)</li>
+        <li>→ Reduce max_depth, increase min_samples</li>
+        <li>→ Get more training data</li>
+        <li>→ Drop noisy / irrelevant features</li>
+        <li>→ Use cross-validation properly</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>General checklist:</strong> Bad data quality → fix features first. Then try model. Then tune.
+  </div>
+
+  <div class="card" style="margin-bottom:0.5rem;">
+    <h3><span class="dot"></span>GridSearchCV — Hyperparameter Tuning</h3>
+    <p>Systematically try combinations of parameters and pick the best.</p>
+  </div>
+<pre><code><span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> GridSearchCV
+<span class="kw">from</span> sklearn.ensemble <span class="kw">import</span> RandomForestClassifier
+
+param_grid = {
+    <span class="st">'n_estimators'</span>:    [<span class="nm">100</span>, <span class="nm">200</span>, <span class="nm">300</span>],
+    <span class="st">'max_depth'</span>:       [<span class="nm">5</span>, <span class="nm">10</span>, <span class="nm">None</span>],
+    <span class="st">'min_samples_split'</span>: [<span class="nm">2</span>, <span class="nm">5</span>, <span class="nm">10</span>]
+}
+
+rf = <span class="cl">RandomForestClassifier</span>(random_state=<span class="nm">42</span>)
+grid_search = <span class="cl">GridSearchCV</span>(rf, param_grid, cv=<span class="nm">5</span>,
+                              scoring=<span class="st">'roc_auc'</span>, n_jobs=-<span class="nm">1</span>)
+grid_search.<span class="fn">fit</span>(X_train, y_train)
+
+<span class="fn">print</span>(<span class="st">'Best params:'</span>, grid_search.best_params_)
+<span class="fn">print</span>(<span class="st">'Best AUC:'</span>,    grid_search.best_score_)
+
+best_model = grid_search.best_estimator_</code></pre>
+
+  <div class="card" style="margin-bottom:0.5rem;">
+    <h3><span class="dot"></span>RandomizedSearchCV — Faster Alternative</h3>
+    <p>When you have many parameters, random sampling is faster than exhaustive grid search.</p>
+  </div>
+<pre><code><span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> RandomizedSearchCV
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> randint, uniform
+
+param_dist = {
+    <span class="st">'n_estimators'</span>: <span class="fn">randint</span>(<span class="nm">100</span>, <span class="nm">500</span>),
+    <span class="st">'max_depth'</span>:    <span class="fn">randint</span>(<span class="nm">3</span>, <span class="nm">20</span>),
+    <span class="st">'learning_rate'</span>: <span class="fn">uniform</span>(<span class="nm">0.01</span>, <span class="nm">0.2</span>)  <span class="cm"># for LightGBM</span>
+}
+
+random_search = <span class="cl">RandomizedSearchCV</span>(model, param_dist,
+                                     n_iter=<span class="nm">50</span>, cv=<span class="nm">5</span>,
+                                     scoring=<span class="st">'roc_auc'</span>,
+                                     random_state=<span class="nm">42</span>, n_jobs=-<span class="nm">1</span>)
+random_search.<span class="fn">fit</span>(X_train, y_train)
+<span class="fn">print</span>(random_search.best_params_)</code></pre>
+
+  <div class="callout callout-green">
+    <strong>Interview tip:</strong> If performance is bad, always say: "First I'd check the data, then evaluate if it's underfitting or overfitting, then tune." Don't jump straight to "try a different model."
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div style="text-align:center;padding:2rem 0;border-top:1px solid var(--border);margin-top:1rem;">
+  <p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.06em;">
+    ML REVISION GUIDE · Built for Google DS Interview Prep · Good luck Nihal! 🚀
+  </p>
+</div>
+
+</div><!-- end .page -->
+</body>
+</html>

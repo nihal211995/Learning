@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistics Reference — AI Powered</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f0e8;
+  --bg2: #ede7d8;
+  --ink: #1a1410;
+  --ink2: #4a3f35;
+  --ink3: #7a6f65;
+  --accent: #c8401a;
+  --accent2: #1a6ec8;
+  --accent3: #1a9640;
+  --gold: #c8960a;
+  --card-bg: #faf7f2;
+  --border: rgba(26,20,16,0.12);
+  --shadow: 0 2px 20px rgba(26,20,16,0.08);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'DM Mono', monospace;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* HEADER */
+.header {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 3rem 2rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 40px,
+    rgba(200,64,26,0.06) 40px,
+    rgba(200,64,26,0.06) 41px
+  );
+}
+
+.header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.header h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 3.5rem;
+  font-weight: 300;
+  line-height: 1.1;
+  color: var(--bg);
+  letter-spacing: -0.02em;
+}
+
+.header h1 em {
+  font-style: italic;
+  color: #e8855a;
+}
+
+.header-sub {
+  margin-top: 0.75rem;
+  color: rgba(245,240,232,0.6);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.header-badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 4px 12px;
+  border: 1px solid rgba(245,240,232,0.2);
+  border-radius: 100px;
+  font-size: 11px;
+  color: rgba(245,240,232,0.7);
+  letter-spacing: 0.05em;
+}
+
+/* NAV */
+.nav {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+
+.nav-btn {
+  padding: 14px 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover { color: var(--ink); }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* MAIN LAYOUT */
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* CONCEPT PANEL */
+.concepts { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.concept-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(16px);
+  animation: fadeUp 0.4s forwards;
+}
+
+.concept-card:nth-child(1) { animation-delay: 0.05s; }
+.concept-card:nth-child(2) { animation-delay: 0.1s; }
+.concept-card:nth-child(3) { animation-delay: 0.15s; }
+.concept-card:nth-child(4) { animation-delay: 0.2s; }
+.concept-card:nth-child(5) { animation-delay: 0.25s; }
+.concept-card:nth-child(6) { animation-delay: 0.3s; }
+
+@keyframes fadeUp {
+  to { opacity:1; transform:translateY(0); }
+}
+
+.concept-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid transparent;
+  transition: background 0.2s;
+}
+
+.concept-header:hover { background: var(--bg2); }
+
+.concept-card.open .concept-header {
+  border-bottom-color: var(--border);
+  background: var(--bg2);
+}
+
+.concept-tag {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.tag-pvalue { background: rgba(200,64,26,0.1); color: var(--accent); border: 1px solid rgba(200,64,26,0.2); }
+.tag-error { background: rgba(200,150,10,0.1); color: var(--gold); border: 1px solid rgba(200,150,10,0.2); }
+.tag-ci { background: rgba(26,110,200,0.1); color: var(--accent2); border: 1px solid rgba(26,110,200,0.2); }
+.tag-power { background: rgba(26,150,64,0.1); color: var(--accent3); border: 1px solid rgba(26,150,64,0.2); }
+
+.concept-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.2rem;
+  font-weight: 300;
+  flex: 1;
+}
+
+.concept-toggle {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink3);
+  transition: transform 0.3s;
+  font-size: 16px;
+}
+
+.concept-card.open .concept-toggle { transform: rotate(45deg); }
+
+.concept-body {
+  display: none;
+  padding: 1.5rem;
+}
+
+.concept-card.open .concept-body { display: block; }
+
+.def-block {
+  background: var(--bg);
+  border-left: 3px solid var(--accent);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  border-radius: 0 2px 2px 0;
+  font-size: 13px;
+}
+
+.def-block.blue { border-left-color: var(--accent2); }
+.def-block.green { border-left-color: var(--accent3); }
+.def-block.gold { border-left-color: var(--gold); }
+
+.def-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 0.4rem;
+}
+
+.def-text {
+  color: var(--ink);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+
+.mini-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1rem;
+  font-size: 13px;
+}
+
+.mini-card-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 0.5rem;
+}
+
+.mini-card-val {
+  font-family: 'Fraunces', serif;
+  font-size: 1.8rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.red { color: var(--accent); }
+.blue { color: var(--accent2); }
+.green { color: var(--accent3); }
+.gold { color: var(--gold); }
+
+.outcome-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin: 1rem 0;
+}
+
+.outcome-table th, .outcome-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid var(--border);
+}
+
+.outcome-table th {
+  background: var(--bg2);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+
+.cell-good { background: rgba(26,150,64,0.08); color: var(--accent3); font-weight: 500; }
+.cell-bad { background: rgba(200,64,26,0.08); color: var(--accent); font-weight: 500; }
+
+.formula-box {
+  background: var(--ink);
+  color: #e8855a;
+  padding: 1rem 1.25rem;
+  border-radius: 3px;
+  font-size: 13px;
+  margin: 1rem 0;
+  line-height: 2;
+}
+
+.ask-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--ink2);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 4px;
+}
+
+.ask-btn:hover {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+.ask-btn svg { width: 12px; height: 12px; }
+
+.ask-row {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  align-items: center;
+}
+
+.ask-row-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-right: 0.5rem;
+  flex-basis: 100%;
+  margin-bottom: 0.5rem;
+}
+
+/* CALCULATOR */
+.calc-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 60px;
+}
+
+.calc-header {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 1.25rem 1.5rem;
+}
+
+.calc-header-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.1rem;
+  font-weight: 300;
+}
+
+.calc-header-sub {
+  font-size: 11px;
+  color: rgba(245,240,232,0.5);
+  margin-top: 3px;
+  letter-spacing: 0.05em;
+}
+
+.calc-body { padding: 1.5rem; }
+
+.calc-section-title {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 1rem;
+  margin-top: 1.5rem;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.calc-section-title:first-child { margin-top: 0; }
+
+.slider-row {
+  margin-bottom: 1.25rem;
+}
+
+.slider-label-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.slider-label {
+  font-size: 12px;
+  color: var(--ink2);
+}
+
+.slider-val {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  min-width: 40px;
+  text-align: right;
+}
+
+input[type=range] {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 3px;
+  background: var(--bg2);
+  outline: none;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--ink);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+.select-styled {
+  width: 100%;
+  padding: 8px 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--ink);
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 1rem 0;
+}
+
+.stat-chip {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.stat-chip-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 4px;
+}
+
+.stat-chip-val {
+  font-family: 'Fraunces', serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.result-bar {
+  height: 8px;
+  background: var(--bg2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0.75rem 0;
+}
+
+.result-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.bar-power { background: var(--accent3); }
+.bar-alpha { background: var(--accent); }
+.bar-beta { background: var(--gold); }
+
+.verdict-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1rem;
+  margin-top: 1rem;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink2);
+}
+
+.verdict-box strong { color: var(--ink); }
+
+.calc-solve-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 1rem;
+}
+
+.solve-btn {
+  padding: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.solve-btn-primary {
+  background: var(--ink);
+  color: var(--bg);
+  border: 1px solid var(--ink);
+}
+
+.solve-btn-primary:hover { background: var(--accent); border-color: var(--accent); }
+
+.solve-btn-secondary {
+  background: none;
+  color: var(--ink);
+  border: 1px solid var(--border);
+}
+
+.solve-btn-secondary:hover { background: var(--bg2); }
+
+/* AI CHAT PANEL */
+.ai-panel {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 420px;
+  max-height: 80vh;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(26,20,16,0.18);
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+  transform: translateY(20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ai-panel.open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+
+.ai-panel-header {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 7px 7px 0 0;
+  flex-shrink: 0;
+}
+
+.ai-panel-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1rem;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-dot {
+  width: 8px;
+  height: 8px;
+  background: #4ade80;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+.ai-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245,240,232,0.1);
+  border: none;
+  border-radius: 2px;
+  color: var(--bg);
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+
+.ai-close:hover { background: rgba(245,240,232,0.2); }
+
+.ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 200px;
+  max-height: 400px;
+}
+
+.ai-msg {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  animation: msgIn 0.3s ease;
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ai-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ai-avatar.ai { background: var(--ink); color: var(--bg); font-family: 'Fraunces', serif; font-style: italic; }
+.ai-avatar.user { background: var(--bg2); color: var(--ink2); font-size: 10px; letter-spacing: 0.05em; }
+
+.ai-bubble {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 2px 8px 8px 8px;
+  padding: 0.75rem 1rem;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: calc(100% - 40px);
+  flex: 1;
+}
+
+.ai-msg.user .ai-bubble {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+  border-radius: 8px 2px 8px 8px;
+}
+
+.ai-thinking {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.ai-thinking span {
+  width: 6px;
+  height: 6px;
+  background: var(--ink3);
+  border-radius: 50%;
+  animation: think 1.2s infinite;
+}
+
+.ai-thinking span:nth-child(2) { animation-delay: 0.2s; }
+.ai-thinking span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes think {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+.ai-input-row {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#ai-input {
+  flex: 1;
+  padding: 10px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--ink);
+  outline: none;
+  resize: none;
+  min-height: 42px;
+  max-height: 100px;
+}
+
+#ai-input:focus { border-color: var(--ink); }
+
+#ai-send {
+  padding: 10px 16px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 2px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  align-self: flex-end;
+}
+
+#ai-send:hover { background: var(--accent); }
+#ai-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* FAB */
+.ai-fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 56px;
+  height: 56px;
+  background: var(--ink);
+  border: none;
+  border-radius: 4px;
+  color: var(--bg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(26,20,16,0.25);
+  transition: all 0.2s;
+  z-index: 199;
+  font-family: 'Fraunces', serif;
+  font-size: 1.2rem;
+  font-style: italic;
+}
+
+.ai-fab:hover {
+  background: var(--accent);
+  transform: scale(1.05);
+}
+
+.ai-fab.hidden { display: none; }
+
+/* QUIZ SECTION */
+.quiz-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-top: 2rem;
+}
+
+.quiz-header {
+  background: var(--bg2);
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quiz-header-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.2rem;
+  font-weight: 300;
+}
+
+.quiz-score-badge {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 4px 12px;
+  border-radius: 2px;
+  font-size: 12px;
+}
+
+.quiz-body { padding: 1.5rem; }
+
+.quiz-q {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.quiz-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.25rem; }
+
+.quiz-opt {
+  padding: 12px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  text-align: left;
+  transition: all 0.2s;
+  color: var(--ink2);
+}
+
+.quiz-opt:hover { background: var(--bg2); border-color: var(--ink3); }
+.quiz-opt.correct { background: rgba(26,150,64,0.08); border-color: var(--accent3); color: var(--accent3); }
+.quiz-opt.wrong { background: rgba(200,64,26,0.08); border-color: var(--accent); color: var(--accent); }
+.quiz-opt:disabled { cursor: default; }
+
+.quiz-feedback {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1rem;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink2);
+  display: none;
+  margin-bottom: 1rem;
+}
+
+.quiz-feedback.show { display: block; }
+
+.quiz-next-btn {
+  padding: 10px 24px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 2px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: none;
+}
+
+.quiz-next-btn.show { display: inline-block; }
+.quiz-next-btn:hover { background: var(--accent); }
+
+/* SECTION PANELS */
+.section { display: none; }
+.section.active { display: block; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+  .calc-panel { position: static; }
+  .ai-panel { width: calc(100vw - 3rem); right: 1.5rem; }
+}
+
+@media (max-width: 600px) {
+  .header h1 { font-size: 2.2rem; }
+  .main { padding: 1rem; }
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--ink3); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <h1>Statistics<br><em>Reference</em></h1>
+    <p class="header-sub">p-values · confidence intervals · power analysis · errors</p>
+    <div class="header-badges">
+      <span class="badge">Interactive</span>
+      <span class="badge">AI-Powered Q&amp;A</span>
+      <span class="badge">Power Calculator</span>
+      <span class="badge">Self-Test Quiz</span>
+    </div>
+  </div>
+</div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <button class="nav-btn active" onclick="switchSection('concepts', this)">Concepts</button>
+    <button class="nav-btn" onclick="switchSection('calculator', this)">Power Calculator</button>
+    <button class="nav-btn" onclick="switchSection('outcomes', this)">Error Matrix</button>
+    <button class="nav-btn" onclick="switchSection('quiz', this)">Self-Test</button>
+  </div>
+</nav>
+
+<!-- CONCEPTS SECTION -->
+<div id="section-concepts" class="section active">
+  <div class="main">
+    <div class="concepts">
+
+      <!-- P-VALUE -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="concept-header">
+          <span class="concept-tag tag-pvalue">Core</span>
+          <span class="concept-title">P-Value</span>
+          <span class="concept-toggle">+</span>
+        </div>
+        <div class="concept-body">
+          <div class="def-block">
+            <div class="def-label">Definition</div>
+            <div class="def-text">Probability of observing your data (or more extreme) assuming the null hypothesis is TRUE</div>
+          </div>
+          <p style="font-size:13px; color:var(--ink2); margin-bottom:1rem;">Not the probability that your hypothesis is correct. It only tells you how compatible your data is with H₀.</p>
+          <div class="formula-box">
+P-value = P( Data this extreme | H₀ is true )<br><br>
+p = 0.03 → Only 3% chance of this data if H₀ is true<br>
+p = 0.08 → 8% chance of this data if H₀ is true
+          </div>
+          <div class="grid2">
+            <div class="mini-card">
+              <div class="mini-card-label">p &lt; 0.05</div>
+              <div class="mini-card-val green" style="font-size:1.1rem; line-height:1.4;">Reject H₀</div>
+              <p style="font-size:11px; color:var(--ink3); margin-top:6px;">Statistically significant. Evidence against the null.</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-label">p ≥ 0.05</div>
+              <div class="mini-card-val red" style="font-size:1.1rem; line-height:1.4;">Fail to Reject</div>
+              <p style="font-size:11px; color:var(--ink3); margin-top:6px;">Insufficient evidence. Cannot conclude an effect exists.</p>
+            </div>
+          </div>
+          <div class="ask-row">
+            <div class="ask-row-label">Ask AI about p-values:</div>
+            <button class="ask-btn" onclick="askAI('What is a p-value in simple terms?', event)">Simple explanation</button>
+            <button class="ask-btn" onclick="askAI('What are the most common misconceptions about p-values?', event)">Common mistakes</button>
+            <button class="ask-btn" onclick="askAI('Give me a real world example of p-value interpretation', event)">Real example</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TYPE I ERROR -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="concept-header">
+          <span class="concept-tag tag-error">Error</span>
+          <span class="concept-title">Type I Error (α)</span>
+          <span class="concept-toggle">+</span>
+        </div>
+        <div class="concept-body">
+          <div class="def-block gold">
+            <div class="def-label">Definition</div>
+            <div class="def-text">Rejecting H₀ when H₀ is actually TRUE — a false positive. You claim an effect exists when it doesn't.</div>
+          </div>
+          <div class="grid2">
+            <div class="mini-card">
+              <div class="mini-card-label">Also called</div>
+              <div style="font-size:13px; font-weight:500; margin-top:4px;">False Positive<br>Significance Level</div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-label">Standard value</div>
+              <div class="mini-card-val gold">5%</div>
+              <p style="font-size:11px; color:var(--ink3); margin-top:4px;">α = 0.05</p>
+            </div>
+          </div>
+          <p style="font-size:13px; color:var(--ink2); margin:1rem 0;">When you reject H₀ using a p &lt; 0.05 threshold, you accept at most a <strong>5% risk of being wrong</strong>. This is the error rate you control directly through your significance threshold.</p>
+          <table class="outcome-table">
+            <thead><tr><th>Confidence Level</th><th>α</th><th>Error Rate</th><th>Strictness</th></tr></thead>
+            <tbody>
+              <tr><td>99% CI</td><td>0.01</td><td>1%</td><td>Very strict</td></tr>
+              <tr><td>95% CI</td><td>0.05</td><td>5%</td><td>Standard</td></tr>
+              <tr><td>90% CI</td><td>0.10</td><td>10%</td><td>Lenient</td></tr>
+            </tbody>
+          </table>
+          <div class="ask-row">
+            <div class="ask-row-label">Explore further:</div>
+            <button class="ask-btn" onclick="askAI('Explain Type I error with a drug testing example', event)">Drug testing example</button>
+            <button class="ask-btn" onclick="askAI('How does alpha level affect Type I error?', event)">How alpha controls it</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TYPE II ERROR -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="concept-header">
+          <span class="concept-tag tag-error">Error</span>
+          <span class="concept-title">Type II Error (β)</span>
+          <span class="concept-toggle">+</span>
+        </div>
+        <div class="concept-body">
+          <div class="def-block gold">
+            <div class="def-label">Definition</div>
+            <div class="def-text">Failing to reject H₀ when H₀ is actually FALSE — a false negative. You miss a real effect that exists.</div>
+          </div>
+          <div class="formula-box">
+Power = 1 − β<br>
+β = 1 − Power<br><br>
+If Power = 0.80 → β = 0.20 (20% miss rate)<br>
+If Power = 0.90 → β = 0.10 (10% miss rate)
+          </div>
+          <p style="font-size:13px; color:var(--ink2); margin:1rem 0;">β is determined by your <strong>effect size</strong> and <strong>sample size</strong>. The p-value only controls Type I error — β requires separate power analysis.</p>
+          <div class="ask-row">
+            <div class="ask-row-label">Explore further:</div>
+            <button class="ask-btn" onclick="askAI('What is the difference between Type I and Type II error?', event)">vs Type I</button>
+            <button class="ask-btn" onclick="askAI('How does sample size reduce Type II error beta?', event)">Sample size impact</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFIDENCE INTERVAL -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="concept-header">
+          <span class="concept-tag tag-ci">Interval</span>
+          <span class="concept-title">Confidence Interval</span>
+          <span class="concept-toggle">+</span>
+        </div>
+        <div class="concept-body">
+          <div class="def-block blue">
+            <div class="def-label">Definition</div>
+            <div class="def-text">A range of values likely to contain the true population parameter, at a stated confidence level</div>
+          </div>
+          <p style="font-size:13px; color:var(--ink2); margin-bottom:1rem;"><strong>95% CI means:</strong> If you repeated this study 100 times, 95 of those confidence intervals would contain the true value.</p>
+          <div class="mini-card" style="margin-bottom:1rem;">
+            <div class="mini-card-label">Key relationship</div>
+            <p style="font-size:13px; margin-top:6px;">If the 95% CI <strong>does not include zero</strong> (or the null value) → p &lt; 0.05 → Reject H₀</p>
+            <p style="font-size:13px; margin-top:6px;">If the 95% CI <strong>includes zero</strong> → p ≥ 0.05 → Fail to reject H₀</p>
+          </div>
+          <table class="outcome-table">
+            <thead><tr><th>CI Level</th><th>α (alpha)</th><th>p-threshold</th><th>Max Error</th></tr></thead>
+            <tbody>
+              <tr><td>90% CI</td><td>0.10</td><td>p &lt; 0.10</td><td>10%</td></tr>
+              <tr><td>95% CI</td><td>0.05</td><td>p &lt; 0.05</td><td>5%</td></tr>
+              <tr><td>99% CI</td><td>0.01</td><td>p &lt; 0.01</td><td>1%</td></tr>
+            </tbody>
+          </table>
+          <div class="ask-row">
+            <div class="ask-row-label">Ask AI:</div>
+            <button class="ask-btn" onclick="askAI('Explain confidence intervals with a practical example', event)">Practical example</button>
+            <button class="ask-btn" onclick="askAI('Can I have 99% CI and p value of 0.05?', event)">99% CI + p=0.05?</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATISTICAL POWER -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="concept-header">
+          <span class="concept-tag tag-power">Power</span>
+          <span class="concept-title">Statistical Power</span>
+          <span class="concept-toggle">+</span>
+        </div>
+        <div class="concept-body">
+          <div class="def-block green">
+            <div class="def-label">Definition</div>
+            <div class="def-text">Probability of correctly rejecting H₀ when H₀ is actually FALSE. Your study's ability to detect a real effect.</div>
+          </div>
+          <div class="grid2">
+            <div class="mini-card">
+              <div class="mini-card-label">Standard Power</div>
+              <div class="mini-card-val green">80%</div>
+              <p style="font-size:11px; color:var(--ink3); margin-top:4px;">Power = 0.80</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-label">Type II Risk (β)</div>
+              <div class="mini-card-val gold">20%</div>
+              <p style="font-size:11px; color:var(--ink3); margin-top:4px;">1 − 0.80 = 0.20</p>
+            </div>
+          </div>
+          <p style="font-size:13px; color:var(--ink2); margin:1rem 0;">Power depends on 3 things: <strong>effect size</strong> (bigger = easier to detect), <strong>sample size</strong> (larger = higher power), and <strong>α level</strong> (stricter α = lower power).</p>
+          <div class="ask-row">
+            <div class="ask-row-label">Ask AI:</div>
+            <button class="ask-btn" onclick="askAI('How does power relate to beta and Type II error?', event)">Power vs Beta</button>
+            <button class="ask-btn" onclick="askAI('Why is 0.80 the standard power level in research?', event)">Why 80%?</button>
+            <button class="ask-btn" onclick="askAI('How do I increase statistical power in my study?', event)">How to increase it</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POWER ANALYSIS -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="concept-header">
+          <span class="concept-tag tag-power">Analysis</span>
+          <span class="concept-title">Power Analysis</span>
+          <span class="concept-toggle">+</span>
+        </div>
+        <div class="concept-body">
+          <div class="def-block green">
+            <div class="def-label">Definition</div>
+            <div class="def-text">A method to determine the required sample size, achievable power, or detectable effect size — given the other three inputs.</div>
+          </div>
+          <p style="font-size:13px; color:var(--ink2); margin-bottom:1rem;">The 4 variables are linked. Know 3, calculate the 4th.</p>
+          <table class="outcome-table">
+            <thead><tr><th>Given</th><th>Solve For</th><th>Business Use</th></tr></thead>
+            <tbody>
+              <tr><td>ES, α, Power</td><td class="green"><strong>Sample Size</strong></td><td>Most common — "How many users?"</td></tr>
+              <tr><td>ES, α, N</td><td class="blue"><strong>Power</strong></td><td>"Is our study big enough?"</td></tr>
+              <tr><td>α, Power, N</td><td class="red"><strong>Effect Size</strong></td><td>"What's smallest change we can detect?"</td></tr>
+              <tr><td>ES, Power, N</td><td class="gold"><strong>Alpha</strong></td><td>"What false positive risk must we accept?"</td></tr>
+            </tbody>
+          </table>
+          <div class="def-block" style="margin-top:1rem;">
+            <div class="def-label">Typical Workflow</div>
+            <div class="def-text">Product team defines MDE (Minimum Detectable Effect) → You set α=0.05, Power=0.80 → Power Analysis → Sample size needed</div>
+          </div>
+          <div class="ask-row">
+            <div class="ask-row-label">Ask AI:</div>
+            <button class="ask-btn" onclick="askAI('Walk me through a power analysis for an A/B test', event)">A/B test walkthrough</button>
+            <button class="ask-btn" onclick="askAI('What is Minimum Detectable Effect MDE in product analytics?', event)">What is MDE?</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: MINI CALCULATOR -->
+    <div>
+      <div class="calc-panel">
+        <div class="calc-header">
+          <div class="calc-header-title">Power Calculator</div>
+          <div class="calc-header-sub">Adjust 3 inputs → solve for the 4th</div>
+        </div>
+        <div class="calc-body">
+          <div class="calc-section-title">Effect Size (Cohen's d)</div>
+          <div class="slider-row">
+            <div class="slider-label-row">
+              <span class="slider-label" id="es-hint">Medium effect</span>
+              <span class="slider-val" id="es-val">0.50</span>
+            </div>
+            <input type="range" id="sl-es" min="5" max="150" value="50" oninput="updateCalc()">
+          </div>
+
+          <div class="calc-section-title">Alpha (α)</div>
+          <select class="select-styled" id="sl-alpha" onchange="updateCalc()">
+            <option value="0.01">α = 0.01 — 99% confidence</option>
+            <option value="0.05" selected>α = 0.05 — 95% confidence</option>
+            <option value="0.10">α = 0.10 — 90% confidence</option>
+          </select>
+
+          <div class="calc-section-title">Desired Power (1−β)</div>
+          <select class="select-styled" id="sl-power" onchange="updateCalc()">
+            <option value="0.70">Power = 0.70 (β = 30%)</option>
+            <option value="0.80" selected>Power = 0.80 (β = 20%)</option>
+            <option value="0.90">Power = 0.90 (β = 10%)</option>
+            <option value="0.95">Power = 0.95 (β = 5%)</option>
+          </select>
+
+          <div class="calc-section-title">Results</div>
+          <div class="stat-grid">
+            <div class="stat-chip">
+              <div class="stat-chip-label">Sample Size / group</div>
+              <div class="stat-chip-val green" id="r-n">64</div>
+            </div>
+            <div class="stat-chip">
+              <div class="stat-chip-label">Type I Error</div>
+              <div class="stat-chip-val red" id="r-alpha">5%</div>
+            </div>
+            <div class="stat-chip">
+              <div class="stat-chip-label">Type II Error</div>
+              <div class="stat-chip-val gold" id="r-beta">20%</div>
+            </div>
+            <div class="stat-chip">
+              <div class="stat-chip-label">Power</div>
+              <div class="stat-chip-val blue" id="r-power">80%</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="slider-label-row" style="margin-bottom:4px;">
+              <span style="font-size:11px; color:var(--ink3); letter-spacing:0.05em; text-transform:uppercase;">Power</span>
+              <span style="font-size:11px; color:var(--accent3);" id="r-power-pct">80%</span>
+            </div>
+            <div class="result-bar"><div class="result-bar-fill bar-power" id="bar-power" style="width:80%"></div></div>
+
+            <div class="slider-label-row" style="margin-bottom:4px; margin-top:8px;">
+              <span style="font-size:11px; color:var(--ink3); letter-spacing:0.05em; text-transform:uppercase;">Type I Error (α)</span>
+              <span style="font-size:11px; color:var(--accent);" id="r-alpha-pct">5%</span>
+            </div>
+            <div class="result-bar"><div class="result-bar-fill bar-alpha" id="bar-alpha" style="width:5%"></div></div>
+
+            <div class="slider-label-row" style="margin-bottom:4px; margin-top:8px;">
+              <span style="font-size:11px; color:var(--ink3); letter-spacing:0.05em; text-transform:uppercase;">Type II Error (β)</span>
+              <span style="font-size:11px; color:var(--gold);" id="r-beta-pct">20%</span>
+            </div>
+            <div class="result-bar"><div class="result-bar-fill bar-beta" id="bar-beta" style="width:20%"></div></div>
+          </div>
+
+          <div class="verdict-box" id="verdict-box">
+            <strong>Well-powered study.</strong> With a medium effect size and these settings, you need 64 participants per group.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CALCULATOR SECTION -->
+<div id="section-calculator" class="section">
+  <div class="main" style="grid-template-columns: 1fr;">
+    <div class="calc-panel" style="position:static; max-width:600px; margin:0 auto;">
+      <div class="calc-header">
+        <div class="calc-header-title">Full Power Analysis Calculator</div>
+        <div class="calc-header-sub">Given any 3 of 4 inputs — calculate the 4th</div>
+      </div>
+      <div class="calc-body">
+        <div class="calc-section-title">Effect Size (Cohen's d)</div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <span class="slider-label" id="es-hint2">Medium effect</span>
+            <span class="slider-val" id="es-val2">0.50</span>
+          </div>
+          <input type="range" id="sl-es2" min="5" max="150" value="50" oninput="updateCalc2()">
+        </div>
+
+        <div class="calc-section-title">Alpha (α)</div>
+        <select class="select-styled" id="sl-alpha2" onchange="updateCalc2()">
+          <option value="0.01">α = 0.01 — 99% confidence</option>
+          <option value="0.05" selected>α = 0.05 — 95% confidence</option>
+          <option value="0.10">α = 0.10 — 90% confidence</option>
+        </select>
+
+        <div class="calc-section-title">Desired Power (1−β)</div>
+        <select class="select-styled" id="sl-power2" onchange="updateCalc2()">
+          <option value="0.70">Power = 0.70 (β = 30%)</option>
+          <option value="0.80" selected>Power = 0.80 (β = 20%)</option>
+          <option value="0.90">Power = 0.90 (β = 10%)</option>
+          <option value="0.95">Power = 0.95 (β = 5%)</option>
+        </select>
+
+        <div class="calc-section-title">Results</div>
+        <div class="stat-grid">
+          <div class="stat-chip">
+            <div class="stat-chip-label">Sample Size / group</div>
+            <div class="stat-chip-val green" id="r-n2">64</div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-label">Total Sample</div>
+            <div class="stat-chip-val blue" id="r-total">128</div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-label">Type II Error (β)</div>
+            <div class="stat-chip-val gold" id="r-beta2">20%</div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-label">Power</div>
+            <div class="stat-chip-val green" id="r-power2">80%</div>
+          </div>
+        </div>
+        <div class="verdict-box" id="verdict-box2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OUTCOMES SECTION -->
+<div id="section-outcomes" class="section">
+  <div class="main" style="grid-template-columns: 1fr;">
+    <div style="max-width:800px; margin:0 auto; width:100%;">
+      <div class="concept-card" style="animation:none; opacity:1; transform:none;">
+        <div class="concept-header" style="pointer-events:none;">
+          <span class="concept-tag tag-error">Matrix</span>
+          <span class="concept-title">All Four Statistical Outcomes</span>
+        </div>
+        <div class="concept-body" style="display:block;">
+          <p style="font-size:13px; color:var(--ink2); margin-bottom:1.5rem;">Every statistical decision falls into one of these four outcomes. Hover each cell to learn more.</p>
+          <table class="outcome-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>H₀ is TRUE (no real effect)</th>
+                <th>H₀ is FALSE (effect exists)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:500;">You REJECT H₀</td>
+                <td class="cell-bad" title="False Positive — you claimed an effect that doesn't exist. Risk = α = 5%">
+                  ✗ Type I Error<br>
+                  <small>False Positive<br>Risk = α (5%)</small>
+                </td>
+                <td class="cell-good" title="True Positive — you correctly found the effect. Probability = Power = 80%">
+                  ✓ Correct!<br>
+                  <small>True Positive<br>Probability = Power (80%)</small>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:500;">You FAIL to reject H₀</td>
+                <td class="cell-good" title="True Negative — you correctly found no effect. Probability = 1-α = 95%">
+                  ✓ Correct!<br>
+                  <small>True Negative<br>Probability = 1-α (95%)</small>
+                </td>
+                <td class="cell-bad" title="False Negative — you missed a real effect. Risk = β = 20%">
+                  ✗ Type II Error<br>
+                  <small>False Negative<br>Risk = β (20%)</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="grid2" style="margin-top:1.5rem;">
+            <div class="mini-card">
+              <div class="mini-card-label">Type I Error (α)</div>
+              <div style="font-size:13px; margin-top:6px; color:var(--ink2);">
+                Claim effect exists when it doesn't. Controlled by significance threshold (0.05). Low α = fewer false alarms.
+              </div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-card-label">Type II Error (β)</div>
+              <div style="font-size:13px; margin-top:6px; color:var(--ink2);">
+                Miss a real effect. Controlled by sample size and effect size. High power = low β.
+              </div>
+            </div>
+          </div>
+
+          <div class="ask-row">
+            <div class="ask-row-label">Ask AI:</div>
+            <button class="ask-btn" onclick="askAI('Which is worse — Type I or Type II error, and when does it matter?', event)">Which is worse?</button>
+            <button class="ask-btn" onclick="askAI('Give me a medical diagnosis analogy for Type I and Type II errors', event)">Medical analogy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ SECTION -->
+<div id="section-quiz" class="section">
+  <div class="main" style="grid-template-columns: 1fr;">
+    <div class="quiz-card" style="max-width:700px; margin:0 auto; width:100%;">
+      <div class="quiz-header">
+        <span class="quiz-header-title">Self-Test: Statistics Concepts</span>
+        <span class="quiz-score-badge" id="quiz-score">0 / 0</span>
+      </div>
+      <div class="quiz-body" id="quiz-body">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI PANEL -->
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-panel-header">
+    <div class="ai-panel-title">
+      <div class="ai-dot"></div>
+      Ask Claude — Statistics AI
+    </div>
+    <button class="ai-close" onclick="toggleAI()">×</button>
+  </div>
+  <div class="ai-messages" id="ai-messages">
+    <div class="ai-msg">
+      <div class="ai-avatar ai">C</div>
+      <div class="ai-bubble">Hi! I'm your statistics tutor. Ask me anything about p-values, confidence intervals, power analysis, or hypothesis testing — or click any "Ask AI" button in the reference cards.</div>
+    </div>
+  </div>
+  <div class="ai-input-row">
+    <textarea id="ai-input" placeholder="Ask a question..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"></textarea>
+    <button id="ai-send" onclick="sendMsg()">Send</button>
+  </div>
+</div>
+
+<button class="ai-fab" id="ai-fab" onclick="toggleAI()">C</button>
+
+<script>
+// ─── CARD TOGGLE ───
+function toggleCard(card) {
+  card.classList.toggle('open');
+}
+
+// ─── NAV SECTIONS ───
+function switchSection(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'quiz') initQuiz();
+}
+
+// ─── NORMAL CDF ───
+function normCDF(x) {
+  const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429, p=0.3275911;
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x) / Math.sqrt(2);
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return 0.5*(1+sign*y);
+}
+
+function getSampleSize(power, es, alpha) {
+  const zAlpha = Math.abs(normCDF(1-alpha/2)*2 - 1) * 1.414;
+  const zBeta  = Math.abs(normCDF(power)*2 - 1) * 1.414;
+  return Math.ceil(Math.pow(zAlpha + zBeta, 2) * 2 / Math.pow(es, 2));
+}
+
+function getESHint(es) {
+  if (es < 0.2) return 'Very small effect';
+  if (es < 0.5) return 'Small effect';
+  if (es < 0.8) return 'Medium effect';
+  return 'Large effect';
+}
+
+// ─── CALC 1 (sidebar) ───
+function updateCalc() {
+  const es = parseFloat(document.getElementById('sl-es').value) / 100;
+  const alpha = parseFloat(document.getElementById('sl-alpha').value);
+  const power = parseFloat(document.getElementById('sl-power').value);
+  const beta = 1 - power;
+  const n = getSampleSize(power, es, alpha);
+
+  document.getElementById('es-val').textContent = es.toFixed(2);
+  document.getElementById('es-hint').textContent = getESHint(es);
+  document.getElementById('r-n').textContent = n.toLocaleString();
+  document.getElementById('r-alpha').textContent = (alpha*100).toFixed(0) + '%';
+  document.getElementById('r-beta').textContent = (beta*100).toFixed(0) + '%';
+  document.getElementById('r-power').textContent = (power*100).toFixed(0) + '%';
+  document.getElementById('r-power-pct').textContent = (power*100).toFixed(0) + '%';
+  document.getElementById('r-alpha-pct').textContent = (alpha*100).toFixed(0) + '%';
+  document.getElementById('r-beta-pct').textContent = (beta*100).toFixed(0) + '%';
+  document.getElementById('bar-power').style.width = (power*100) + '%';
+  document.getElementById('bar-alpha').style.width = Math.min(alpha*100*3, 100) + '%';
+  document.getElementById('bar-beta').style.width = (beta*100) + '%';
+
+  let msg = '';
+  if (power >= 0.9) msg = `<strong>Excellent power.</strong> With a ${getESHint(es).toLowerCase()}, you need ${n.toLocaleString()} participants per group. Very high chance of detecting the effect.`;
+  else if (power >= 0.8) msg = `<strong>Well-powered.</strong> ${n.toLocaleString()} participants per group provides solid power to detect a ${getESHint(es).toLowerCase()}.`;
+  else msg = `<strong>Underpowered.</strong> You have a ${(beta*100).toFixed(0)}% risk of missing the effect. Consider increasing sample size or effect size.`;
+
+  document.getElementById('verdict-box').innerHTML = msg;
+}
+
+// ─── CALC 2 (full page) ───
+function updateCalc2() {
+  const es = parseFloat(document.getElementById('sl-es2').value) / 100;
+  const alpha = parseFloat(document.getElementById('sl-alpha2').value);
+  const power = parseFloat(document.getElementById('sl-power2').value);
+  const beta = 1 - power;
+  const n = getSampleSize(power, es, alpha);
+
+  document.getElementById('es-val2').textContent = es.toFixed(2);
+  document.getElementById('es-hint2').textContent = getESHint(es);
+  document.getElementById('r-n2').textContent = n.toLocaleString();
+  document.getElementById('r-total').textContent = (n*2).toLocaleString();
+  document.getElementById('r-beta2').textContent = (beta*100).toFixed(0) + '%';
+  document.getElementById('r-power2').textContent = (power*100).toFixed(0) + '%';
+
+  let msg = `To detect a <strong>${getESHint(es).toLowerCase()} (d=${es.toFixed(2)})</strong> with <strong>${(power*100).toFixed(0)}% power</strong> and <strong>α=${alpha}</strong>: `;
+  msg += `you need <strong>${n.toLocaleString()} participants per group</strong> (${(n*2).toLocaleString()} total). `;
+  msg += `Type I error risk: ${(alpha*100).toFixed(0)}%. Type II error risk (β): ${(beta*100).toFixed(0)}%.`;
+  document.getElementById('verdict-box2').innerHTML = msg;
+}
+
+// ─── QUIZ ───
+const questions = [
+  {
+    q: "What does p < 0.05 mean?",
+    opts: [
+      "The probability the null hypothesis is true is 5%",
+      "There is less than 5% chance of observing this data if H₀ is true",
+      "There is a 95% chance our hypothesis is correct",
+      "The error rate in the data is less than 5%"
+    ],
+    ans: 1,
+    exp: "p < 0.05 means: if the null hypothesis were true, there is less than 5% chance of observing data this extreme. It does NOT mean H₀ has a 5% probability of being true."
+  },
+  {
+    q: "A researcher sets α = 0.05. What does this control?",
+    opts: [
+      "The probability of missing a real effect",
+      "The maximum acceptable Type II error rate",
+      "The maximum acceptable Type I error rate (false positives)",
+      "The statistical power of the study"
+    ],
+    ans: 2,
+    exp: "α (alpha) directly controls the Type I error rate — the probability of falsely rejecting a true null hypothesis (false positive). Setting α = 0.05 means you accept at most a 5% risk of a false positive."
+  },
+  {
+    q: "Power = 0.80 and β = 0.20 means:",
+    opts: [
+      "80% chance the null hypothesis is false, 20% chance it is true",
+      "80% chance of detecting a real effect, 20% chance of missing it",
+      "80% confidence level with 20% error margin",
+      "p-value will be less than 0.80"
+    ],
+    ans: 1,
+    exp: "Power = 0.80 means an 80% probability of correctly rejecting H₀ when a real effect exists. β = 0.20 is the complementary Type II error — the 20% risk of failing to detect that real effect."
+  },
+  {
+    q: "In power analysis, if you know Effect Size, α, and Power — what do you calculate?",
+    opts: [
+      "p-value",
+      "Confidence interval",
+      "Sample size",
+      "Effect size"
+    ],
+    ans: 2,
+    exp: "Given Effect Size, α (significance level), and Power, you solve for Sample Size — how many participants you need per group to reliably detect the effect. This is the most common power analysis use case."
+  },
+  {
+    q: "You get p = 0.07 with α = 0.05. What is your conclusion?",
+    opts: [
+      "Reject H₀ — there is a 7% error rate",
+      "Fail to reject H₀ — there is insufficient evidence",
+      "Accept H₀ — it is definitely true",
+      "The study has 7% power"
+    ],
+    ans: 1,
+    exp: "p = 0.07 > α = 0.05, so you fail to reject H₀. This does NOT mean H₀ is true, and it does NOT mean there is a 7% error rate. It means the data is not extreme enough to reject the null at the 5% threshold."
+  },
+  {
+    q: "95% confidence interval and p < 0.05 are:",
+    opts: [
+      "Completely unrelated measures",
+      "Two expressions of the same significance threshold",
+      "95% CI is stricter than p < 0.05",
+      "95% CI applies only to sample sizes over 100"
+    ],
+    ans: 1,
+    exp: "95% CI and p < 0.05 both correspond to α = 0.05 — they express the same significance threshold. If a 95% CI excludes the null value (e.g., zero), the p-value will be < 0.05."
+  }
+];
+
+let qIdx = 0, score = 0, answered = false;
+
+function initQuiz() {
+  qIdx = 0; score = 0; answered = false;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  if (qIdx >= questions.length) {
+    document.getElementById('quiz-body').innerHTML = `
+      <div style="text-align:center; padding:2rem;">
+        <div style="font-family:'Fraunces',serif; font-size:3rem; color:var(--accent3); margin-bottom:1rem;">${score}/${questions.length}</div>
+        <p style="font-size:14px; color:var(--ink2); margin-bottom:1.5rem;">${score === questions.length ? 'Perfect score! Excellent understanding.' : score >= 4 ? 'Good work! Review any concepts you missed.' : 'Keep studying — click the Concepts tab to review.'}</p>
+        <button class="quiz-next-btn show" onclick="initQuiz()">Restart Quiz</button>
+      </div>`;
+    return;
+  }
+
+  const q = questions[qIdx];
+  answered = false;
+  document.getElementById('quiz-score').textContent = `${score} / ${qIdx}`;
+
+  let optsHTML = q.opts.map((o, i) =>
+    `<button class="quiz-opt" onclick="answerQ(this, ${i})">${String.fromCharCode(65+i)}. ${o}</button>`
+  ).join('');
+
+  document.getElementById('quiz-body').innerHTML = `
+    <div style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3); margin-bottom:1rem;">Question ${qIdx+1} of ${questions.length}</div>
+    <div class="quiz-q">${q.q}</div>
+    <div class="quiz-options">${optsHTML}</div>
+    <div class="quiz-feedback" id="qfb">${q.exp}</div>
+    <button class="quiz-next-btn" id="qnext" onclick="nextQ()">Next question →</button>
+  `;
+}
+
+function answerQ(btn, idx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[qIdx];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach(o => o.disabled = true);
+  if (idx === q.ans) {
+    btn.classList.add('correct');
+    score++;
+  } else {
+    btn.classList.add('wrong');
+    opts[q.ans].classList.add('correct');
+  }
+  document.getElementById('qfb').classList.add('show');
+  document.getElementById('qnext').classList.add('show');
+}
+
+function nextQ() {
+  qIdx++;
+  renderQuestion();
+}
+
+// ─── AI CHAT ───
+let aiOpen = false;
+const SYSTEM = `You are a statistics tutor helping a data analyst understand p-values, confidence intervals, Type I/II errors, statistical power, and power analysis. 
+
+Keep explanations:
+- Clear and conversational, like we're chatting
+- Use simple analogies and real-world examples  
+- Reference the concepts: p-value, alpha, beta, power, effect size, sample size, Type I/Type II error
+- Keep responses concise (3-5 sentences max unless a detailed example is needed)
+- Use emojis sparingly to make it friendly
+
+The student has been learning through conversation and understands basics. Build on that.`;
+
+const msgs = [];
+
+function toggleAI() {
+  aiOpen = !aiOpen;
+  document.getElementById('ai-panel').classList.toggle('open', aiOpen);
+  document.getElementById('ai-fab').classList.toggle('hidden', aiOpen);
+  if (aiOpen) setTimeout(() => document.getElementById('ai-input').focus(), 300);
+}
+
+function askAI(question, event) {
+  if (event) event.stopPropagation();
+  if (!aiOpen) toggleAI();
+  setTimeout(() => {
+    document.getElementById('ai-input').value = question;
+    sendMsg();
+  }, 350);
+}
+
+async function sendMsg() {
+  const input = document.getElementById('ai-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  document.getElementById('ai-send').disabled = true;
+
+  appendMsg('user', text);
+  msgs.push({ role: 'user', content: text });
+
+  const thinkEl = appendThinking();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM,
+        messages: msgs
+      })
+    });
+
+    const data = await res.json();
+    thinkEl.remove();
+
+    const reply = data.content?.filter(c => c.type === 'text').map(c => c.text).join('') || 'Sorry, I had trouble responding.';
+    msgs.push({ role: 'assistant', content: reply });
+    appendMsg('ai', reply);
+  } catch (e) {
+    thinkEl.remove();
+    appendMsg('ai', 'Connection error. Please try again.');
+  }
+
+  document.getElementById('ai-send').disabled = false;
+  input.focus();
+}
+
+function appendMsg(role, text) {
+  const container = document.getElementById('ai-messages');
+  const div = document.createElement('div');
+  div.className = 'ai-msg' + (role === 'user' ? ' user' : '');
+  div.innerHTML = `
+    <div class="ai-avatar ${role}">${role === 'ai' ? 'C' : 'You'}</div>
+    <div class="ai-bubble">${text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+function appendThinking() {
+  const container = document.getElementById('ai-messages');
+  const div = document.createElement('div');
+  div.className = 'ai-msg';
+  div.innerHTML = `
+    <div class="ai-avatar ai">C</div>
+    <div class="ai-bubble"><div class="ai-thinking"><span></span><span></span><span></span></div></div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+// ─── INIT ───
+updateCalc();
+updateCalc2();
+initQuiz();
+</script>
+</body>
+</html>

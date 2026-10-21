@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confidence Intervals & Python — Interview Prep Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f4f2ee;
+    color: #1a1a1a;
+    padding: 40px 20px;
+    line-height: 1.7;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    background: #111;
+    color: #fff;
+    border-radius: 14px;
+    padding: 36px 40px;
+    margin-bottom: 36px;
+  }
+  .header-tag {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #f0c060;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .header h1 { font-size: 30px; font-weight: 700; margin-bottom: 8px; }
+  .header p { color: #aaa; font-size: 14px; }
+
+  /* TOC */
+  .toc {
+    background: #fff;
+    border: 1px solid #e0dcd5;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 36px;
+  }
+  .toc-title { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #999; font-weight: 600; margin-bottom: 14px; }
+  .toc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toc-item { font-size: 13px; color: #444; display: flex; gap: 8px; align-items: center; }
+  .toc-num { color: #f0c060; font-weight: 700; font-size: 12px; min-width: 20px; }
+
+  /* Sections */
+  .section {
+    background: #fff;
+    border: 1px solid #e0dcd5;
+    border-radius: 14px;
+    padding: 32px 36px;
+    margin-bottom: 24px;
+  }
+  .section-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: #111;
+    color: #f0c060;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .section h2 {
+    font-size: 21px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+  p { font-size: 15px; color: #444; margin-bottom: 14px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* Callout boxes */
+  .callout {
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .callout-yellow { background: #fffbea; border-left: 3px solid #f0c060; color: #5a4a00; }
+  .callout-blue   { background: #eff6ff; border-left: 3px solid #3b82f6; color: #1e3a5f; }
+  .callout-green  { background: #f0fdf4; border-left: 3px solid #22c55e; color: #14532d; }
+  .callout-red    { background: #fef2f2; border-left: 3px solid #ef4444; color: #7f1d1d; }
+  .callout-label  { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; opacity: 0.7; }
+  .callout strong { font-weight: 700; }
+
+  /* Bullet lists */
+  ul { padding-left: 0; list-style: none; margin-bottom: 14px; }
+  ul li { font-size: 15px; color: #444; padding: 5px 0 5px 24px; position: relative; }
+  ul li::before { content: "→"; position: absolute; left: 0; color: #f0c060; font-weight: 700; }
+
+  /* Code blocks */
+  .code-block {
+    background: #1e1e2e;
+    border-radius: 10px;
+    padding: 22px 26px;
+    margin: 16px 0;
+    overflow-x: auto;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    color: #cdd6f4;
+  }
+  .code-block .comment  { color: #6c7086; }
+  .code-block .keyword  { color: #cba6f7; }
+  .code-block .string   { color: #a6e3a1; }
+  .code-block .number   { color: #fab387; }
+  .code-block .func     { color: #89b4fa; }
+  .code-block .output   { color: #f9e2af; }
+  .code-block .section-divider { color: #45475a; border-top: 1px solid #313244; margin: 10px 0; display: block; }
+
+  /* Formula */
+  .formula-box {
+    background: #111;
+    color: #f0ede8;
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    text-align: center;
+    margin: 16px 0;
+    letter-spacing: 0.05em;
+  }
+  .formula-box .hl { color: #f0c060; }
+
+  /* Term grid */
+  .term-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .term-card { background: #f9f7f4; border: 1px solid #e0dcd5; border-radius: 10px; padding: 14px 18px; }
+  .term-symbol { font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700; color: #111; margin-bottom: 4px; }
+  .term-name { font-size: 13px; font-weight: 600; color: #444; }
+  .term-desc { font-size: 12px; color: #777; margin-top: 4px; line-height: 1.5; }
+
+  /* Z table */
+  .z-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+  .z-table th { background: #111; color: #fff; padding: 10px 14px; text-align: left; }
+  .z-table td { padding: 10px 14px; border-bottom: 1px solid #e0dcd5; }
+  .z-table tr:nth-child(even) { background: #f9f7f4; }
+  .z-table .hl-row { background: #fffbea !important; font-weight: 600; }
+
+  /* Decision guide */
+  .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .decision-card { border-radius: 10px; padding: 18px 20px; }
+  .decision-no  { background: #fef2f2; border: 1px solid #fca5a5; }
+  .decision-yes { background: #f0fdf4; border: 1px solid #86efac; }
+  .decision-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .decision-no .decision-title  { color: #dc2626; }
+  .decision-yes .decision-title { color: #16a34a; }
+  .decision-body { font-size: 13px; color: #555; line-height: 1.6; }
+
+  /* Mistakes */
+  .mistake { display: flex; gap: 14px; background: #f9f7f4; border: 1px solid #e0dcd5; border-radius: 10px; padding: 16px 18px; margin-bottom: 10px; align-items: flex-start; }
+  .mistake-icon { font-size: 20px; flex-shrink: 0; }
+  .mistake-title { font-size: 14px; font-weight: 700; color: #111; margin-bottom: 4px; }
+  .mistake-desc { font-size: 13px; color: #555; line-height: 1.5; }
+
+  /* Interpretation comparison */
+  .interp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .interp-card { border-radius: 10px; padding: 18px 20px; }
+  .interp-wrong { background: #fef2f2; border: 1px solid #fca5a5; }
+  .interp-right { background: #f0fdf4; border: 1px solid #86efac; }
+  .interp-label { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .interp-wrong .interp-label { color: #dc2626; }
+  .interp-right .interp-label { color: #16a34a; }
+  .interp-text { font-size: 13px; color: #333; line-height: 1.6; }
+
+  /* P-value bridge */
+  .bridge { display: flex; gap: 0; align-items: stretch; margin: 16px 0; border-radius: 10px; overflow: hidden; border: 1px solid #e0dcd5; }
+  .bridge-left { background: #eff6ff; padding: 18px 20px; flex: 1; }
+  .bridge-mid  { background: #f9f7f4; padding: 18px 16px; display: flex; align-items: center; font-size: 20px; color: #ccc; }
+  .bridge-right { background: #f0fdf4; padding: 18px 20px; flex: 1; }
+  .bridge-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; color: #999; }
+  .bridge-val { font-size: 14px; color: #333; line-height: 1.6; }
+
+  /* Footer */
+  .footer { text-align: center; font-size: 12px; color: #bbb; font-family: 'Courier New', monospace; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0dcd5; }
+
+  @media (max-width: 600px) {
+    .toc-grid, .term-grid, .decision-grid, .interp-grid { grid-template-columns: 1fr; }
+    .bridge { flex-direction: column; }
+    .section { padding: 24px 20px; }
+    .header { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-tag">Google Product Data Scientist — Interview Prep</div>
+    <h1>Confidence Intervals & Python Coding</h1>
+    <p>Simple intuition first. Formula second. Code third. No textbooks, no proofs.</p>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">What's inside</div>
+    <div class="toc-grid">
+      <div class="toc-item"><span class="toc-num">01</span> What is a Confidence Interval?</div>
+      <div class="toc-item"><span class="toc-num">02</span> When to Use CIs</div>
+      <div class="toc-item"><span class="toc-num">03</span> Core Idea — Mean, Std, Sample Size</div>
+      <div class="toc-item"><span class="toc-num">04</span> The Formula (Kept Light)</div>
+      <div class="toc-item"><span class="toc-num">05</span> Python — Single Sample CI</div>
+      <div class="toc-item"><span class="toc-num">06</span> Python — Two Sample Comparison</div>
+      <div class="toc-item"><span class="toc-num">07</span> Python — Visualization</div>
+      <div class="toc-item"><span class="toc-num">08</span> How to Interpret CI</div>
+      <div class="toc-item"><span class="toc-num">09</span> Quick Decision Guide</div>
+      <div class="toc-item"><span class="toc-num">10</span> Common Mistakes</div>
+      <div class="toc-item"><span class="toc-num">11</span> Bonus: CI vs P-Value</div>
+    </div>
+  </div>
+
+  <!-- Section 1 -->
+  <div class="section">
+    <div class="section-badge">Section 01</div>
+    <h2>What is a Confidence Interval? (Simple Intuition)</h2>
+    <p>Imagine you're trying to figure out the average daily sessions per user on Google Play Games. You can't survey every user — so you take a sample of 1,000 users and compute the average.</p>
+    <p>But here's the thing: if you ran this same experiment 100 times with different random samples, you'd get 100 slightly different averages every time. A <strong>confidence interval</strong> is just a range that says: <em>"Most of those averages would land somewhere in here."</em></p>
+
+    <div class="callout callout-yellow">
+      <div class="callout-label">One-liner intuition</div>
+      A 95% confidence interval means: if I repeat this experiment 100 times, about 95 of those intervals will contain the true average. It's a measure of <strong>how trustworthy your estimate is</strong>, not a guarantee.
+    </div>
+
+    <p>Think of it like a weather forecast. The meteorologist doesn't say "it will be exactly 28°C tomorrow." They say "between 26°C and 30°C." The CI is your range of reasonable estimates.</p>
+  </div>
+
+  <!-- Section 2 -->
+  <div class="section">
+    <div class="section-badge">Section 02</div>
+    <h2>When Should You Use Confidence Intervals?</h2>
+    <ul>
+      <li><strong>A/B testing</strong> — Did the treatment group actually perform better, or was it just noise?</li>
+      <li><strong>Estimating averages</strong> — What's the true average revenue per user, CTR, or session length?</li>
+      <li><strong>Comparing two groups</strong> — Is the difference between control and treatment meaningful?</li>
+      <li><strong>Survey results</strong> — "User satisfaction score is 4.2" — but how confident are we in that number?</li>
+      <li><strong>Business metrics</strong> — Reporting DAU, ARPU, or retention with a reliable range, not just a point estimate.</li>
+    </ul>
+
+    <div class="callout callout-blue">
+      <div class="callout-label">Real-world example — Google Play Games</div>
+      You launch personalised game recommendations and observe that average daily sessions increased from 3.2 to 3.4. Your manager wants to ship it. Before saying yes, you compute a 95% CI for the difference: <strong>[−0.05, +0.45]</strong>. Since the interval includes 0, the lift might just be noise. You should not ship yet.
+    </div>
+  </div>
+
+  <!-- Section 3 -->
+  <div class="section">
+    <div class="section-badge">Section 03</div>
+    <h2>Core Idea — Mean, Variability & Sample Size</h2>
+    <p>Three things control how wide your confidence interval is:</p>
+
+    <div class="term-grid">
+      <div class="term-card">
+        <div class="term-symbol">x̄ (mean)</div>
+        <div class="term-name">Your best guess</div>
+        <div class="term-desc">The average from your sample. The CI is centered here. Doesn't affect width — only position.</div>
+      </div>
+      <div class="term-card">
+        <div class="term-symbol">σ (std)</div>
+        <div class="term-name">How spread out the data is</div>
+        <div class="term-desc">High spread = wide CI. If users are very different from each other, your estimate is less reliable.</div>
+      </div>
+      <div class="term-card">
+        <div class="term-symbol">n (sample size)</div>
+        <div class="term-name">How many observations</div>
+        <div class="term-desc">More data = tighter CI. With 10,000 users you're much more confident than with 100.</div>
+      </div>
+      <div class="term-card">
+        <div class="term-symbol">Z (confidence level)</div>
+        <div class="term-name">How confident you want to be</div>
+        <div class="term-desc">95% → Z = 1.96. Higher confidence = wider interval. You're casting a bigger net to be more sure.</div>
+      </div>
+    </div>
+
+    <div class="callout callout-green" style="margin-top: 16px;">
+      <div class="callout-label">Why larger sample = tighter interval</div>
+      The formula divides std by √n. So as n grows, the denominator gets bigger, making the whole margin of error smaller. 10× more data → ~3× tighter interval (√10 ≈ 3.16). This is why Google runs experiments on millions of users — it makes small effects detectable.
+    </div>
+  </div>
+
+  <!-- Section 4 -->
+  <div class="section">
+    <div class="section-badge">Section 04</div>
+    <h2>The Formula (Kept Light)</h2>
+
+    <div class="formula-box">
+      CI &nbsp;=&nbsp; <span class="hl">x̄</span> &nbsp;±&nbsp; <span class="hl">Z</span> &nbsp;×&nbsp; ( <span class="hl">σ</span> &nbsp;/&nbsp; √<span class="hl">n</span> )
+    </div>
+
+    <p>Each piece in plain English:</p>
+    <ul>
+      <li><strong>x̄ (mean)</strong> — Your sample average. The center of the interval.</li>
+      <li><strong>Z</strong> — How many standard deviations wide you want to go. Depends on your confidence level.</li>
+      <li><strong>σ (std)</strong> — How spread out your data is. More spread = wider interval.</li>
+      <li><strong>n</strong> — Sample size. More data = smaller margin of error.</li>
+      <li><strong>σ / √n</strong> — This piece is called the <em>standard error</em>. It's how much the sample mean can wiggle around the true mean.</li>
+    </ul>
+
+    <p style="margin-top: 8px;">Common Z-values to remember:</p>
+    <table class="z-table">
+      <thead><tr><th>Confidence Level</th><th>Z-value</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td>90%</td><td>1.645</td><td>90 out of 100 intervals will contain the true value</td></tr>
+        <tr class="hl-row"><td>95% ← most common</td><td>1.96</td><td>95 out of 100 intervals will contain the true value</td></tr>
+        <tr><td>99%</td><td>2.576</td><td>99 out of 100 intervals will contain the true value</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Section 5 -->
+  <div class="section">
+    <div class="section-badge">Section 05</div>
+    <h2>Python Code — Single Sample CI</h2>
+    <p>Scenario: You've collected daily session counts for 200 users. You want to estimate the true average with a 95% confidence interval.</p>
+
+    <div class="code-block">
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> scipy <span class="keyword">import</span> stats
+
+<span class="comment"># --- Step 1: Generate sample data (or load your real data) ---</span>
+np.random.seed(<span class="number">42</span>)
+data = np.random.normal(loc=<span class="number">3.2</span>, scale=<span class="number">1.5</span>, size=<span class="number">200</span>)
+<span class="comment"># loc = true mean (3.2 sessions/day), scale = std, size = 200 users</span>
+
+<span class="comment"># --- Step 2: Compute basic stats ---</span>
+n     = <span class="func">len</span>(data)
+mean  = np.<span class="func">mean</span>(data)
+std   = np.<span class="func">std</span>(data, ddof=<span class="number">1</span>)   <span class="comment"># ddof=1 for sample std (not population)</span>
+
+<span class="comment"># --- Step 3: Compute 95% Confidence Interval ---</span>
+confidence = <span class="number">0.95</span>
+ci_low, ci_high = stats.t.<span class="func">interval</span>(
+    confidence,           <span class="comment"># confidence level</span>
+    df=n - <span class="number">1</span>,            <span class="comment"># degrees of freedom</span>
+    loc=mean,             <span class="comment"># center of interval</span>
+    scale=stats.<span class="func">sem</span>(data) <span class="comment"># standard error of the mean</span>
+)
+
+<span class="comment"># --- Step 4: Print results ---</span>
+<span class="func">print</span>(<span class="string">f"Sample size  : {n}"</span>)
+<span class="func">print</span>(<span class="string">f"Mean         : {mean:.2f}"</span>)
+<span class="func">print</span>(<span class="string">f"Std Dev      : {std:.2f}"</span>)
+<span class="func">print</span>(<span class="string">f"95% CI       : ({ci_low:.2f}, {ci_high:.2f})"</span>)
+
+<span class="comment"># --- Expected Output ---</span>
+<span class="output"># Sample size  : 200</span>
+<span class="output"># Mean         : 3.18</span>
+<span class="output"># Std Dev      : 1.49</span>
+<span class="output"># 95% CI       : (2.97, 3.39)</span>
+    </div>
+
+    <div class="callout callout-yellow">
+      <div class="callout-label">Why t-interval and not z-interval?</div>
+      We use <strong>scipy.stats.t.interval</strong> (t-distribution) instead of z because in practice we don't know the true population std — we estimate it from the sample. The t-distribution accounts for this uncertainty. For large samples (n &gt; 30), t and z give nearly identical results anyway.
+    </div>
+  </div>
+
+  <!-- Section 6 -->
+  <div class="section">
+    <div class="section-badge">Section 06</div>
+    <h2>Python Code — Two Sample Comparison (A/B Test)</h2>
+    <p>Scenario: You ran an A/B test. You want to compare control vs treatment and compute a CI for the <em>difference in means</em>.</p>
+
+    <div class="code-block">
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> scipy <span class="keyword">import</span> stats
+
+<span class="comment"># --- Step 1: Simulate control and treatment data ---</span>
+np.random.seed(<span class="number">42</span>)
+control   = np.random.normal(loc=<span class="number">3.2</span>, scale=<span class="number">1.5</span>, size=<span class="number">1000</span>)
+treatment = np.random.normal(loc=<span class="number">3.5</span>, scale=<span class="number">1.6</span>, size=<span class="number">1000</span>)
+
+<span class="comment"># --- Step 2: Compute means and difference ---</span>
+mean_control   = np.<span class="func">mean</span>(control)
+mean_treatment = np.<span class="func">mean</span>(treatment)
+diff           = mean_treatment - mean_control
+
+<span class="comment"># --- Step 3: Compute CI for the difference using Welch's t-test ---</span>
+t_stat, p_value = stats.<span class="func">ttest_ind</span>(treatment, control, equal_var=<span class="keyword">False</span>)
+
+<span class="comment"># Manual CI for difference in means</span>
+se = np.<span class="func">sqrt</span>(
+    np.<span class="func">var</span>(treatment, ddof=<span class="number">1</span>) / <span class="func">len</span>(treatment) +
+    np.<span class="func">var</span>(control,   ddof=<span class="number">1</span>) / <span class="func">len</span>(control)
+)
+z = <span class="number">1.96</span>   <span class="comment"># for 95% CI</span>
+ci_low  = diff - z * se
+ci_high = diff + z * se
+
+<span class="comment"># --- Step 4: Print results ---</span>
+<span class="func">print</span>(<span class="string">f"Control mean    : {mean_control:.3f}"</span>)
+<span class="func">print</span>(<span class="string">f"Treatment mean  : {mean_treatment:.3f}"</span>)
+<span class="func">print</span>(<span class="string">f"Difference      : {diff:.3f}"</span>)
+<span class="func">print</span>(<span class="string">f"95% CI (diff)   : ({ci_low:.3f}, {ci_high:.3f})"</span>)
+<span class="func">print</span>(<span class="string">f"P-value         : {p_value:.4f}"</span>)
+
+<span class="comment"># --- Expected Output ---</span>
+<span class="output"># Control mean    : 3.193</span>
+<span class="output"># Treatment mean  : 3.482</span>
+<span class="output"># Difference      : 0.289</span>
+<span class="output"># 95% CI (diff)   : (0.157, 0.421)</span>
+<span class="output"># P-value         : 0.0001</span>
+
+<span class="comment"># --- Step 5: Decision ---</span>
+<span class="keyword">if</span> ci_low &gt; <span class="number">0</span>:
+    <span class="func">print</span>(<span class="string">"CI does not include 0 → statistically significant lift!"</span>)
+<span class="keyword">else</span>:
+    <span class="func">print</span>(<span class="string">"CI includes 0 → lift may just be noise. Do not ship yet."</span>)
+    </div>
+
+    <div class="callout callout-blue">
+      <div class="callout-label">Why equal_var=False?</div>
+      This uses <strong>Welch's t-test</strong>, which doesn't assume the two groups have equal variance. Always prefer this in real A/B tests — you rarely know if variances are equal, and Welch handles both cases safely.
+    </div>
+  </div>
+
+  <!-- Section 7 -->
+  <div class="section">
+    <div class="section-badge">Section 07</div>
+    <h2>Python Code — Visualization</h2>
+    <p>Two charts: a histogram showing the data distribution with CI marked, and an error bar chart comparing control vs treatment.</p>
+
+    <div class="code-block">
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+<span class="keyword">from</span> scipy <span class="keyword">import</span> stats
+
+np.random.seed(<span class="number">42</span>)
+control   = np.random.normal(<span class="number">3.2</span>, <span class="number">1.5</span>, <span class="number">1000</span>)
+treatment = np.random.normal(<span class="number">3.5</span>, <span class="number">1.6</span>, <span class="number">1000</span>)
+
+fig, (ax1, ax2) = plt.<span class="func">subplots</span>(<span class="number">1</span>, <span class="number">2</span>, figsize=(<span class="number">12</span>, <span class="number">5</span>))
+
+<span class="comment"># --- Chart 1: Histogram with CI ---</span>
+mean_c = np.<span class="func">mean</span>(control)
+ci_c   = stats.t.<span class="func">interval</span>(<span class="number">0.95</span>, df=<span class="func">len</span>(control)-<span class="number">1</span>,
+                            loc=mean_c, scale=stats.<span class="func">sem</span>(control))
+
+ax1.<span class="func">hist</span>(control, bins=<span class="number">40</span>, color=<span class="string">'steelblue'</span>, alpha=<span class="number">0.7</span>, edgecolor=<span class="string">'white'</span>)
+ax1.<span class="func">axvline</span>(mean_c,    color=<span class="string">'black'</span>,  lw=<span class="number">2</span>,   label=<span class="string">f'Mean: {mean_c:.2f}'</span>)
+ax1.<span class="func">axvline</span>(ci_c[<span class="number">0</span>], color=<span class="string">'crimson'</span>, lw=<span class="number">1.5</span>, linestyle=<span class="string">'--'</span>, label=<span class="string">f'95% CI: ({ci_c[0]:.2f}, {ci_c[1]:.2f})'</span>)
+ax1.<span class="func">axvline</span>(ci_c[<span class="number">1</span>], color=<span class="string">'crimson'</span>, lw=<span class="number">1.5</span>, linestyle=<span class="string">'--'</span>)
+ax1.<span class="func">set_title</span>(<span class="string">'Control: Distribution + 95% CI'</span>)
+ax1.<span class="func">set_xlabel</span>(<span class="string">'Daily Sessions'</span>)
+ax1.<span class="func">set_ylabel</span>(<span class="string">'Count'</span>)
+ax1.<span class="func">legend</span>()
+
+<span class="comment"># --- Chart 2: Error bars comparing control vs treatment ---</span>
+groups  = [<span class="string">'Control'</span>, <span class="string">'Treatment'</span>]
+means   = [np.<span class="func">mean</span>(control), np.<span class="func">mean</span>(treatment)]
+errors  = [<span class="number">1.96</span> * stats.<span class="func">sem</span>(control), <span class="number">1.96</span> * stats.<span class="func">sem</span>(treatment)]
+colors  = [<span class="string">'steelblue'</span>, <span class="string">'darkorange'</span>]
+
+ax2.<span class="func">bar</span>(groups, means, color=colors, alpha=<span class="number">0.8</span>, edgecolor=<span class="string">'white'</span>, width=<span class="number">0.5</span>)
+ax2.<span class="func">errorbar</span>(groups, means, yerr=errors, fmt=<span class="string">'none'</span>, color=<span class="string">'black'</span>, capsize=<span class="number">8</span>, lw=<span class="number">2</span>)
+ax2.<span class="func">set_title</span>(<span class="string">'Control vs Treatment — Mean ± 95% CI'</span>)
+ax2.<span class="func">set_ylabel</span>(<span class="string">'Mean Daily Sessions'</span>)
+ax2.<span class="func">set_ylim</span>(<span class="number">0</span>, <span class="number">4.5</span>)
+
+plt.<span class="func">tight_layout</span>()
+plt.<span class="func">savefig</span>(<span class="string">'ci_plot.png'</span>, dpi=<span class="number">120</span>, bbox_inches=<span class="string">'tight'</span>)
+plt.<span class="func">show</span>()
+    </div>
+
+    <div class="callout callout-green">
+      <div class="callout-label">What to look for in the error bar chart</div>
+      If the error bars of control and treatment <strong>do not overlap</strong>, the difference is likely statistically significant. If they overlap substantially, you probably have no significant effect. This is a quick visual gut-check before running the formal t-test.
+    </div>
+  </div>
+
+  <!-- Section 8 -->
+  <div class="section">
+    <div class="section-badge">Section 08</div>
+    <h2>How to Interpret a CI — Very Important</h2>
+    <p>This is where most people get it wrong — including in interviews. Let's fix it.</p>
+
+    <div class="interp-grid">
+      <div class="interp-card interp-wrong">
+        <div class="interp-label">❌ Wrong interpretation</div>
+        <div class="interp-text">"There is a 95% probability that the true mean lies between 2.97 and 3.39."<br><br>This sounds right but it's incorrect. The true mean is fixed — it either is or isn't in this interval. Probability doesn't apply to a fixed unknown value.</div>
+      </div>
+      <div class="interp-card interp-right">
+        <div class="interp-label">✅ Correct interpretation</div>
+        <div class="interp-text">"If I repeated this experiment 100 times and built a CI each time, about 95 of those intervals would contain the true mean."<br><br>The randomness is in the <em>intervals</em>, not in the true value. This specific interval either contains the true mean or it doesn't — we just don't know which.</div>
+      </div>
+    </div>
+
+    <div class="callout callout-yellow" style="margin-top: 16px;">
+      <div class="callout-label">In a Google interview</div>
+      If asked to interpret a CI, say: <strong>"This interval was constructed using a method that captures the true value 95% of the time across repeated samples. For this specific sample, the estimate is [X, Y]."</strong> This shows you understand the frequentist definition properly.
+    </div>
+
+    <p style="margin-top: 16px;">Also remember: a <strong>wider CI</strong> means less certainty (small sample or high variance). A <strong>narrower CI</strong> means more certainty. A CI that's very wide is a signal to collect more data before making decisions.</p>
+  </div>
+
+  <!-- Section 9 -->
+  <div class="section">
+    <div class="section-badge">Section 09</div>
+    <h2>Quick Decision Guide</h2>
+    <p>The most common practical use of CI in product analytics is deciding whether an observed effect is real. Here's a simple rule:</p>
+
+    <div class="decision-grid">
+      <div class="decision-card decision-no">
+        <div class="decision-title">CI includes 0 → No strong effect</div>
+        <div class="decision-body">Example: CI for lift = [−0.05, +0.45]. Since 0 is inside the range, the true lift might be zero. The observed difference could just be random noise. <strong>Do not ship. Collect more data.</strong></div>
+      </div>
+      <div class="decision-card decision-yes">
+        <div class="decision-title">CI excludes 0 → Likely real effect</div>
+        <div class="decision-body">Example: CI for lift = [+0.15, +0.42]. Since 0 is not in the range, you're 95% confident the treatment has a positive effect. <strong>Consider shipping, check practical significance too.</strong></div>
+      </div>
+    </div>
+
+    <div class="callout callout-blue" style="margin-top: 16px;">
+      <div class="callout-label">A/B Test example — Google Play Games</div>
+      You tested personalised recommendations. Difference in avg daily sessions = +0.29. 95% CI = [+0.16, +0.42].
+      Since the entire interval is above 0, you're confident the feature helps. Now check: is +0.29 sessions/day meaningful for the business? Multiply by your user base and revenue per session. If yes — ship it.
+    </div>
+  </div>
+
+  <!-- Section 10 -->
+  <div class="section">
+    <div class="section-badge">Section 10</div>
+    <h2>Common Mistakes to Avoid</h2>
+
+    <div class="mistake">
+      <div class="mistake-icon">⚠️</div>
+      <div>
+        <div class="mistake-title">Small sample size</div>
+        <div class="mistake-desc">With n = 50, your CI will be very wide and unreliable. Always check if your experiment is powered enough before drawing conclusions. At Google scale, this is rarely a problem — but always verify.</div>
+      </div>
+    </div>
+    <div class="mistake">
+      <div class="mistake-icon">⚠️</div>
+      <div>
+        <div class="mistake-title">Ignoring variance</div>
+        <div class="mistake-desc">Two groups can have the same mean but wildly different spreads. Always look at std and CI width, not just the point estimate. High variance = unreliable estimate even with a large sample.</div>
+      </div>
+    </div>
+    <div class="mistake">
+      <div class="mistake-icon">⚠️</div>
+      <div>
+        <div class="mistake-title">Misinterpreting "95% probability"</div>
+        <div class="mistake-desc">The 95% refers to the method, not this specific interval. This interval either contains the true value or it doesn't — we just don't know. Don't say "there's a 95% chance the true value is in here."</div>
+      </div>
+    </div>
+    <div class="mistake">
+      <div class="mistake-icon">⚠️</div>
+      <div>
+        <div class="mistake-title">Confusing statistical and practical significance</div>
+        <div class="mistake-desc">A CI that excludes 0 means the effect is statistically significant — but is it large enough to matter? A +0.001 increase in sessions/day might be statistically significant with 10M users but completely irrelevant for the business.</div>
+      </div>
+    </div>
+    <div class="mistake">
+      <div class="mistake-icon">⚠️</div>
+      <div>
+        <div class="mistake-title">Peeking at results early</div>
+        <div class="mistake-desc">If you check your experiment every day and stop as soon as CI excludes 0, you massively inflate your false positive rate. Decide the experiment duration upfront and stick to it.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 11 -->
+  <div class="section">
+    <div class="section-badge">Section 11 — Bonus</div>
+    <h2>Relation to P-Value</h2>
+    <p>CI and p-values are two sides of the same coin. Here's the bridge:</p>
+
+    <div class="bridge">
+      <div class="bridge-left">
+        <div class="bridge-label">Confidence Interval says</div>
+        <div class="bridge-val">95% CI for the difference = [+0.16, +0.42]<br>→ Does not include 0</div>
+      </div>
+      <div class="bridge-mid">⟺</div>
+      <div class="bridge-right">
+        <div class="bridge-label">P-Value says</div>
+        <div class="bridge-val">p-value &lt; 0.05<br>→ Statistically significant</div>
+      </div>
+    </div>
+
+    <ul style="margin-top: 16px;">
+      <li>If 95% CI <strong>excludes 0</strong> → p-value &lt; 0.05 → statistically significant</li>
+      <li>If 95% CI <strong>includes 0</strong> → p-value ≥ 0.05 → not statistically significant</li>
+      <li>CI gives you <strong>more information</strong> — it tells you the direction and magnitude of the effect, not just whether it's significant</li>
+    </ul>
+
+    <div class="callout callout-green" style="margin-top: 16px;">
+      <div class="callout-label">Preferred in interviews</div>
+      Always prefer reporting CI over just p-values. A CI tells your stakeholder <strong>how big</strong> the effect is and <strong>how uncertain</strong> you are. A p-value alone just says "yes/no." Google cares about business impact — so always quantify the range of plausible effects.
+    </div>
+  </div>
+
+  <div class="footer">Google Product Data Scientist Interview Prep — Nihal R &nbsp;|&nbsp; Confidence Intervals & Python Coding</div>
+
+</div>
+</body>
+</html>
