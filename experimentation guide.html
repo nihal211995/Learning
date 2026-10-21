@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Experimentation &amp; Causal Inference — Field Guide</title>
+<style>
+:root{
+  --bg:#0C1016; --panel:#131A23; --panel2:#1A2330; --panel3:#202B3A;
+  --border:#27313F; --border2:#33404F;
+  --text:#E8EEF5; --muted:#8FA0B3; --faint:#5E6E80;
+  --acc:#45C4D6; --acc-dim:rgba(69,196,214,.12);
+  --vio:#9B8CFF; --vio-dim:rgba(155,140,255,.13);
+  --good:#3FB950; --good-dim:rgba(63,185,80,.13);
+  --warn:#E0A82E; --warn-dim:rgba(224,168,46,.13);
+  --bad:#F2555A;  --bad-dim:rgba(242,85,90,.12);
+  --ctl:#7E8FA3;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --rad:8px; --rad-sm:6px;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+html[data-theme="light"]{
+  --bg:#EFF3F7; --panel:#FFFFFF; --panel2:#F0F4F8; --panel3:#E4EAF1;
+  --border:#D4DCE5; --border2:#C2CCD8;
+  --text:#17222E; --muted:#5C6C7E; --faint:#8B99A9;
+  --acc:#0B84A8; --acc-dim:rgba(11,132,168,.10);
+  --vio:#6753E3; --vio-dim:rgba(103,83,227,.10);
+  --good:#1F8E47; --good-dim:rgba(31,142,71,.11);
+  --warn:#A1730F; --warn-dim:rgba(161,115,15,.12);
+  --bad:#CE3640;  --bad-dim:rgba(206,54,64,.10);
+  --ctl:#64748B;
+  --shadow:0 1px 3px rgba(20,35,50,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:var(--sans); font-size:14.5px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--acc-dim)}
+
+/* ---------- Layout ---------- */
+.app{display:grid;grid-template-columns:264px 1fr;min-height:100vh}
+.sidebar{
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  background:var(--panel);border-right:1px solid var(--border);
+  padding:18px 14px 32px;scrollbar-width:thin;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 14px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.brand-mark{
+  width:30px;height:30px;border-radius:7px;flex:none;
+  background:linear-gradient(135deg,var(--acc),var(--vio));
+  display:grid;place-items:center;font-family:var(--mono);
+  font-weight:700;font-size:13px;color:#0B1117;
+}
+.brand-name{font-weight:700;font-size:13.5px;letter-spacing:.2px;line-height:1.25}
+.brand-sub{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.nav a{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 8px;border-radius:var(--rad-sm);
+  color:var(--muted);text-decoration:none;font-size:13px;
+}
+.nav a:hover{background:var(--panel2);color:var(--text)}
+.nav a.active{background:var(--acc-dim);color:var(--text)}
+.nav a.active .snum{background:var(--acc);color:#0B1117;border-color:transparent}
+.snum{
+  font-family:var(--mono);font-size:10px;flex:none;width:28px;height:18px;
+  display:grid;place-items:center;border:1px solid var(--border2);
+  border-radius:4px;color:var(--muted);
+}
+.nav-depth{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--faint)}
+.nav a.active .nav-depth{color:var(--acc)}
+
+/* ---------- Topbar ---------- */
+.main{min-width:0}
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;
+  padding:10px 22px;background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--border);
+}
+.menu-btn{display:none}
+.searchwrap{position:relative;flex:1;max-width:430px}
+.searchwrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.55}
+#search{
+  width:100%;padding:7px 10px 7px 32px;border-radius:var(--rad-sm);
+  border:1px solid var(--border2);background:var(--panel);color:var(--text);
+  font-family:var(--mono);font-size:12.5px;outline:none;
+}
+#search:focus{border-color:var(--acc)}
+#search-count{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.tb-spacer{flex:1}
+.iconbtn{
+  border:1px solid var(--border2);background:var(--panel);color:var(--text);
+  border-radius:var(--rad-sm);padding:6px 10px;cursor:pointer;
+  font-family:var(--mono);font-size:11.5px;display:flex;align-items:center;gap:6px;
+}
+.iconbtn:hover{border-color:var(--acc)}
+.iconbtn:focus-visible,#search:focus-visible,.nav a:focus-visible,
+.dt-opt:focus-visible,summary:focus-visible,.minibtn:focus-visible{
+  outline:2px solid var(--acc);outline-offset:2px;
+}
+
+/* ---------- Content ---------- */
+.content{max-width:920px;margin:0 auto;padding:26px 26px 90px}
+.hero{
+  border:1px solid var(--border);border-radius:12px;background:
+  linear-gradient(180deg,var(--panel) 0%,var(--bg) 130%);
+  padding:26px 26px 22px;margin-bottom:30px;position:relative;overflow:hidden;
+}
+.hero::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+   linear-gradient(var(--border) 1px,transparent 1px) 0 0/100% 28px,
+   linear-gradient(90deg,var(--border) 1px,transparent 1px) 0 0/28px 100%;
+  opacity:.18;mask-image:linear-gradient(120deg,transparent 45%,#000 100%);
+  -webkit-mask-image:linear-gradient(120deg,transparent 45%,#000 100%);
+}
+.hero h1{font-size:25px;line-height:1.25;letter-spacing:-.01em;margin:6px 0 8px}
+.hero p{color:var(--muted);max-width:62ch}
+.hero-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.eyebrow{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--acc);
+}
+.section{margin-bottom:46px;scroll-margin-top:64px}
+.sec-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:16px}
+.sec-head h2{font-size:19px;letter-spacing:-.01em}
+.sec-id{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.sec-tools{margin-left:auto;display:flex;gap:6px}
+.minibtn{
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:5px;cursor:pointer;
+}
+.minibtn:hover{color:var(--text);border-color:var(--border2)}
+.lede{color:var(--muted);margin-bottom:14px;max-width:72ch}
+h3.sub{font-size:14px;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+h3.sub::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--acc);flex:none}
+
+/* ---------- Chips ---------- */
+.chip{
+  display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);
+  font-size:10px;letter-spacing:.06em;padding:2.5px 8px;border-radius:99px;
+  border:1px solid var(--border2);color:var(--muted);text-transform:uppercase;white-space:nowrap;
+}
+.chip.acc{color:var(--acc);border-color:var(--acc);background:var(--acc-dim)}
+.chip.vio{color:var(--vio);border-color:var(--vio);background:var(--vio-dim)}
+.chip.good{color:var(--good);border-color:var(--good);background:var(--good-dim)}
+.chip.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-dim)}
+.chip.bad{color:var(--bad);border-color:var(--bad);background:var(--bad-dim)}
+
+/* ---------- Topic cards (collapsible) ---------- */
+.topic,.method,.case{
+  border:1px solid var(--border);border-radius:var(--rad);
+  background:var(--panel);margin-bottom:9px;box-shadow:var(--shadow);
+  overflow:hidden;
+}
+summary{
+  list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;
+  padding:11px 14px;font-weight:600;font-size:13.5px;
+}
+summary::-webkit-details-marker{display:none}
+summary .arrow{
+  flex:none;width:16px;height:16px;color:var(--faint);
+  transition:transform .15s ease;
+}
+@media(prefers-reduced-motion:reduce){summary .arrow{transition:none}}
+details[open]>summary .arrow{transform:rotate(90deg);color:var(--acc)}
+details[open]>summary{border-bottom:1px solid var(--border)}
+summary .t-tag{margin-left:auto}
+.t-body{padding:13px 15px 15px;font-size:13.5px}
+.t-body p{margin-bottom:9px;color:var(--text)}
+.t-body p:last-child{margin-bottom:0}
+.ex,.kt,.note{
+  border-left:3px solid var(--border2);border-radius:0 var(--rad-sm) var(--rad-sm) 0;
+  background:var(--panel2);padding:8px 11px;margin:9px 0;font-size:13px;
+}
+.ex{border-left-color:var(--vio)}
+.kt{border-left-color:var(--good)}
+.note{border-left-color:var(--warn)}
+.lbl{
+  display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:3px;
+}
+.ex .lbl{color:var(--vio)} .kt .lbl{color:var(--good)} .note .lbl{color:var(--warn)}
+
+/* ---------- Deep method cards ---------- */
+.method>summary{font-size:14px}
+.m-body{padding:14px 16px 16px}
+.m-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:11px 0}
+.m-cell{border:1px solid var(--border);border-radius:var(--rad-sm);background:var(--panel2);padding:10px 12px;font-size:13px}
+.m-cell ul{margin:4px 0 0 16px}
+.m-cell li{margin-bottom:4px}
+.m-cell.pros{border-color:color-mix(in srgb,var(--good) 40%,var(--border))}
+.m-cell.cons{border-color:color-mix(in srgb,var(--bad) 40%,var(--border))}
+.m-cell.pros .lbl{color:var(--good)} .m-cell.cons .lbl{color:var(--bad)}
+
+/* ---------- Tables ---------- */
+.tblwrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--rad);margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--panel)}
+th{
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:9px 12px;background:var(--panel2);
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td b{color:var(--text)}
+.heat td{text-align:center;font-family:var(--mono);font-size:11.5px}
+.heat td:first-child{text-align:left;font-family:var(--sans);font-weight:600}
+
+/* ---------- Formulas ---------- */
+.formula{
+  display:block;font-family:var(--mono);font-size:13.5px;
+  background:var(--panel2);border:1px solid var(--border);border-radius:var(--rad-sm);
+  padding:12px 14px;margin:10px 0;overflow-x:auto;color:var(--text);
+}
+.formula .fv{color:var(--acc)} .formula .fc{color:var(--muted);font-size:11.5px}
+
+/* ---------- Diagrams ---------- */
+.diagram{
+  border:1px solid var(--border);border-radius:var(--rad);background:var(--panel);
+  padding:14px;margin:12px 0;overflow-x:auto;
+}
+.diagram .cap{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.diagram svg{display:block;max-width:100%;height:auto;margin:0 auto}
+svg .nd{fill:var(--panel2);stroke:var(--border2);stroke-width:1.2}
+svg .nd-acc{fill:var(--acc-dim);stroke:var(--acc)}
+svg .nd-vio{fill:var(--vio-dim);stroke:var(--vio)}
+svg .nd-good{fill:var(--good-dim);stroke:var(--good)}
+svg .nd-warn{fill:var(--warn-dim);stroke:var(--warn)}
+svg .nd-bad{fill:var(--bad-dim);stroke:var(--bad)}
+svg .ln{stroke:var(--faint);stroke-width:1.3;fill:none}
+svg .ln-dash{stroke-dasharray:4 4}
+svg .tx{fill:var(--text);font-family:var(--sans);font-size:11.5px}
+svg .tx-m{fill:var(--muted);font-family:var(--mono);font-size:9.5px;letter-spacing:.05em}
+svg .tx-s{fill:var(--muted);font-family:var(--sans);font-size:10px}
+
+/* ---------- Decision tree walker ---------- */
+.dtree{
+  border:1px solid var(--acc);border-radius:10px;background:var(--panel);
+  padding:18px;margin:14px 0;box-shadow:0 0 0 4px var(--acc-dim);
+}
+.dt-q{font-size:15.5px;font-weight:700;margin:8px 0 14px}
+.dt-opts{display:grid;gap:8px}
+.dt-opt{
+  text-align:left;border:1px solid var(--border2);background:var(--panel2);
+  color:var(--text);padding:10px 13px;border-radius:var(--rad-sm);cursor:pointer;
+  font-size:13.5px;font-family:var(--sans);display:flex;align-items:center;gap:10px;
+}
+.dt-opt:hover{border-color:var(--acc);background:var(--acc-dim)}
+.dt-opt .k{font-family:var(--mono);font-size:10px;color:var(--acc);flex:none;border:1px solid var(--acc);border-radius:4px;width:18px;height:18px;display:grid;place-items:center}
+.dt-crumbs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;min-height:22px}
+.dt-crumb{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:2px 8px}
+.dt-result{border:1px solid var(--good);background:var(--good-dim);border-radius:var(--rad-sm);padding:14px}
+.dt-result h4{font-size:15px;margin-bottom:6px;color:var(--good)}
+.dt-result p{font-size:13px;margin-bottom:10px}
+.dt-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+
+/* ---------- Misc ---------- */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:9px;margin:12px 0}
+.kcard{border:1px solid var(--border);border-radius:var(--rad-sm);background:var(--panel);padding:11px 13px;font-size:12.5px}
+.kcard .kh{font-weight:700;font-size:12.5px;margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.kcard p{color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:99px;flex:none}
+.footer{border-top:1px solid var(--border);margin-top:50px;padding-top:16px;color:var(--faint);font-size:12px;font-family:var(--mono)}
+mark{background:var(--warn-dim);color:var(--warn);border-radius:3px;padding:0 2px}
+.hidden{display:none!important}
+.sec-hidden{display:none!important}
+a.inline{color:var(--acc);text-decoration:none;border-bottom:1px dotted var(--acc)}
+kbd{font-family:var(--mono);font-size:10.5px;border:1px solid var(--border2);border-bottom-width:2px;border-radius:4px;padding:1px 5px;background:var(--panel2)}
+
+/* ---------- Responsive ---------- */
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .sidebar{
+    position:fixed;left:0;top:0;z-index:100;width:272px;
+    transform:translateX(-100%);transition:transform .2s ease;
+    box-shadow:8px 0 30px rgba(0,0,0,.35);
+  }
+  @media(prefers-reduced-motion:reduce){.sidebar{transition:none}}
+  body.nav-open .sidebar{transform:translateX(0)}
+  .menu-btn{display:flex}
+  .content{padding:20px 16px 70px}
+  .m-grid{grid-template-columns:1fr}
+  body.nav-open::after{content:"";position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:90}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-mark">Δ</div>
+    <div>
+      <div class="brand-name">Experimentation Field Guide</div>
+      <div class="brand-sub">Causal Methods Console</div>
+    </div>
+  </div>
+  <nav class="nav" id="nav">
+    <a href="#s1"><span class="snum">S1</span>Experimentation Fundamentals<span class="nav-depth">REF</span></a>
+    <a href="#s2"><span class="snum">S2</span>Statistical Foundations<span class="nav-depth">REF</span></a>
+    <a href="#s3"><span class="snum">S3</span>A/B Testing<span class="nav-depth">REF</span></a>
+    <a href="#s4"><span class="snum">S4</span>Sample Size &amp; Power<span class="nav-depth">REF</span></a>
+    <a href="#s5"><span class="snum">S5</span>Advanced Experimentation<span class="nav-depth">DEEP</span></a>
+    <a href="#s6"><span class="snum">S6</span>Marketplace Experiments<span class="nav-depth">REF</span></a>
+    <a href="#s7"><span class="snum">S7</span>When A/B Isn't Possible<span class="nav-depth">DEEP</span></a>
+    <a href="#s8"><span class="snum">S8</span>Causal Inference<span class="nav-depth">DEEP</span></a>
+    <a href="#s9"><span class="snum">S9</span>Product Analytics<span class="nav-depth">REF</span></a>
+    <a href="#s10"><span class="snum">S10</span>Airbnb Case Studies<span class="nav-depth">CASE</span></a>
+    <a href="#s11"><span class="snum">S11</span>Decision Frameworks<span class="nav-depth">FLOW</span></a>
+  </nav>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+<header class="topbar">
+  <button class="iconbtn menu-btn" id="menuBtn" aria-label="Toggle navigation">☰</button>
+  <div class="searchwrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="search" type="search" placeholder="Search topics… ( / )" autocomplete="off" aria-label="Search topics">
+  </div>
+  <span id="search-count"></span>
+  <div class="tb-spacer"></div>
+  <button class="iconbtn" id="themeBtn" aria-label="Toggle dark or light mode"><span id="themeIcon">◐</span><span id="themeLabel">Light</span></button>
+</header>
+
+<main class="content">
+
+<div class="hero">
+  <span class="eyebrow">Field guide · v1.0</span>
+  <h1>Experimentation, A/B Testing &amp; Causal Inference</h1>
+  <p>A working reference for Data Scientists, Product Analysts, and Experimentation Scientists — covering the methods used at Airbnb, Uber, Netflix, Meta, Amazon, Booking.com, DoorDash, and Expedia. Quick-reference cards for fundamentals; deep dives where it matters: variance reduction, causal methods when you can't randomize, and causal inference foundations.</p>
+  <div class="hero-tags">
+    <span class="chip acc">11 sections</span>
+    <span class="chip vio">12 causal methods</span>
+    <span class="chip good">Interactive decision tree</span>
+    <span class="chip">Offline · single file</span>
+  </div>
+</div>
+
+<!-- ==================== SECTION 1 ==================== -->
+<section class="section" id="s1">
+  <div class="sec-head">
+    <span class="sec-id">S1</span><h2>Experimentation Fundamentals</h2><span class="chip">Quick ref</span>
+    <div class="sec-tools"><button class="minibtn exp-all">Expand all</button><button class="minibtn col-all">Collapse</button></div>
+  </div>
+  <p class="lede">The vocabulary and core logic behind every controlled experiment. Get the units right and most downstream statistics take care of themselves.</p>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Why experimentation matters<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Experiments are the only scalable way to attribute a change in outcomes to a change in the product. At Microsoft, Booking.com and Airbnb, only ~10–30% of ideas tested actually improve key metrics — intuition alone systematically ships the other 70–90%.</p>
+    <div class="ex"><span class="lbl">Business example</span>A low-priority Bing idea (moving ad title lines) sat in the backlog for months; when finally tested it produced one of the largest revenue lifts in Bing's history. Nobody could rank ideas by opinion.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Opinions don't scale; experiments do. The value of an experimentation culture is mostly in the ideas it stops you from shipping.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Randomization<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Random assignment balances <em>observed and unobserved</em> user characteristics across groups in expectation. Any remaining outcome difference is attributable to the treatment plus quantifiable sampling noise — this is what licenses causal language.</p>
+    <div class="ex"><span class="lbl">Business example</span>In practice: <code>bucket = hash(user_id + experiment_salt) % 100</code>. Deterministic, stable across sessions, independent across experiments via the salt.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Randomization replaces "control for everything" with "balance everything by design." When it breaks (SRM), nothing downstream can be trusted.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Treatment vs Control<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>The control group is your live counterfactual: what would have happened without the change. It must run concurrently (never compare to last month) and remain untouched by the treatment experience.</p>
+    <div class="ex"><span class="lbl">Business example</span>Netflix tests new artwork: control sees existing artwork during the same weeks, absorbing the same seasonality, releases, and outages as treatment.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Concurrent control absorbs time effects for free. Most "before vs after" wins are seasonality wearing a costume.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Experiment Units<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>The unit you randomize: user, device, session, listing, geo, or time window. Choose the unit where (a) interference between units is minimal and (b) the unit matches the decision you'll make.</p>
+    <div class="ex"><span class="lbl">Business example</span>Uber can't randomize riders for a pricing change — riders share one driver pool — so it randomizes city×time windows (switchbacks) instead.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Unit choice is a causal decision, not a plumbing decision. Wrong unit → biased estimate, no statistics can rescue it.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Exposure Units<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>The subset of randomized units that could actually encounter the change. If only 5% of assigned users reach the changed screen, the other 95% contribute pure noise and dilute the measured effect ~20×.</p>
+    <div class="ex"><span class="lbl">Business example</span>A checkout redesign at Expedia: randomize all visitors, but only those who reach checkout are exposed. Triggered analysis restricts to them (see S5).</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Measured lift ≈ true lift on exposed × exposure rate. Always know your trigger rate before judging an effect size.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Analysis Units<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>The unit your metric is computed over. When analysis unit ≠ randomization unit (randomize users, analyze sessions or page-views), observations are correlated within users and naive variance formulas are wrong — usually too small.</p>
+    <div class="ex"><span class="lbl">Business example</span>Session conversion with user-level randomization: heavy users contribute many correlated sessions. Use the delta method or user-level bootstrap for correct CIs.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>If analysis unit is finer than randomization unit, your p-values are optimistic unless you correct for clustering.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Hypothesis Design<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>A testable hypothesis names the change, the population, the metric, the expected direction and size, and the mechanism: <em>"If we [change X] for [population], [metric] will move by [≥ MDE] because [mechanism]."</em></p>
+    <div class="ex"><span class="lbl">Business example</span>"If we show total price upfront to EU guests, booking conversion drops ≤0.5% while customer-service contacts about fees fall ≥10%, because pricing surprise at checkout is removed."</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>The mechanism clause is what makes a result interpretable. No mechanism → no learning, even from a win.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Success Metrics<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Pick one primary metric <em>before</em> launch: sensitive enough to move in weeks, attributable to the change, and directionally aligned with long-term value. Surround it with guardrails (must-not-harm) and diagnostics (explain the movement).</p>
+    <div class="ex"><span class="lbl">Business example</span>Airbnb search experiments: primary = search→booking conversion; guardrails = cancellation rate, host-side response rate; diagnostics = result CTR, position of booked listing.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>One pre-registered primary metric. Everything chosen after seeing the data is a hypothesis for the <em>next</em> experiment.</div>
+  </div></details>
+</section>
+
+<!-- ==================== SECTION 2 ==================== -->
+<section class="section" id="s2">
+  <div class="sec-head">
+    <span class="sec-id">S2</span><h2>Statistical Foundations</h2><span class="chip">Quick ref</span>
+    <div class="sec-tools"><button class="minibtn exp-all">Expand all</button><button class="minibtn col-all">Collapse</button></div>
+  </div>
+  <p class="lede">Twelve concepts that cover ~90% of the statistics used in product experimentation. The error-rate diagram at the end ties them together.</p>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Probability<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>The long-run frequency of an event (frequentist) or a degree of belief (Bayesian). Every product metric — conversion, retention, CTR — is a sample estimate of an underlying probability or expectation.</p>
+    <div class="ex"><span class="lbl">Business example</span>"Conversion is 2.3%" means: of sessions observed, 2.3% booked. The true P(book) is unknown; your data estimates it with noise.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Dashboards show estimates, not truths. The whole testing apparatus exists to quantify how wrong the estimate could be.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Conditional Probability<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>P(A|B) — the probability of A among units where B holds. Comparing P(outcome | feature users) to P(outcome | non-users) is the most common analysis pattern, and the most commonly misread one: who ends up in B is rarely random.</p>
+    <div class="ex"><span class="lbl">Business example</span>P(rebook | used wishlist) = 40% vs 12% overall. Wishlist users were high-intent before they touched the feature — conditioning ≠ causation.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Every "users who do X retain better" insight is conditional probability. Treat it as a hypothesis to test, never a result to ship.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Bayes' Theorem<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>P(H|data) ∝ P(data|H) · P(H). Updates a prior belief with evidence. Its sharpest product application: interpreting a "significant" result given how often ideas truly work.</p>
+    <div class="ex"><span class="lbl">Business example</span>If only 10% of ideas have real effects, α=.05, power=.80: P(real | significant) = (.10×.80)/(.10×.80 + .90×.05) ≈ 64%. A third of your "wins" are false.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Significance is not certainty. Low-prior, surprising wins deserve replication before a big rollout.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Expected Value<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>The probability-weighted average of outcomes: E[X] = Σ p(x)·x. Nearly every primary metric (revenue per user, bookings per visitor) is a sample mean estimating an expected value.</p>
+    <div class="ex"><span class="lbl">Business example</span>Revenue/visitor = P(purchase) × E[order value | purchase]. Decomposing an EV like this tells you <em>which</em> lever an experiment actually moved.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Decompose mean metrics into rate × value. Treatments often move one component while the headline metric hides it.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Variance<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Average squared deviation from the mean — the noise floor of your experiment. Heavy-tailed metrics (revenue, GMV) have enormous variance; a few whales can dominate the estimate.</p>
+    <div class="ex"><span class="lbl">Business example</span>Booking value at Expedia spans $40 hostels to $40k villas. Same sample size detects a 1% conversion lift easily but a 1% revenue lift not at all.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Variance — not the mean — decides how long experiments take. This is why variance reduction (S5) is a whole discipline.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Central Limit Theorem<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Means of large independent samples are approximately normal, regardless of the metric's own distribution. This is why z/t-tests work on skewed metrics like revenue — the <em>mean</em> is well-behaved even when the data isn't.</p>
+    <div class="diagram"><div class="cap">CLT · skewed data → normal sampling distribution of the mean</div>
+      <svg viewBox="0 0 560 110" role="img" aria-label="Skewed distribution converging to a normal distribution of sample means">
+        <rect class="nd-vio" x="20" y="70" width="14" height="25" rx="2"/><rect class="nd-vio" x="36" y="40" width="14" height="55" rx="2"/><rect class="nd-vio" x="52" y="55" width="14" height="40" rx="2"/><rect class="nd-vio" x="68" y="72" width="14" height="23" rx="2"/><rect class="nd-vio" x="84" y="82" width="14" height="13" rx="2"/><rect class="nd-vio" x="100" y="88" width="14" height="7" rx="2"/><rect class="nd-vio" x="116" y="91" width="14" height="4" rx="2"/>
+        <text class="tx-m" x="75" y="106" text-anchor="middle">RAW METRIC (SKEWED)</text>
+        <path class="ln" d="M150 60 H225" marker-end="url(#arr)"/><text class="tx-m" x="187" y="50" text-anchor="middle">SAMPLE n TIMES</text>
+        <path class="ln" d="M250 95 C285 95 290 25 320 25 C350 25 355 95 390 95" stroke="var(--acc)" stroke-width="2"/>
+        <line class="ln ln-dash" x1="320" y1="25" x2="320" y2="95"/>
+        <text class="tx-m" x="320" y="106" text-anchor="middle">DISTRIBUTION OF MEANS ≈ NORMAL</text>
+        <text class="tx-s" x="430" y="45">SE = σ/√n</text>
+        <text class="tx-s" x="430" y="62">4× data → ½ the noise</text>
+        <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--faint)"/></marker></defs>
+      </svg>
+    </div>
+    <div class="note"><span class="lbl">Caveat</span>CLT assumes independent units. Ratio metrics and clustered data (sessions within users) need the delta method or bootstrap.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Confidence Intervals<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>A 95% CI is a procedure that captures the true effect in 95% of repeated experiments. Width = precision; the point estimate is just the center of your uncertainty.</p>
+    <div class="ex"><span class="lbl">Business example</span>Lift +1.2%, CI [−0.1%, +2.5%]: includes zero → not significant, but also consistent with a +2% win. The right read is "underpowered," not "no effect."</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Report CIs, not just stars. A CI of [+0.1%, +0.3%] and [+0.1%, +8%] are both "significant" and mean completely different things.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Hypothesis Testing<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Assume no effect (H₀), then measure how surprising the observed difference would be under that assumption. If sufficiently surprising (p &lt; α), reject H₀. Default to two-sided tests — regressions matter as much as wins.</p>
+    <div class="kt"><span class="lbl">Key takeaway</span>A test controls how often you fool yourself, nothing more. It says nothing about effect size or business value — pair it with the CI and a practical-significance threshold.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>P-values<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>P(data at least this extreme | H₀ is true). It is <em>not</em> P(H₀ | data), not the probability the result is a fluke, and not a measure of effect size.</p>
+    <div class="ex"><span class="lbl">Business example</span>p=0.03 with n=10M can mean a +0.05% lift nobody should ship; p=0.08 with n=5k can hide a +5% win worth re-running with more traffic.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>p answers "how surprising is this data under no-effect?" — combine with prior win rates (Bayes) and CI width before deciding.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Type I Error (α)<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>False positive: declaring an effect that doesn't exist. Rate set by α (typically 5%). Cost: shipping noise, polluting the roadmap with "wins" that never replicate, eroding trust in the platform.</p>
+    <div class="kt"><span class="lbl">Key takeaway</span>α is a budget you spend per look and per metric. Peeking and multiple testing (S3) silently overspend it.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Type II Error (β)<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>False negative: missing a real effect. Rate β depends on sample size, effect size, variance, and α. Cost: killing good ideas — usually invisible, because nobody audits the experiments that "didn't work."</p>
+    <div class="kt"><span class="lbl">Key takeaway</span>Underpowered tests don't just miss effects — the wins they <em>do</em> find are systematically exaggerated (winner's curse).</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Statistical Power (1−β)<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Probability of detecting an effect of a given size if it's real. Industry default: ≥80% at the MDE. The diagram shows how α, β, and power partition the two sampling distributions.</p>
+    <div class="diagram"><div class="cap">H₀ vs H₁ sampling distributions · α, β, power</div>
+      <div id="powerViz"></div>
+    </div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Power is decided <em>before</em> launch via sample size (S4). "We'll just run it longer if it's close" is peeking with extra steps.</div>
+  </div></details>
+</section>
+
+<!-- ==================== SECTION 3 ==================== -->
+<section class="section" id="s3">
+  <div class="sec-head">
+    <span class="sec-id">S3</span><h2>A/B Testing</h2><span class="chip">Quick ref</span>
+    <div class="sec-tools"><button class="minibtn exp-all">Expand all</button><button class="minibtn col-all">Collapse</button></div>
+  </div>
+
+  <h3 class="sub">Experiment lifecycle</h3>
+  <div class="diagram"><div class="cap">Seven stages · every stage can kill the experiment</div><div id="lifecycleViz"></div></div>
+  <div class="tblwrap"><table>
+    <tr><th>Stage</th><th>One-line job</th><th>Common failure</th></tr>
+    <tr><td><b>1 · Problem</b></td><td>Name the user/business problem with baseline data</td><td>Solution looking for a problem</td></tr>
+    <tr><td><b>2 · Hypothesis</b></td><td>Change → metric → direction → size → mechanism</td><td>No mechanism, no MDE</td></tr>
+    <tr><td><b>3 · Metrics</b></td><td>Pre-register primary, guardrails, diagnostics</td><td>Metric shopping after results</td></tr>
+    <tr><td><b>4 · Launch</b></td><td>Power calc, ramp plan, randomization check</td><td>Underpowered, no SRM check</td></tr>
+    <tr><td><b>5 · Monitoring</b></td><td>Watch guardrails + SRM, not significance</td><td>Peeking at the p-value daily</td></tr>
+    <tr><td><b>6 · Analysis</b></td><td>Fixed-horizon read: effect, CI, segments-as-hypotheses</td><td>Slicing until something is significant</td></tr>
+    <tr><td><b>7 · Decision</b></td><td>Ship / iterate / abandon + document the learning</td><td>Shipping stat-sig but practically tiny wins</td></tr>
+  </table></div>
+
+  <h3 class="sub">Metric hierarchy</h3>
+  <div class="diagram"><div class="cap">Metric tree · north star → drivers, fenced by guardrails</div><div id="metricTreeViz"></div></div>
+  <div class="kgrid">
+    <div class="kcard"><div class="kh"><span class="dot" style="background:var(--acc)"></span>North Star</div><p>Long-term value proxy: nights booked (Airbnb), hours watched (Netflix), orders delivered (DoorDash). Too slow to be a test's primary metric — experiments move its <em>drivers</em>.</p></div>
+    <div class="kcard"><div class="kh"><span class="dot" style="background:var(--warn)"></span>Guardrails</div><p>Must-not-harm: latency, crash rate, cancellations, unsubscribes, support contacts. Tested for non-inferiority, with a pre-agreed tolerable regression.</p></div>
+    <div class="kcard"><div class="kh"><span class="dot" style="background:var(--vio)"></span>Diagnostics</div><p>Explain <em>why</em> the primary moved: funnel steps, CTR, error rates. Never used for ship decisions — only for understanding and debugging.</p></div>
+  </div>
+
+  <h3 class="sub">Common pitfalls</h3>
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Sample Ratio Mismatch (SRM)<span class="t-tag chip bad">CRITICAL</span></summary>
+  <div class="t-body">
+    <p>The observed assignment split deviates from design more than chance allows (chi-square test). At 1M users, even 50.2/49.8 is a giant red flag. Causes: bot filtering applied unevenly, redirects dropping one arm, logging loss, triggering bugs.</p>
+    <div class="kt"><span class="lbl">Rule</span>SRM means the missing users are non-random — discard the result entirely. Microsoft found ~6% of experiments hit SRM; debugging it is step zero of every analysis.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Peeking<span class="t-tag chip warn">PITFALL</span></summary>
+  <div class="t-body">
+    <p>Checking significance repeatedly and stopping on the first p &lt; .05. Daily peeks over a few weeks can push the real false-positive rate from 5% toward 20–30% — extreme values occur by chance mid-flight and you harvest them.</p>
+    <div class="kt"><span class="lbl">Fix</span>Commit to a fixed horizon, or use sequential methods built for continuous monitoring (S5). Monitoring guardrails for harm is fine; harvesting wins early is not.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Novelty &amp; Primacy Effects<span class="t-tag chip warn">PITFALL</span></summary>
+  <div class="t-body">
+    <p>Novelty: users poke at anything new, inflating early lift that decays. Primacy: users trained on the old experience underperform at first, masking a true win. Both make week-1 reads misleading.</p>
+    <div class="kt"><span class="lbl">Fix</span>Plot effect by days-since-first-exposure; compare new vs returning users; run ≥2 full business cycles; use long-term holdouts (S7) for the durable effect.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Multiple Testing<span class="t-tag chip warn">PITFALL</span></summary>
+  <div class="t-body">
+    <p>20 metrics × 10 segments = 200 tests; at α=.05 you expect ~10 "significant" results from pure noise. Segment fishing is the polite name for it.</p>
+    <div class="kt"><span class="lbl">Fix</span>One pre-registered primary; Benjamini–Hochberg correction for secondary metrics; treat any surprising segment result as a hypothesis for a follow-up test, never a finding.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Survivorship Bias<span class="t-tag chip warn">PITFALL</span></summary>
+  <div class="t-body">
+    <p>Analyzing only users who stuck around ("retained users in treatment spend more") conditions on a post-treatment outcome. If treatment changed <em>who</em> survives, the comparison is broken.</p>
+    <div class="kt"><span class="lbl">Fix</span>Intention-to-treat: analyze <em>all</em> randomized units in their assigned groups, including users who churned, bounced, or never engaged.</div>
+  </div></details>
+
+  <h3 class="sub">Ship / iterate / abandon</h3>
+  <div class="diagram"><div class="cap">Decision flowchart · run after the fixed horizon</div><div id="shipFlowViz"></div></div>
+</section>
+
+<!-- ==================== SECTION 4 ==================== -->
+<section class="section" id="s4">
+  <div class="sec-head">
+    <span class="sec-id">S4</span><h2>Sample Size &amp; Power</h2><span class="chip">Formulas</span>
+  </div>
+  <p class="lede">Three views of one equation. Fix any three of {n, MDE, power, α} and the fourth is determined. Knowledge-book mode: formulas and interpretation, no calculators.</p>
+
+  <h3 class="sub">Sample size</h3>
+  <code class="formula">n per arm = 2 · (z<sub>1−α/2</sub> + z<sub>1−β</sub>)² · <span class="fv">σ²</span> / <span class="fv">δ²</span>&nbsp;&nbsp;<span class="fc">// δ = MDE (absolute), σ² = metric variance</span><br>
+  proportions: σ² ≈ p̄(1−p̄)&nbsp;&nbsp;<span class="fc">// p̄ = pooled baseline rate</span><br>
+  rule of thumb (α=.05, power=.80): n ≈ <span class="fv">16 · σ² / δ²</span></code>
+  <div class="tblwrap"><table>
+    <tr><th>Reading the formula</th><th>Consequence</th></tr>
+    <tr><td>δ² in the denominator</td><td><b>Halve the MDE → 4× the sample.</b> Detecting subtle effects is quadratically expensive.</td></tr>
+    <tr><td>σ² in the numerator</td><td>Cut variance 30% (CUPED, S5) → run 30% fewer users for the same power.</td></tr>
+    <tr><td>z-terms grow with stricter α / higher power</td><td>α=.01 or power=.90 each add ~30–50% more sample.</td></tr>
+    <tr><td>Worked example</td><td>Baseline 10% conversion, MDE +0.5pp absolute: n ≈ 16 × .09 / .0005² ≈ <b>57,600 per arm</b>.</td></tr>
+  </table></div>
+
+  <h3 class="sub">Minimum Detectable Effect</h3>
+  <code class="formula">MDE = (z<sub>1−α/2</sub> + z<sub>1−β</sub>) · σ · √(2/n)&nbsp;&nbsp;<span class="fc">// smallest true effect you'd detect with the planned power</span></code>
+  <p>Use it in reverse: given the traffic you actually have, what's detectable? If your realistic MDE is +3% but plausible wins are +0.5%, the experiment cannot answer the question — change the metric, reduce variance, or don't run it.</p>
+  <div class="note"><span class="lbl">Interpretation</span>MDE is a property of the <em>design</em>, not a prediction of the effect. "Non-significant" only means "no effect ≥ MDE was detected."</div>
+
+  <h3 class="sub">Statistical power</h3>
+  <code class="formula">power = 1 − β = P(reject H₀ | true effect = δ)&nbsp;&nbsp;<span class="fc">// convention: ≥ 0.80 at the MDE</span></code>
+  <div class="tblwrap"><table>
+    <tr><th>Lever</th><th>Effect on power</th><th>Cost</th></tr>
+    <tr><td>More units (n↑)</td><td>↑</td><td>Calendar time, traffic share</td></tr>
+    <tr><td>Bigger true effect (δ↑)</td><td>↑</td><td>Not controllable — but bolder variants help</td></tr>
+    <tr><td>Lower variance (σ↓)</td><td>↑</td><td>CUPED/stratification engineering (S5)</td></tr>
+    <tr><td>Looser α</td><td>↑</td><td>More false positives</td></tr>
+    <tr><td>One-sided test</td><td>↑</td><td>Blind to regressions — rarely justified</td></tr>
+  </table></div>
+</section>
+
+<!-- ==================== SECTION 5 ==================== -->
+<section class="section" id="s5">
+  <div class="sec-head">
+    <span class="sec-id">S5</span><h2>Advanced Experimentation</h2><span class="chip vio">Deep dive</span>
+    <div class="sec-tools"><button class="minibtn exp-all">Expand all</button><button class="minibtn col-all">Collapse</button></div>
+  </div>
+  <p class="lede">Variance reduction and sensitivity techniques — how mature platforms (Microsoft EXP, Netflix XP, DoorDash Curie) detect smaller effects with the same traffic.</p>
+
+  <details class="topic" open><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>CUPED<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <p><b>Controlled-experiment Using Pre-Experiment Data.</b> Adjust each unit's outcome using its own pre-experiment value of (usually) the same metric. Because pre-period behavior predicts post-period behavior but cannot be affected by treatment, subtracting the predictable part removes noise without touching the treatment effect.</p>
+    <code class="formula">Y<sub>adj</sub> = Y − θ·(X − E[X])&nbsp;&nbsp;<span class="fc">// X = pre-period covariate</span><br>θ = cov(X,Y) / var(X)&nbsp;&nbsp;&nbsp;&nbsp;variance reduction = <span class="fv">ρ²</span>&nbsp;&nbsp;<span class="fc">// ρ = corr(X,Y)</span></code>
+    <p>If pre/post correlation ρ = 0.7, variance drops ~49% — roughly halving required sample size or runtime. Microsoft reported ~50% runtime reductions on engagement metrics after adopting it platform-wide.</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Assumptions</span><ul><li>Covariate measured strictly pre-assignment (unaffected by treatment)</li><li>Covariate correlates with the outcome</li><li>Same θ applied to both arms</li></ul></div>
+      <div class="m-cell"><span class="lbl">Watch-outs</span><ul><li>New users have no pre-period → adjust only matched users, or set X to the mean</li><li>Weak correlation → negligible gain (it never hurts in expectation)</li><li>Doesn't fix bias — only shrinks variance</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Example</span>Netflix tests a new row-ranking model on hours watched. Last month's hours per user explains most of this month's variance; CUPED on it detects a 0.3% lift that a raw t-test would call noise.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>CUPAC<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <p><b>Control Using Predictions As Covariates</b> (DoorDash). Same algebra as CUPED, but the covariate is an ML model's <em>prediction</em> of the outcome built from many pre-experiment features. The better the model, the higher ρ, the bigger the variance cut.</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">When it beats CUPED</span><ul><li>No single strong pre-period metric exists (new surfaces, sparse users)</li><li>Many weak signals combine into a strong predictor</li><li>Delivery/logistics metrics driven by context (region, daypart, weather)</li></ul></div>
+      <div class="m-cell"><span class="lbl">Watch-outs</span><ul><li>Model must train only on pre-experiment / outside-experiment data</li><li>Leakage of treatment info into features biases the estimate</li><li>Adds MLOps cost — justify with measured sensitivity gains</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Example</span>DoorDash predicts delivery time from store, region, and historical load, then uses the prediction as the CUPED covariate for switchback experiments — cutting required experiment duration materially.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Covariate Adjustment (Regression)<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <p>Regress the outcome on the treatment indicator plus pre-treatment covariates (platform, country, tenure, pre-activity). The treatment coefficient is the adjusted effect; precision improves in proportion to how much the covariates explain.</p>
+    <div class="m-grid">
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Handles many covariates at once; standard tooling</li><li>Equivalent to CUPED with one covariate; generalizes it</li><li>Also corrects chance imbalance on observables</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li><b>Never include post-treatment variables</b> — conditioning on outcomes of the treatment (e.g., sessions after exposure) breaks randomization</li><li>Inference should use robust (HC) standard errors</li><li>Temptation to tweak the model after seeing results</li></ul></div>
+    </div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Stratified Randomization<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <p>Split units into strata (country, platform, user tier) and randomize <em>within</em> each, guaranteeing balance on those variables instead of hoping for it. Variance shrinks by the between-strata share of total variance.</p>
+    <div class="m-grid">
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Exact balance on chosen strata even in small samples</li><li>Pre-planned subgroup reads are valid and powered</li><li>Critical for geo/cluster experiments with few units</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Must be wired into the assignment service, not bolted on later</li><li>Only balances what you stratify on</li><li>Analysis must respect strata (stratified estimator)</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Example</span>A geo experiment with 40 markets stratifies on market size and region before assignment — otherwise one unlucky draw puts all mega-cities in treatment.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Triggered Analysis<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <p>Restrict analysis to units that actually reached the change ("triggered"), removing the diluting mass of never-exposed users. With a 5% trigger rate, a +4% effect on the exposed shows up as +0.2% overall — triggering recovers the sensitivity.</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Requirements</span><ul><li><b>Counterfactual triggering:</b> control units are flagged at the moment they <em>would have</em> seen the change — requires logging the counterfactual decision</li><li>Trigger condition must be identical and pre-treatment in both arms</li><li>Check SRM <em>within the triggered population</em></li></ul></div>
+      <div class="m-cell"><span class="lbl">Watch-outs</span><ul><li>Triggered lift ≠ launch impact: dilute back (overall ≈ triggered lift × trigger share of the metric)</li><li>If treatment changes <em>who</em> triggers, the populations differ → biased</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Example</span>Booking.com tests a new low-availability banner shown only when ≤3 rooms remain. Analysis runs on sessions where the condition fired, with control sessions flagged counterfactually.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Sequential Testing<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <p>Methods that keep α valid under continuous monitoring: group-sequential boundaries (O'Brien–Fleming alpha-spending) or always-valid inference (mSPRT, used by Optimizely/Netflix-style platforms). Legalizes "peeking" by paying for it upfront.</p>
+    <div class="m-grid">
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Stop early on big wins or harmful regressions — ethical &amp; fast</li><li>Honest error control with daily dashboards</li><li>Fits ramp-up cultures (ship fast when evidence is strong)</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Less power than a fixed-horizon test at the same final n</li><li>Early stops overestimate effect sizes (condition on extremes)</li><li>More complex to implement and explain to stakeholders</li></ul></div>
+    </div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Variance Reduction — choosing<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <div class="tblwrap"><table>
+      <tr><th>Technique</th><th>When to use</th><th>Typical gain</th><th>Main limitation</th></tr>
+      <tr><td><b>CUPED</b></td><td>Existing users with pre-period history on the same metric</td><td>30–50% variance ↓ on engagement/retention</td><td>Useless for brand-new users / new metrics</td></tr>
+      <tr><td><b>CUPAC</b></td><td>Rich features but no single strong pre-metric; logistics</td><td>Up to model's R²</td><td>ML pipeline cost; leakage risk</td></tr>
+      <tr><td><b>Regression adjustment</b></td><td>Several useful covariates; post-hoc analysis</td><td>Similar to CUPED, multi-covariate</td><td>Post-treatment covariate foot-gun</td></tr>
+      <tr><td><b>Stratification</b></td><td>Few randomization units (geos, clusters); heterogeneous strata</td><td>Between-strata variance removed</td><td>Needs assignment-time integration</td></tr>
+      <tr><td><b>Triggered analysis</b></td><td>Low exposure rate (&lt;~20%)</td><td>Sensitivity × (1/trigger rate)-ish</td><td>Counterfactual logging required</td></tr>
+      <tr><td><b>Sequential testing</b></td><td>Need continuous monitoring / early stopping</td><td>Time saved, not variance</td><td>Power cost vs fixed horizon</td></tr>
+      <tr><td><b>Winsorizing / capping</b></td><td>Heavy-tailed revenue metrics</td><td>Large variance ↓</td><td>Changes the estimand (capped mean)</td></tr>
+    </table></div>
+    <div class="kt"><span class="lbl">Stacking</span>These compose: stratify at assignment, CUPED at analysis, trigger where exposure is low. Mature platforms apply all three by default.</div>
+  </div></details>
+</section>
+
+<!-- ==================== SECTION 6 ==================== -->
+<section class="section" id="s6">
+  <div class="sec-head">
+    <span class="sec-id">S6</span><h2>Marketplace Experimentation</h2><span class="chip">Quick ref</span>
+  </div>
+  <p class="lede">Two-sided marketplaces (Airbnb, Uber, DoorDash) break the core A/B assumption — units share finite supply, so treatment and control contaminate each other.</p>
+
+  <div class="diagram"><div class="cap">Two-sided interference · treatment steals inventory from control</div><div id="mktViz"></div></div>
+
+  <div class="kgrid">
+    <div class="kcard"><div class="kh"><span class="dot" style="background:var(--vio)"></span>Supply metrics</div><p>Active listings, new-host activation, calendar availability, acceptance rate, host churn.</p></div>
+    <div class="kcard"><div class="kh"><span class="dot" style="background:var(--acc)"></span>Demand metrics</div><p>Searchers, search→request rate, booking requests, guest conversion, repeat booking.</p></div>
+    <div class="kcard"><div class="kh"><span class="dot" style="background:var(--good)"></span>Liquidity metrics</div><p>Search→book rate, fill/utilization, match rate, time-to-match, % searches with ≥N relevant results.</p></div>
+    <div class="kcard"><div class="kh"><span class="dot" style="background:var(--warn)"></span>Marketplace health</div><p>Cancellation rate, price dispersion, supply/demand ratio by market, new-host exposure share, take-rate stability.</p></div>
+  </div>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Network effects &amp; spillovers<span class="t-tag chip warn">PITFALL</span></summary>
+  <div class="t-body">
+    <p>A guest-side feature that lifts treatment bookings consumes listings that control guests would have booked. Control is <em>degraded</em>, not neutral — the A/B comparison measures (treatment gain + control loss) and overstates the launch effect, sometimes severely. This is cannibalization / SUTVA violation.</p>
+    <div class="ex"><span class="lbl">Example</span>A ranking change that surfaces high-demand Paris listings: treatment books them first, control finds them gone. The test shows +2%; the launch delivers +0.5% because in launch there's no one to steal from.</div>
+    <div class="kt"><span class="lbl">Mitigations</span>Randomize at the market level (geo experiments), use switchbacks for shared-state levers, randomize the supply side for host features, or model the equilibrium. See S7 and the marketplace framework in S11.</div>
+  </div></details>
+</section>
+
+<!-- ==================== SECTION 7 ==================== -->
+<section class="section" id="s7">
+  <div class="sec-head">
+    <span class="sec-id">S7</span><h2>When A/B Testing Is Not Possible</h2><span class="chip vio">Deep dive</span>
+    <div class="sec-tools"><button class="minibtn exp-all">Expand all</button><button class="minibtn col-all">Collapse</button></div>
+  </div>
+  <p class="lede">The core skill of a senior experimentation scientist: choosing a credible causal design when clean randomization is off the table. Start with the walker, then read the method cards.</p>
+
+  <div class="dtree" id="dtree">
+    <span class="eyebrow">Interactive · When Randomized Experiments Cannot Be Run</span>
+    <div class="dt-crumbs" id="dtCrumbs"></div>
+    <div id="dtBody"></div>
+  </div>
+
+  <h3 class="sub">Method cards</h3>
+
+  <details class="method" id="m-did"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Difference-in-Differences (DiD)<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> a change hits one group/region at a known time while comparable groups remain untreated. DiD compares the treated group's before→after change against the control group's, differencing out both time-invariant group differences and shared time shocks.</p>
+    <code class="formula">effect = (Y<sub>treat,post</sub> − Y<sub>treat,pre</sub>) − (Y<sub>ctrl,post</sub> − Y<sub>ctrl,pre</sub>)</code>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Assumptions</span><ul><li><b>Parallel trends:</b> absent treatment, both groups would have moved identically</li><li>No spillover from treated to control units</li><li>Stable group composition; no simultaneous group-specific shocks</li></ul></div>
+      <div class="m-cell"><span class="lbl">Diagnostics</span><ul><li>Plot long pre-period trends — they should be visually parallel</li><li>Placebo test: fake treatment date in the pre-period should show ~0</li><li>Event-study plot of dynamic effects</li></ul></div>
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Simple, transparent, easily explained to leadership</li><li>Controls for fixed group differences and common shocks</li><li>Works with aggregate data</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Parallel trends is untestable in the post-period</li><li>Staggered adoption + heterogeneous effects biases the classic two-way FE estimator (use modern estimators, e.g. Callaway–Sant'Anna)</li><li>Sensitive to control-group choice</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>Uber changes its service-fee structure in Chicago. Compare Chicago's booking trend before/after vs a set of comparable non-launch cities over the same weeks.</div>
+  </div></details>
+
+  <details class="method" id="m-synth"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Synthetic Control<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> only <em>one</em> treated unit (a city, a country) and no single control matches it. Build a weighted combination of untreated "donor" units that reproduces the treated unit's pre-period trajectory; the post-period gap is the effect.</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Assumptions</span><ul><li>Donor units untreated and unaffected by spillover</li><li>Pre-period long enough to fit weights without overfitting</li><li>No post-period shocks unique to the treated unit</li></ul></div>
+      <div class="m-cell"><span class="lbl">Diagnostics</span><ul><li>Pre-period fit quality (RMSPE)</li><li>Placebo-in-space: apply to each donor; treated effect should be extreme in that distribution</li><li>Leave-one-out donor sensitivity</li></ul></div>
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Data-driven, transparent counterfactual (weights are inspectable)</li><li>Made for one-unit policy/launch evaluations</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Formal inference is awkward (permutation/placebo based)</li><li>Fails when no donor combination matches the pre-trend</li><li>Vulnerable to overfitting short pre-periods</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>A new short-term-rental regulation hits Amsterdam. Weight Berlin, Copenhagen, Vienna… to mimic Amsterdam's pre-regulation nights-booked curve; the divergence after enforcement estimates the impact.</div>
+  </div></details>
+
+  <details class="method" id="m-rdd"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Regression Discontinuity (RDD)<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> treatment assigned by a sharp rule on a running variable (score ≥ cutoff → treated). Units just above and just below the cutoff are as-good-as-randomized, so comparing them near the threshold identifies a local causal effect.</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Assumptions</span><ul><li>Units cannot precisely manipulate their running variable (check density continuity — McCrary test)</li><li>Potential outcomes continuous at the cutoff</li><li>Nothing else changes at the same threshold</li></ul></div>
+      <div class="m-cell"><span class="lbl">Diagnostics</span><ul><li>Density plot around the cutoff (no bunching)</li><li>Covariate smoothness across the threshold</li><li>Bandwidth &amp; polynomial sensitivity checks</li></ul></div>
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Near-experimental credibility without randomizing</li><li>Thresholds are everywhere in products: eligibility scores, tiers, minimums</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Estimates a <em>local</em> effect at the cutoff only</li><li>Needs dense data near the threshold</li><li>Fuzzy compliance requires an IV-style estimator</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>Superhost status requires a 4.8 rating. Compare hosts at 4.79 vs 4.81 on subsequent bookings to estimate the causal value of the badge.</div>
+  </div></details>
+
+  <details class="method" id="m-iv"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Instrumental Variables (IV)<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> treatment is self-selected (confounded), but some variable — the instrument — shifts treatment uptake while affecting the outcome <em>only</em> through treatment. In product work the cleanest instrument is a <b>randomized encouragement</b>: you can't force feature adoption, but you can randomize a nudge toward it.</p>
+    <code class="formula">effect (LATE) = (effect of instrument on outcome) / (effect of instrument on treatment uptake)</code>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Assumptions</span><ul><li><b>Relevance:</b> instrument moves uptake (testable)</li><li><b>Exclusion:</b> instrument affects outcome only via treatment (untestable — argue it)</li><li><b>Independence:</b> instrument as-good-as-random</li><li><b>Monotonicity:</b> no defiers</li></ul></div>
+      <div class="m-cell"><span class="lbl">Diagnostics</span><ul><li>First-stage F-stat (weak instrument if small)</li><li>Balance of covariates across instrument values</li><li>Reduced-form effect sanity check</li></ul></div>
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Handles <em>unobserved</em> confounding — PSM cannot</li><li>Encouragement designs are cheap to run on top of normal A/B infra</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Estimates effect for <em>compliers</em> only (LATE), not everyone</li><li>Weak instruments → huge variance and bias</li><li>Exclusion violations are silent and fatal</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>Does enabling Instant Book raise host earnings? Randomize an in-app encouragement to enable it; use the nudge as an instrument for adoption.</div>
+  </div></details>
+
+  <details class="method" id="m-psm"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Propensity Score Matching (PSM)<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> purely observational adopter vs non-adopter comparisons. Model each unit's probability of treatment from pre-treatment covariates (the propensity score), then match treated units to untreated units with similar scores, mimicking a randomized comparison <em>on observables</em>.</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Assumptions</span><ul><li><b>Ignorability:</b> no unobserved confounders given the covariates — the big one</li><li><b>Overlap:</b> comparable untreated units exist across the score range</li><li>Covariates measured pre-treatment</li></ul></div>
+      <div class="m-cell"><span class="lbl">Diagnostics</span><ul><li>Standardized mean differences after matching (&lt;0.1)</li><li>Propensity distribution overlap plot</li><li>Sensitivity analysis (Rosenbaum bounds / E-values)</li></ul></div>
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Intuitive, auditable balance tables stakeholders trust</li><li>Reduces model dependence vs raw regression</li><li>Weighting variants (IPW, doubly-robust) improve efficiency</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Cannot fix confounders you didn't measure — selection on motivation usually survives</li><li>Discards unmatched units (changes the population)</li><li>Many researcher degrees of freedom</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>Estimate the effect of hosts adding professional photos on bookings, matching on listing quality, price tier, market, and pre-period demand. Report as "associational with adjustment," not gospel.</div>
+  </div></details>
+
+  <details class="method" id="m-its"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Interrupted Time Series (ITS)<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> the change launched to <em>everyone</em> at once — no comparison group exists. Model the pre-launch trend (level, slope, seasonality) and measure the post-launch deviation from the projected counterfactual (segmented regression / Bayesian structural time series, e.g. CausalImpact).</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Assumptions</span><ul><li>Pre-trend model is correct and would have continued</li><li>No co-occurring shocks at launch (marketing pushes, press, outages)</li><li>Launch date known and sharp</li></ul></div>
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Works when nothing else does (full launches, brand events)</li><li>Uses only the series' own history; covariate series improve it</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Anything else happening at launch is absorbed into the "effect"</li><li>Needs long, stable history; weak for slow-burn effects</li><li>Autocorrelation complicates inference</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>An app-wide checkout redesign ships to 100% on day X. Fit daily conversion for the prior 12 months, project forward, and read the post-launch gap with uncertainty bands.</div>
+  </div></details>
+
+  <details class="method" id="m-geo"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Geo Experiments &amp; Cluster Randomization<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> user-level randomization is impossible (broadcast media, brand campaigns) or invalid (marketplace/network interference). Randomize self-contained clusters — cities, DMAs, regions, or graph communities — so interference stays <em>inside</em> units.</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Assumptions</span><ul><li>Limited spillover across cluster boundaries (commuting, travel, social ties)</li><li>Clusters comparable, or made so via stratification/matched pairs</li><li>Enough clusters for power (the binding constraint)</li></ul></div>
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Captures equilibrium/market-level effects A/B misses</li><li>Only credible design for offline media incrementality</li><li>Pairs naturally with synthetic-control analysis (trimmed-match, GeoLift-style)</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Tiny n (tens of geos) → low power; needs stratified/matched assignment + covariate adjustment</li><li>Expensive and operationally heavy</li><li>Heterogeneous geos make estimates noisy</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>Expedia measures TV-ad incrementality: match 30 DMA pairs on size and booking trends, treat one of each pair, compare booking lift per dollar.</div>
+  </div></details>
+
+  <details class="method" id="m-switchback"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Switchback Experiments<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> marketplace-wide levers (surge pricing, dispatch, ranking the whole market sees) where every user shares one state. Alternate the entire market between treatment and control across time windows (e.g., region × 30-min blocks), randomizing the window assignment.</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Assumptions</span><ul><li>Carryover between windows is short relative to window length (driver positioning, queued orders decay fast)</li><li>Effects stabilize within a window</li><li>Window assignment is randomized (often with balancing constraints)</li></ul></div>
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Each market serves as its own control → time-invariant market differences cancel</li><li>Handles shared-state interference that user splits cannot</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Carryover bias if windows are too short; power loss if too long</li><li>Observations within region-windows are correlated → cluster-robust inference required</li><li>Users may experience inconsistent behavior across windows</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>DoorDash compares two dispatch algorithms by alternating them per region per 30-minute block for two weeks, analyzing delivery time and Dasher utilization at the window level with CUPAC adjustment.</div>
+  </div></details>
+
+  <details class="method" id="m-rollout"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Staggered Rollouts<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> the decision to ship is made, but you still want risk control and a usable effect estimate. Roll out in waves (5% → 25% → 100% of users, or market by market); if wave <em>order is randomized</em>, later waves serve as temporary controls for earlier ones.</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Assumptions</span><ul><li>Wave order random (or as-good-as-random) — convenience ordering by market size confounds everything</li><li>No anticipation effects in not-yet-treated waves</li><li>For staggered DiD analysis: use heterogeneity-robust estimators</li></ul></div>
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Risk containment built in: regressions caught at 5%</li><li>Measurement nearly free if order is randomized</li><li>Organizationally easy to sell</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Confounded by time if order isn't random</li><li>Control pool shrinks each wave → power decays</li><li>Classic two-way FE on staggered adoption can even flip signs</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>A payments migration rolls out to randomized 10% user waves weekly; each wave's first week is compared against not-yet-migrated users for a clean read before 100%.</div>
+  </div></details>
+
+  <details class="method" id="m-holdout"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Holdout Groups<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> individual A/B tests measure short-run, isolated effects. A long-term holdout keeps a small slice of users (0.5–5%) on the old experience for months while everyone else gets the full stream of launches — measuring <em>cumulative, durable</em> impact.</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Design notes</span><ul><li>Re-randomize periodically; a permanent holdout drifts out of comparability</li><li>Scope clearly: feature-level, team-level, or global holdout</li><li>Track novelty decay: cumulative effect vs sum of individual test wins</li></ul></div>
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Catches interaction effects and novelty decay across many launches</li><li>The honest answer to "did this quarter's work move anything?"</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Holdout users get a degraded product for months — ethics/CX cost</li><li>Engineering cost of keeping old paths alive</li><li>Contamination via cross-device, support scripts, word of mouth</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>Meta-style notification holdout: 1% of users receive the old notification stack for two quarters; the gap vs everyone else prices the whole roadmap, including annoyance-driven churn the individual tests missed.</div>
+  </div></details>
+
+  <details class="method" id="m-shadow"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Shadow Testing<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> a new model or system is too risky to expose. Run it in parallel on live traffic, log what it <em>would have</em> done, and compare offline against the production system — zero user exposure.</p>
+    <div class="m-grid">
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Zero user risk; validates latency, error rates, and prediction quality at production scale</li><li>Catches train/serve skew before any experiment</li><li>Cheap precursor that de-risks the real A/B</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li><b>No behavioral outcomes</b> — you see what would be shown, never how users respond</li><li>Feedback loops absent (a ranker changes what users click, which changes the data)</li><li>Tempting to over-claim from offline metrics</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>Airbnb shadows a new search-ranking model for two weeks: identical queries scored by both systems, comparing overlap, latency, and offline NDCG — then graduates it to a real experiment.</div>
+  </div></details>
+
+  <details class="method" id="m-natural"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Natural Experiments<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="m-body">
+    <p><b>Problem solved:</b> no design is available, but the world randomizes for you — outages, policy changes, weather, lotteries, arbitrary eligibility rules create as-if-random variation in treatment.</p>
+    <div class="m-grid">
+      <div class="m-cell"><span class="lbl">Assumptions</span><ul><li>The shock is plausibly unrelated to potential outcomes (argue, don't assume)</li><li>Affected vs unaffected units otherwise comparable</li><li>Usually analyzed via DiD, IV, or RDD machinery</li></ul></div>
+      <div class="m-cell pros"><span class="lbl">Pros</span><ul><li>Real-world variation at scales you could never engineer</li><li>Sometimes the only ethical route (pricing harm, legal constraints)</li></ul></div>
+      <div class="m-cell cons"><span class="lbl">Cons</span><ul><li>Rare and opportunistic — you can't schedule one</li><li>As-if randomness is a claim, not a fact</li><li>Shock may bundle multiple changes at once</li></ul></div>
+    </div>
+    <div class="ex"><span class="lbl">Use case</span>A 6-hour push-notification outage hits a random subset of devices: compare their next-week engagement vs unaffected devices to estimate notifications' true incremental value.</div>
+  </div></details>
+</section>
+
+<!-- ==================== SECTION 8 ==================== -->
+<section class="section" id="s8">
+  <div class="sec-head">
+    <span class="sec-id">S8</span><h2>Causal Inference</h2><span class="chip vio">Deep dive</span>
+    <div class="sec-tools"><button class="minibtn exp-all">Expand all</button><button class="minibtn col-all">Collapse</button></div>
+  </div>
+  <p class="lede">The reasoning layer beneath every method in S7. If you can read a DAG, you can predict which analyses are biased before running a single query.</p>
+
+  <details class="topic" open><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Correlation vs Causation<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <p>X and Y can correlate because X→Y, Y→X (reverse causation), a third variable drives both (confounding), or you conditioned on a common effect (collider/selection). Only one of those four supports "ship X to move Y" — the entire job is telling them apart.</p>
+    <div class="ex"><span class="lbl">Example</span>"Users with the app installed spend 3× more on the website." Install caused spend? High-intent users install apps? Or did a campaign target big spenders with install ads? Each story implies a different action.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>A correlation is one observable consequence of many possible causal structures. Decide the structure first (draw the DAG), then pick the analysis.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Confounding<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <p>A confounder Z causes both treatment X and outcome Y, creating a non-causal "backdoor path" X ← Z → Y. The raw X–Y association mixes the true effect with Z's influence. Fix: block the backdoor by adjusting for Z (regression, matching, stratification) — or destroy it entirely with randomization, which deletes the Z→X arrow.</p>
+    <div class="diagram"><div class="cap">Fork · chain · collider — the three primitive structures</div><div id="dagViz"></div></div>
+    <div class="ex"><span class="lbl">Example</span>Trip intent (Z) drives both wishlist use (X) and booking (Y). Adjusting for intent proxies shrinks the wishlist "effect" from +28pp to +4pp.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Adjust for confounders (forks). Do <b>not</b> adjust for mediators (chains) if you want the total effect, and <b>never</b> adjust for colliders.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Selection Bias<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <p>The analyzed sample is conditioned on something caused by treatment, outcome, or both — surveys answered only by happy users, funnels analyzed only for completers, churned users excluded. Formally it's conditioning on a collider: sample inclusion is the common effect.</p>
+    <div class="ex"><span class="lbl">Example</span>"NPS rose after the redesign" — but the redesign frustrated low-engagement users into leaving before the survey fired. The survivors were always happier.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Ask of every dataset: <em>who is missing, and could the treatment or outcome have decided that?</em> If yes, the comparison is biased before any statistics happen.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Collider Bias<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <p>X → C ← Y: X and Y both cause C. Unconditionally, X and Y can be independent — but condition on C (filter, stratify, or "control for" it) and a spurious X–Y association appears. The classic backwards intuition: adding more control variables can <em>create</em> bias.</p>
+    <div class="ex"><span class="lbl">Example</span>Among <em>featured</em> listings (featured if great photos OR low price), photo quality and price look negatively correlated — pure artifact of the filter. Across all listings, no such trade-off exists.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>"Control for everything" is wrong. Each covariate is either a confounder (adjust), mediator (don't, for total effects), or collider (never). The DAG tells you which.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Simpson's Paradox<span class="t-tag chip vio">DEEP · INTERACTIVE</span></summary>
+  <div class="t-body">
+    <p>A trend that appears in aggregate reverses within every subgroup (or vice versa), because group membership confounds the relationship. Neither view is automatically "right" — the causal structure decides which one answers your question.</p>
+    <div class="diagram">
+      <div class="cap">Toggle the view · same data, opposite conclusions</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="minibtn" id="simpAgg">Aggregated</button>
+        <button class="minibtn" id="simpSeg">Segmented</button>
+      </div>
+      <div id="simpsonViz"></div>
+      <p id="simpsonCap" style="font-size:12.5px;color:var(--muted);margin-top:8px"></p>
+    </div>
+    <div class="ex"><span class="lbl">Example</span>Aggregate: more search filters used → lower booking rate. Within mobile and within desktop: more filters → <em>higher</em> booking rate. Mobile users use more filters and convert less for unrelated reasons — platform is the confounder.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>If group membership causally precedes both variables, the segmented view is the causal one. Decide by structure, not by which chart looks better.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>DAGs (Directed Acyclic Graphs)<span class="t-tag chip vio">DEEP</span></summary>
+  <div class="t-body">
+    <p>Nodes are variables; arrows are direct causal claims. DAGs make assumptions explicit and mechanical: list every path from treatment to outcome, classify each as causal (front-door) or spurious (backdoor), then choose an adjustment set that blocks all backdoor paths while leaving causal paths open — the <b>backdoor criterion</b>.</p>
+    <div class="tblwrap"><table>
+      <tr><th>Structure</th><th>Pattern</th><th>Adjusting for the middle node…</th></tr>
+      <tr><td><b>Fork (confounder)</b></td><td>X ← Z → Y</td><td>✅ Removes spurious association — adjust</td></tr>
+      <tr><td><b>Chain (mediator)</b></td><td>X → M → Y</td><td>⚠️ Blocks part of the real effect — don't, for total effect</td></tr>
+      <tr><td><b>Collider</b></td><td>X → C ← Y</td><td>❌ Creates spurious association — never</td></tr>
+    </table></div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Five minutes drawing the DAG with a domain expert beats five weeks of regression archaeology. Every S7 method is a strategy for blocking backdoor paths when you can't randomize them away.</div>
+  </div></details>
+</section>
+
+<!-- ==================== SECTION 9 ==================== -->
+<section class="section" id="s9">
+  <div class="sec-head">
+    <span class="sec-id">S9</span><h2>Advanced Product Analytics</h2><span class="chip">Quick ref</span>
+    <div class="sec-tools"><button class="minibtn exp-all">Expand all</button><button class="minibtn col-all">Collapse</button></div>
+  </div>
+
+  <div class="diagram"><div class="cap">Funnel · biggest drop ≠ biggest opportunity</div><div id="funnelViz"></div></div>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Funnel Analysis<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Stepwise conversion through a flow. Read it with headroom in mind: a 95%→90% step has little to gain; a 40% step with strong intent upstream is where experiments pay.</p>
+    <div class="kt"><span class="lbl">Key takeaway</span>Prioritize steps by <em>reachable headroom × traffic</em>, not by raw drop-off. And fix the funnel definition (time window, ordering, dedup) before comparing anything.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Cohort Analysis<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Group users by start period (or acquisition channel) and track each group over relative time. Separates real product change from mix shift — a "declining" average metric is often just newer, lower-quality cohorts diluting the blend.</p>
+    <div class="tblwrap"><table class="heat" id="cohortHeat">
+      <tr><th>Cohort</th><th>M0</th><th>M1</th><th>M2</th><th>M3</th><th>M4</th></tr>
+      <tr><td>Jan</td><td data-v="100">100%</td><td data-v="42">42%</td><td data-v="33">33%</td><td data-v="29">29%</td><td data-v="27">27%</td></tr>
+      <tr><td>Feb</td><td data-v="100">100%</td><td data-v="44">44%</td><td data-v="35">35%</td><td data-v="31">31%</td><td></td></tr>
+      <tr><td>Mar</td><td data-v="100">100%</td><td data-v="48">48%</td><td data-v="39">39%</td><td></td><td></td></tr>
+      <tr><td>Apr</td><td data-v="100">100%</td><td data-v="52">52%</td><td></td><td></td><td></td></tr>
+    </table></div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Read down the columns: each cohort retaining better at the same age (42→44→48→52% at M1) is the cleanest observational evidence the product is improving.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Retention<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Define it three ways and say which: N-day (active exactly on day N), rolling/unbounded (active on day N or later), bracket (active within a window). The shape matters more than the level — a curve that flattens means a durable habit; one that decays to zero means a leaky bucket no acquisition can fill.</p>
+    <div class="kt"><span class="lbl">Key takeaway</span>Match the retention window to natural usage frequency: daily for messaging, weekly for food delivery, yearly for travel. Wrong window → false alarm or false comfort.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Segmentation<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Behavioral segments (frequency, recency, use case) beat demographic ones for product decisions. Segments are most valuable defined <em>before</em> analysis; segments discovered after seeing results are multiple-testing bait (S3).</p>
+    <div class="kt"><span class="lbl">Key takeaway</span>A good segmentation changes a decision (build, target, price). If every segment gets the same action, it's a chart, not a segmentation.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>LTV (Lifetime Value)<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Discounted margin a user generates over their lifetime. Estimate via cohort extrapolation (fit the retention curve, multiply by margin per active period) or survival/probabilistic models. The LTV/CAC ratio governs how aggressively you can acquire.</p>
+    <div class="kt"><span class="lbl">Key takeaway</span>LTV is a model, not a metric — always quote the horizon and assumptions. "3-year contribution-margin LTV" is honest; "LTV" is negotiable fiction.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Churn<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>For subscriptions churn is an event (cancel); for usage products it's a definition (inactive ≥ X days, with X chosen from natural return-gap distributions). Leading indicators — usage decay, support contacts, payment failures — beat the lagging churn flag for intervention.</p>
+    <div class="kt"><span class="lbl">Key takeaway</span>Predicting churn is easy; preventing it is causal. The save-offer's value is its <em>incremental</em> effect on would-be churners — an uplift question, not a classification one.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Attribution<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Assigning conversion credit across touchpoints. Rule-based (last-touch, first-touch, position) is arbitrary; data-driven (Shapley, Markov) is more principled but still <em>correlational</em> — it allocates observed credit, it doesn't prove causation.</p>
+    <div class="kt"><span class="lbl">Key takeaway</span>Last-touch systematically over-credits bottom-funnel channels (brand search, retargeting). Use attribution for steering between channels, incrementality (below) for budget truth.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Incrementality<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>The causal question behind attribution: how many conversions would <em>not</em> have happened without the spend? Measured with geo experiments, intent-to-treat ad holdouts, or ghost ads — never with click-through data alone.</p>
+    <div class="ex"><span class="lbl">Example</span>Retargeting shows 8× ROAS by last-touch; a geo holdout shows 1.2× incremental ROAS. The difference is users who would have purchased anyway.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Attribution divides the pie; incrementality measures whether the pie got bigger.</div>
+  </div></details>
+
+  <details class="topic"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>Uplift Modeling<span class="t-tag chip">REF</span></summary>
+  <div class="t-body">
+    <p>Predict the <em>individual</em> treatment effect (CATE) to target only "persuadables" — skip sure-things, lost causes, and the do-not-disturbs a treatment would backfire on. Trained on randomized experiment data (T-learner, X-learner, causal forests); evaluated with Qini/uplift curves, not AUC.</p>
+    <div class="ex"><span class="lbl">Example</span>A discount lifts conversion +1% overall, but +9% on the top-uplift-decile users. Targeting that decile delivers most of the value at a tenth of the discount cost.</div>
+    <div class="kt"><span class="lbl">Key takeaway</span>Propensity models target who will convert; uplift models target who will convert <em>because of you</em>. Different question, often opposite targets.</div>
+  </div></details>
+</section>
+
+<!-- ==================== SECTION 10 ==================== -->
+<section class="section" id="s10">
+  <div class="sec-head">
+    <span class="sec-id">S10</span><h2>Airbnb Case Studies</h2><span class="chip acc">Illustrative</span>
+    <div class="sec-tools"><button class="minibtn exp-all">Expand all</button><button class="minibtn col-all">Collapse</button></div>
+  </div>
+  <p class="lede">Six composite cases in the Airbnb domain, written to exercise the methods in S5–S7. Numbers are illustrative.</p>
+
+  <details class="case"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>1 · Search Ranking Changes<span class="t-tag chip acc">CASE</span></summary>
+  <div class="t-body">
+    <p><span class="lbl">Problem</span>Rank listings to maximize bookings without starving new hosts of exposure or harming long-term marketplace health.</p>
+    <p><span class="lbl">Hypothesis</span>Adding personalized booking-probability features to the ranker lifts search→booking conversion ≥1% with neutral guardrails.</p>
+    <p><span class="lbl">Metrics</span>Primary: search→booking conversion. Guardrails: cancellation rate, new-host exposure share, result diversity, search latency. Diagnostics: CTR by position, booked-listing rank.</p>
+    <p><span class="lbl">Design</span>Naive user-level A/B is contaminated: treatment users book scarce inventory away from control (S6 interference), inflating the lift. Plan: shadow-test the model first (S7), then user-level A/B read alongside market-level liquidity monitoring; in supply-constrained markets, validate with a market-level (geo) read.</p>
+    <p><span class="lbl">Decision</span>Conversion +1.4%, guardrails neutral, but new-host exposure −6%. Ship with an exploration term that floors new-listing impressions; re-test. Document the interference-adjusted estimate (+0.8%) as the expected launch impact.</p>
+  </div></details>
+
+  <details class="case"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>2 · Dynamic Pricing (Smart Pricing)<span class="t-tag chip acc">CASE</span></summary>
+  <div class="t-body">
+    <p><span class="lbl">Problem</span>Hosts misprice: empty calendars in low season, underpriced inventory at peak. Does algorithmic price guidance raise booked nights without cutting host revenue?</p>
+    <p><span class="lbl">Hypothesis</span>Hosts adopting Smart Pricing gain ≥3% booked nights at neutral-or-better revenue per listing.</p>
+    <p><span class="lbl">Metrics</span>Primary: booked nights per listing. Guardrails: host revenue/night, host opt-out rate, guest price-complaint rate. Health: market price dispersion.</p>
+    <p><span class="lbl">Design</span>Listing-level randomization leaks: repricing some listings shifts demand to or from others in the same market (S6 spillover). Plan: cluster-randomize by market (S7 geo), stratified by market size and seasonality (S5); within-market price equilibrium is then captured, not contaminated. CUPED on pre-period booked nights for power with few clusters.</p>
+    <p><span class="lbl">Decision</span>Treated markets: +2.6% booked nights, revenue/night −0.8% (within tolerance), opt-outs concentrated among premium hosts. Ship with a price-floor control for premium segments; monitor with a 5% market holdout.</p>
+  </div></details>
+
+  <details class="case"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>3 · Host Incentives<span class="t-tag chip acc">CASE</span></summary>
+  <div class="t-body">
+    <p><span class="lbl">Problem</span>Supply-constrained markets need new listings. Does a $100 listing bonus create <em>incremental</em> active hosts, or pay people who would have listed anyway?</p>
+    <p><span class="lbl">Hypothesis</span>The bonus raises new-listing activation ≥15% among prospects, at a cost-per-incremental-listing below 90-day listing LTV.</p>
+    <p><span class="lbl">Metrics</span>Primary: activated listings (first booking-ready listing). Secondary: 90-day listing survival, incremental booked nights. Economics: cost per incremental activation.</p>
+    <p><span class="lbl">Design</span>Can't compare bonus-claimers vs others — claiming is self-selected. Randomized encouragement (S7 IV): offer the bonus to a random subset of registered prospects; the offer is the instrument for completing activation. LATE gives the effect for prospects the bonus actually moved — exactly the population the spend targets.</p>
+    <p><span class="lbl">Decision</span>Offer lifts activation 4.2pp on an 18% base; cost per incremental activation ≈ $620 vs $540 LTV. Don't scale flat. Retest a tiered bonus targeted by an uplift model (S9) trained on this experiment.</p>
+  </div></details>
+
+  <details class="case"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>4 · Search Filters<span class="t-tag chip acc">CASE</span></summary>
+  <div class="t-body">
+    <p><span class="lbl">Problem</span>Remote-work travelers can't find suitable stays. Does a "work-friendly" filter (verified wifi speed, desk) improve their conversion?</p>
+    <p><span class="lbl">Hypothesis</span>Among sessions that open the filter panel, exposing the new filter lifts booking conversion ≥2%.</p>
+    <p><span class="lbl">Metrics</span>Primary: triggered-session booking conversion. Guardrails: overall conversion, zero-result search rate. Diagnostics: filter adoption, result-set size after filtering.</p>
+    <p><span class="lbl">Design</span>Expected trigger rate ~6% of sessions — a raw all-users read would dilute a +3% triggered effect to +0.18% overall and need months of traffic. Triggered analysis (S5) with counterfactual logging: control sessions are flagged the moment the filter panel opens. SRM checked within the triggered population.</p>
+    <p><span class="lbl">Decision</span>Triggered conversion +2.7% (significant); diluted launch impact ≈ +0.16% overall bookings, zero-result rate +0.4pp in low-supply markets. Ship, but suppress the filter where verified-wifi supply &lt; threshold; start a host wifi-verification push.</p>
+  </div></details>
+
+  <details class="case"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>5 · Instant Booking<span class="t-tag chip acc">CASE</span></summary>
+  <div class="t-body">
+    <p><span class="lbl">Problem</span>Leadership wants "the effect of Instant Book on host earnings." Adoption is a host choice — responsive, professional hosts adopt more, confounding every raw comparison.</p>
+    <p><span class="lbl">Hypothesis</span>Enabling Instant Book raises a host's booked nights ≥5% via lower booking friction and a ranking boost.</p>
+    <p><span class="lbl">Metrics</span>Primary: booked nights per listing. Secondary: host cancellation rate, guest rebooking. Guardrail: host churn.</p>
+    <p><span class="lbl">Design</span>Three layers of evidence. (1) PSM (S7) on quality, tenure, market, and pre-period demand for a fast adjusted estimate — labeled as observational. (2) Randomized encouragement (IV) nudging a random host subset to enable, for a causal LATE. (3) For the long-run marketplace question, a market-level holdout where IB ranking boosts are withheld.</p>
+    <p><span class="lbl">Decision</span>PSM said +11%; IV said +6% — the gap is selection bias, quantified. Report +6% as causal for movable hosts; use it for adoption-campaign ROI, and keep the holdout running for the ecosystem read.</p>
+  </div></details>
+
+  <details class="case"><summary><svg class="arrow" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5z"/></svg>6 · Recommendation Algorithm Changes<span class="t-tag chip acc">CASE</span></summary>
+  <div class="t-body">
+    <p><span class="lbl">Problem</span>A new "similar listings" carousel model. Does it create bookings, or cannibalize search?</p>
+    <p><span class="lbl">Hypothesis</span>The new model lifts <em>net</em> bookings per visitor ≥0.5%, not just carousel engagement.</p>
+    <p><span class="lbl">Metrics</span>Primary: bookings per visitor (net, surface-agnostic). Guardrails: search conversion (cannibalization check), latency. Diagnostics: carousel CTR, share of bookings via carousel.</p>
+    <p><span class="lbl">Design</span>Stage 1: shadow test (S7) for latency, coverage, and offline ranking quality. Stage 2: user-level A/B with the <em>net</em> metric primary — carousel CTR alone would reward stealing clicks from search. Monitor effect-by-exposure-day to separate novelty (S3) from durable lift; plan a 4-week minimum read.</p>
+    <p><span class="lbl">Decision</span>Carousel CTR +18%, but net bookings +0.1% (ns) and search conversion −0.6%: mostly cannibalization with a novelty spike decaying after week 2. Iterate on candidate diversity rather than ship; keep the net-bookings primary for the rerun.</p>
+  </div></details>
+</section>
+
+<!-- ==================== SECTION 11 ==================== -->
+<section class="section" id="s11">
+  <div class="sec-head">
+    <span class="sec-id">S11</span><h2>Decision Frameworks</h2><span class="chip good">Flowcharts</span>
+  </div>
+  <p class="lede">Four one-glance frameworks. The first mirrors the interactive walker in S7.</p>
+
+  <h3 class="sub">Choosing an experiment method</h3>
+  <div class="diagram"><div class="cap">Can you randomize? → which design</div><div id="fwMethodViz"></div></div>
+
+  <h3 class="sub">Metric selection</h3>
+  <div class="diagram"><div class="cap">From decision to metric set</div><div id="fwMetricViz"></div></div>
+
+  <h3 class="sub">Marketplace experiment design</h3>
+  <div class="diagram"><div class="cap">Which side · what interference · what unit</div><div id="fwMktViz"></div></div>
+
+  <h3 class="sub">Rollout strategy selection</h3>
+  <div class="diagram"><div class="cap">Risk × measurement need</div><div id="fwRolloutViz"></div></div>
+</section>
+
+<div class="footer">
+  Δ Experimentation Field Guide · single-file · works offline · numbers in examples are illustrative · search with <kbd>/</kbd>
+</div>
+
+</main>
+</div><!-- /.main -->
+</div><!-- /.app -->
+<script>
+(function(){
+"use strict";
+var NS="http://www.w3.org/2000/svg";
+
+/* ---------- SVG flow helper ---------- */
+function flow(elId,w,h,nodes,edges,extra){
+  var el=document.getElementById(elId); if(!el) return;
+  var svg=document.createElementNS(NS,"svg");
+  svg.setAttribute("viewBox","0 0 "+w+" "+h);
+  svg.setAttribute("role","img");
+  var defs=document.createElementNS(NS,"defs");
+  defs.innerHTML='<marker id="'+elId+'-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--faint)"/></marker>';
+  svg.appendChild(defs);
+  var nmap={}; nodes.forEach(function(n){nmap[n.id]=n;});
+  function anchor(n,side,dx,dy){
+    dx=dx||0; dy=dy||0;
+    if(side==="t")return[n.x+n.w/2+dx,n.y+dy];
+    if(side==="b")return[n.x+n.w/2+dx,n.y+n.h+dy];
+    if(side==="l")return[n.x+dx,n.y+n.h/2+dy];
+    return[n.x+n.w+dx,n.y+n.h/2+dy];
+  }
+  (edges||[]).forEach(function(e){
+    var f=nmap[e.f],t=nmap[e.t];
+    var a=anchor(f,e.fs||"b",e.fdx,e.fdy),b=anchor(t,e.ts||"t",e.tdx,e.tdy);
+    var x1=a[0],y1=a[1],x2=b[0],y2=b[1],d;
+    var horiz=(e.fs==="r"||e.fs==="l");
+    if(horiz){
+      if(Math.abs(y1-y2)<2)d="M"+x1+" "+y1+" L"+x2+" "+y2;
+      else{var mx=e.mid!==undefined?e.mid:(x1+x2)/2;d="M"+x1+" "+y1+" L"+mx+" "+y1+" L"+mx+" "+y2+" L"+x2+" "+y2;}
+    }else{
+      if(Math.abs(x1-x2)<2)d="M"+x1+" "+y1+" L"+x2+" "+y2;
+      else{var my=e.mid!==undefined?e.mid:(y1+y2)/2;d="M"+x1+" "+y1+" L"+x1+" "+my+" L"+x2+" "+my+" L"+x2+" "+y2;}
+    }
+    var p=document.createElementNS(NS,"path");
+    p.setAttribute("d",d);
+    p.setAttribute("class","ln"+(e.dash?" ln-dash":""));
+    if(e.stroke)p.style.stroke=e.stroke;
+    p.setAttribute("marker-end","url(#"+elId+"-arr)");
+    svg.appendChild(p);
+    if(e.lbl){
+      var tx=document.createElementNS(NS,"text");
+      tx.setAttribute("class","tx-m");
+      tx.setAttribute("x",e.lx!==undefined?e.lx:(x1+x2)/2);
+      tx.setAttribute("y",e.ly!==undefined?e.ly:(y1+y2)/2-5);
+      tx.setAttribute("text-anchor","middle");
+      tx.textContent=e.lbl; svg.appendChild(tx);
+    }
+  });
+  nodes.forEach(function(n){
+    var r=document.createElementNS(NS,"rect");
+    r.setAttribute("x",n.x);r.setAttribute("y",n.y);
+    r.setAttribute("width",n.w);r.setAttribute("height",n.h);
+    r.setAttribute("rx",6);r.setAttribute("class",n.cls||"nd");
+    svg.appendChild(r);
+    var lines=n.lines||[n.t],lh=n.lh||13;
+    var y0=n.y+n.h/2-(lines.length-1)*lh/2+4;
+    lines.forEach(function(ln,i){
+      var tx=document.createElementNS(NS,"text");
+      tx.setAttribute("class",n.eq?"tx":(i===0?"tx":"tx-s"));
+      tx.setAttribute("x",n.x+n.w/2);tx.setAttribute("y",y0+i*lh);
+      tx.setAttribute("text-anchor","middle");
+      tx.textContent=ln; svg.appendChild(tx);
+    });
+  });
+  if(extra)svg.insertAdjacentHTML("beforeend",extra);
+  el.appendChild(svg);
+}
+
+/* ---------- S3: lifecycle ---------- */
+(function(){
+  var labels=["1 · Problem","2 · Hypothesis","3 · Metrics","4 · Launch","5 · Monitoring","6 · Analysis","7 · Decision"];
+  var nodes=labels.map(function(t,i){return{id:"n"+i,x:10+i*133,y:12,w:120,h:40,lines:[t],cls:i===6?"nd-acc":"nd"};});
+  var edges=[];for(var i=0;i<6;i++)edges.push({f:"n"+i,t:"n"+(i+1),fs:"r",ts:"l"});
+  flow("lifecycleViz",950,64,nodes,edges);
+})();
+
+/* ---------- S3: metric tree ---------- */
+flow("metricTreeViz",820,180,[
+  {id:"ns",x:270,y:10,w:200,h:46,cls:"nd-acc",lines:["North Star","Nights booked"]},
+  {id:"d1",x:20,y:120,w:180,h:46,cls:"nd-vio",lines:["Driver","Search conversion"]},
+  {id:"d2",x:215,y:120,w:180,h:46,cls:"nd-vio",lines:["Driver","Supply growth"]},
+  {id:"d3",x:410,y:120,w:180,h:46,cls:"nd-vio",lines:["Driver","Guest retention"]},
+  {id:"g",x:620,y:10,w:185,h:46,cls:"nd-warn",lines:["Guardrails","Latency · Cancellations"]}
+],[
+  {f:"ns",t:"d1"},{f:"ns",t:"d2"},{f:"ns",t:"d3"},
+  {f:"g",t:"ns",fs:"l",ts:"r",dash:true,lbl:"must not harm",lx:545,ly:24}
+]);
+
+/* ---------- S3: ship / iterate / abandon ---------- */
+flow("shipFlowViz",780,300,[
+  {id:"q1",x:290,y:10,w:220,h:40,lines:["Stat-sig at fixed horizon?"]},
+  {id:"cn",x:590,y:10,w:170,h:40,lines:["CI excludes the MDE?"]},
+  {id:"q2",x:290,y:90,w:220,h:40,lines:["Practically significant?"]},
+  {id:"q3",x:290,y:170,w:220,h:40,lines:["Guardrails neutral or better?"]},
+  {id:"sh",x:70,y:250,w:150,h:38,cls:"nd-good",lines:["SHIP"]},
+  {id:"it",x:330,y:250,w:150,h:38,cls:"nd-warn",lines:["ITERATE"]},
+  {id:"ab",x:590,y:250,w:150,h:38,cls:"nd-bad",lines:["ABANDON"]}
+],[
+  {f:"q1",t:"q2",lbl:"YES",lx:415,ly:72},
+  {f:"q1",t:"cn",fs:"r",ts:"l",lbl:"NO",lx:550,ly:24},
+  {f:"cn",t:"ab",lbl:"YES",lx:690,ly:150},
+  {f:"cn",t:"it",fdx:-50,tdx:40,mid:150,lbl:"NO · underpowered",lx:535,ly:144},
+  {f:"q2",t:"q3",lbl:"YES",lx:415,ly:152},
+  {f:"q2",t:"ab",fs:"r",ts:"l",lbl:"NO · too small",lx:548,ly:104},
+  {f:"q3",t:"sh",lbl:"YES",lx:390,ly:226},
+  {f:"q3",t:"it",fdx:80,lbl:"NO",lx:497,ly:226}
+]);
+
+/* ---------- S6: marketplace interference ---------- */
+flow("mktViz",700,240,[
+  {id:"tg",x:30,y:30,w:180,h:50,cls:"nd-vio",lines:["Treatment guests","new feature"]},
+  {id:"cg",x:30,y:155,w:180,h:50,lines:["Control guests","status quo"]},
+  {id:"pool",x:430,y:80,w:230,h:74,cls:"nd-acc",lines:["Shared listing pool","finite inventory"]}
+],[
+  {f:"tg",t:"pool",fs:"r",ts:"l",tdy:-18,lbl:"books inventory first",lx:318,ly:48},
+  {f:"cg",t:"pool",fs:"r",ts:"l",tdy:18,dash:true,lbl:"finds it gone",lx:318,ly:196},
+  {f:"tg",t:"cg",dash:true,stroke:"var(--bad)",lbl:"spillover · control degraded",lx:122,ly:122}
+]);
+
+/* ---------- S8: DAG primitives ---------- */
+(function(){
+  var el=document.getElementById("dagViz"); if(!el)return;
+  el.innerHTML='<svg viewBox="0 0 680 150" role="img" aria-label="Fork, chain, and collider DAG structures">'
+  +'<defs><marker id="dag-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--faint)"/></marker></defs>'
+  /* fork */
+  +'<circle class="nd nd-warn" cx="110" cy="32" r="16"/><text class="tx" x="110" y="36" text-anchor="middle">Z</text>'
+  +'<circle class="nd" cx="50" cy="100" r="16"/><text class="tx" x="50" y="104" text-anchor="middle">X</text>'
+  +'<circle class="nd" cx="170" cy="100" r="16"/><text class="tx" x="170" y="104" text-anchor="middle">Y</text>'
+  +'<path class="ln" d="M99.6 44.2 L60.4 87.8" marker-end="url(#dag-arr)"/>'
+  +'<path class="ln" d="M120.4 44.2 L159.6 87.8" marker-end="url(#dag-arr)"/>'
+  +'<text class="tx-m" x="110" y="138" text-anchor="middle">FORK · ADJUST Z</text>'
+  /* chain */
+  +'<circle class="nd" cx="280" cy="66" r="16"/><text class="tx" x="280" y="70" text-anchor="middle">X</text>'
+  +'<circle class="nd nd-warn" cx="340" cy="66" r="16"/><text class="tx" x="340" y="70" text-anchor="middle">M</text>'
+  +'<circle class="nd" cx="400" cy="66" r="16"/><text class="tx" x="400" y="70" text-anchor="middle">Y</text>'
+  +'<path class="ln" d="M296 66 L324 66" marker-end="url(#dag-arr)"/>'
+  +'<path class="ln" d="M356 66 L384 66" marker-end="url(#dag-arr)"/>'
+  +'<text class="tx-m" x="340" y="138" text-anchor="middle">CHAIN · DON\'T BLOCK M</text>'
+  /* collider */
+  +'<circle class="nd" cx="510" cy="32" r="16"/><text class="tx" x="510" y="36" text-anchor="middle">X</text>'
+  +'<circle class="nd" cx="630" cy="32" r="16"/><text class="tx" x="630" y="36" text-anchor="middle">Y</text>'
+  +'<circle class="nd nd-warn" cx="570" cy="100" r="16"/><text class="tx" x="570" y="104" text-anchor="middle">C</text>'
+  +'<path class="ln" d="M520.4 44.2 L559.6 87.8" marker-end="url(#dag-arr)"/>'
+  +'<path class="ln" d="M619.6 44.2 L580.4 87.8" marker-end="url(#dag-arr)"/>'
+  +'<text class="tx-m" x="570" y="138" text-anchor="middle">COLLIDER · NEVER ADJUST C</text>'
+  +'</svg>';
+})();
+
+/* ---------- S9: funnel ---------- */
+(function(){
+  var el=document.getElementById("funnelViz"); if(!el)return;
+  var steps=[["Visit",100,"100%"],["Search",62,"62% · step 62%"],["View listing",38,"38% · step 61%"],["Begin booking",12,"12% · step 32%"],["Book",7.4,"7.4% · step 62%"]];
+  var cx=330,maxw=420,h=26,gap=9,s='<svg viewBox="0 0 660 185" role="img" aria-label="Booking funnel">';
+  /* connectors */
+  for(var i=0;i<steps.length-1;i++){
+    var w1=steps[i][1]/100*maxw,w2=steps[i+1][1]/100*maxw;
+    var y1=10+i*(h+gap)+h,y2=10+(i+1)*(h+gap);
+    s+='<polygon points="'+(cx-w1/2)+','+y1+' '+(cx+w1/2)+','+y1+' '+(cx+w2/2)+','+y2+' '+(cx-w2/2)+','+y2+'" fill="var(--acc)" opacity="0.1"/>';
+  }
+  steps.forEach(function(st,i){
+    var w=st[1]/100*maxw,y=10+i*(h+gap);
+    s+='<rect class="nd-acc" x="'+(cx-w/2)+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4"/>';
+    s+='<text class="tx" x="'+(cx-maxw/2-14)+'" y="'+(y+h/2+4)+'" text-anchor="end">'+st[0]+'</text>';
+    s+='<text class="tx-m" x="'+(cx+maxw/2+14)+'" y="'+(y+h/2+4)+'">'+st[2]+'</text>';
+  });
+  s+='</svg>';
+  el.innerHTML=s;
+})();
+
+/* ---------- S11: flowcharts ---------- */
+flow("fwMethodViz",880,330,[
+  {id:"root",x:330,y:10,w:220,h:40,cls:"nd-acc",lines:["Can you randomize units?"]},
+  {id:"intf",x:70,y:100,w:240,h:40,lines:["Interference between units?"]},
+  {id:"why",x:560,y:100,w:250,h:40,lines:["Why is randomization impossible?"]},
+  {id:"ab",x:10,y:190,w:170,h:52,cls:"nd-good",lines:["Standard A/B","+ variance reduction (S5)"]},
+  {id:"geo",x:195,y:190,w:160,h:52,cls:"nd-good",lines:["Geo / cluster","randomization"]},
+  {id:"sw",x:370,y:190,w:155,h:52,cls:"nd-good",lines:["Switchback","time-sliced markets"]},
+  {id:"obs",x:545,y:190,w:325,h:112,cls:"nd-vio",lh:24,eq:true,lines:["Full launch → DiD · Synthetic control · ITS","Threshold rule → RDD","Self-selection → IV · PSM","Long-term or risky → Holdout · Shadow"]}
+],[
+  {f:"root",t:"intf",fdx:-60,lbl:"YES",lx:300,ly:70},
+  {f:"root",t:"why",fdx:60,lbl:"NO",lx:592,ly:70},
+  {f:"intf",t:"ab",fdx:-95,lbl:"no",lx:80,ly:168},
+  {f:"intf",t:"geo",lbl:"yes · markets",lx:215,ly:168},
+  {f:"intf",t:"sw",fdx:95,lbl:"yes · shared state",lx:382,ly:168},
+  {f:"why",t:"obs"}
+]);
+
+flow("fwMetricViz",480,400,[
+  {id:"n1",x:120,y:10,w:250,h:48,cls:"nd-acc",lines:["What decision will this","experiment inform?"]},
+  {id:"n2",x:120,y:92,w:250,h:48,lines:["Which north-star driver","should it move?"]},
+  {id:"n3",x:120,y:174,w:250,h:48,cls:"nd-good",lines:["Primary metric — one","sensitive · attributable"]},
+  {id:"n4",x:120,y:256,w:250,h:48,cls:"nd-warn",lines:["Guardrails","the must-not-harm set"]},
+  {id:"n5",x:120,y:338,w:250,h:48,cls:"nd-vio",lines:["Diagnostics","to explain the movement"]}
+],[
+  {f:"n1",t:"n2"},{f:"n2",t:"n3"},{f:"n3",t:"n4"},{f:"n4",t:"n5"}
+]);
+
+flow("fwMktViz",800,260,[
+  {id:"root",x:280,y:10,w:240,h:40,cls:"nd-acc",lines:["Which side does the change touch?"]},
+  {id:"guest",x:30,y:100,w:200,h:40,lines:["Guest-side feature"]},
+  {id:"host",x:310,y:100,w:180,h:40,lines:["Host-side feature"]},
+  {id:"mkt",x:560,y:100,w:210,h:40,lines:["Market-level lever"]},
+  {id:"gl1",x:10,y:190,w:180,h:52,cls:"nd-good",lines:["Low contention →","user-level A/B"]},
+  {id:"gl2",x:205,y:190,w:160,h:52,cls:"nd-warn",lines:["High contention →","geo / cluster"]},
+  {id:"hl",x:380,y:190,w:185,h:52,cls:"nd-good",lines:["Listing-level A/B","+ spillover guardrails"]},
+  {id:"ml",x:580,y:190,w:190,h:52,cls:"nd-vio",lines:["Switchback or","geo experiment"]}
+],[
+  {f:"root",t:"guest",fdx:-80},
+  {f:"root",t:"host"},
+  {f:"root",t:"mkt",fdx:80},
+  {f:"guest",t:"gl1",fdx:-50},
+  {f:"guest",t:"gl2",fdx:50},
+  {f:"host",t:"hl"},
+  {f:"mkt",t:"ml"}
+]);
+
+flow("fwRolloutViz",660,320,[
+  {id:"hl2",x:110,y:60,w:230,h:60,cls:"nd-warn",lines:["High risk · low need","Shadow test → staggered rollout"]},
+  {id:"hh",x:380,y:60,w:230,h:60,cls:"nd-vio",lines:["High risk · high need","Small-% A/B + long-term holdout"]},
+  {id:"ll",x:110,y:170,w:230,h:60,lines:["Low risk · low need","Full launch + ITS sanity check"]},
+  {id:"lh",x:380,y:170,w:230,h:60,cls:"nd-good",lines:["Low risk · high need","Standard A/B test"]}
+],[],
+  '<path class="ln" d="M70 270 L70 36" marker-end="url(#fwRolloutViz-arr)"/>'
+ +'<path class="ln" d="M70 270 L630 270" marker-end="url(#fwRolloutViz-arr)"/>'
+ +'<text class="tx-m" x="78" y="30">RISK</text>'
+ +'<text class="tx-m" x="630" y="288" text-anchor="end">NEED FOR MEASUREMENT</text>'
+);
+
+/* ---------- S2/S4: power diagram ---------- */
+(function(){
+  var el=document.getElementById("powerViz"); if(!el)return;
+  var W=640,H=210,base=178,sd=58,mu0=230,mu1=415,Hh=118;
+  var crit=mu0+1.96*sd;
+  function y(x,mu){return base-Hh*Math.exp(-((x-mu)*(x-mu))/(2*sd*sd));}
+  function curve(mu,x0,x1){var d="";for(var x=x0;x<=x1;x+=4){d+=(d===""?"M":"L")+x.toFixed(1)+" "+y(x,mu).toFixed(1);}return d;}
+  function region(mu,x0,x1,fill,op){
+    var d="M"+x0.toFixed(1)+" "+base;
+    for(var x=x0;x<=x1;x+=4){d+="L"+x.toFixed(1)+" "+y(x,mu).toFixed(1);}
+    d+="L"+x1.toFixed(1)+" "+base+"Z";
+    return '<path d="'+d+'" fill="'+fill+'" opacity="'+op+'" stroke="none"/>';
+  }
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Alpha, beta and power regions under null and alternative distributions">';
+  s+=region(mu1,mu1-3.4*sd,crit,"var(--warn)","0.35");
+  s+=region(mu1,crit,mu1+3.4*sd,"var(--good)","0.22");
+  s+=region(mu0,crit,mu0+3.4*sd,"var(--bad)","0.45");
+  s+='<path d="'+curve(mu0,mu0-3.4*sd,mu0+3.4*sd)+'" fill="none" stroke="var(--ctl)" stroke-width="2"/>';
+  s+='<path d="'+curve(mu1,mu1-3.4*sd,mu1+3.4*sd)+'" fill="none" stroke="var(--acc)" stroke-width="2"/>';
+  s+='<line x1="'+crit+'" y1="28" x2="'+crit+'" y2="'+(base+6)+'" stroke="var(--text)" stroke-width="1.2" stroke-dasharray="4 4"/>';
+  s+='<line x1="30" y1="'+base+'" x2="'+(W-15)+'" y2="'+base+'" stroke="var(--border2)" stroke-width="1.2"/>';
+  s+='<text class="tx-m" x="'+crit+'" y="20" text-anchor="middle">CRITICAL VALUE</text>';
+  s+='<text class="tx" x="'+mu0+'" y="46" text-anchor="middle">H&#8320; · no effect</text>';
+  s+='<text class="tx" x="'+mu1+'" y="46" text-anchor="middle">H&#8321; · effect = &#948;</text>';
+  s+='<text class="tx-m" x="'+(crit+30)+'" y="'+(base+18)+'" fill="var(--bad)">&#945; FALSE POSITIVE</text>';
+  s+='<text class="tx-m" x="'+(crit-32)+'" y="'+(base+18)+'" text-anchor="end" fill="var(--warn)">&#946; MISS</text>';
+  s+='<text class="tx-m" x="'+(mu1+52)+'" y="100" fill="var(--good)">POWER = 1&#8722;&#946;</text>';
+  s+='</svg>';
+  el.innerHTML=s;
+})();
+
+/* ---------- S8: Simpson's paradox ---------- */
+(function(){
+  var el=document.getElementById("simpsonViz"),cap=document.getElementById("simpsonCap");
+  if(!el)return;
+  var wA=[3,-4,2,-2,4,-3,1,-5,3,-1],wB=[-2,3,-3,1,-4,2,-1,4,-2,2];
+  var desk=[],mob=[];
+  for(var i=0;i<10;i++){
+    desk.push([70+i*18,75-i*2+wA[i]]);
+    mob.push([330+i*18,170-i*2+wB[i]]);
+  }
+  function render(seg){
+    var s='<svg viewBox="0 0 620 240" role="img" aria-label="Simpson paradox scatter plot">';
+    s+='<line x1="44" y1="210" x2="600" y2="210" stroke="var(--border2)"/><line x1="44" y1="210" x2="44" y2="16" stroke="var(--border2)"/>';
+    s+='<text class="tx-m" x="600" y="228" text-anchor="end">FILTERS USED &#8594;</text>';
+    s+='<text class="tx-m" x="50" y="14">BOOKING RATE &#8593;</text>';
+    var cD=seg?"var(--acc)":"var(--ctl)",cM=seg?"var(--vio)":"var(--ctl)";
+    desk.forEach(function(p){s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5" fill="'+cD+'" opacity="0.85"/>';});
+    mob.forEach(function(p){s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5" fill="'+cM+'" opacity="0.85"/>';});
+    if(seg){
+      s+='<line x1="60" y1="77" x2="250" y2="56" stroke="var(--acc)" stroke-width="2.5"/>';
+      s+='<line x1="320" y1="172" x2="512" y2="151" stroke="var(--vio)" stroke-width="2.5"/>';
+      s+='<text class="tx-s" x="255" y="50" fill="var(--acc)">Desktop &#8599;</text>';
+      s+='<text class="tx-s" x="516" y="148" fill="var(--vio)">Mobile &#8599;</text>';
+    }else{
+      s+='<line x1="60" y1="33" x2="510" y2="197" stroke="var(--bad)" stroke-width="2.5"/>';
+      s+='<text class="tx-s" x="516" y="200" fill="var(--bad)">All users &#8600;</text>';
+    }
+    s+='</svg>';
+    el.innerHTML=s;
+    cap.textContent=seg
+      ?"Segmented: within desktop and within mobile, more filters \u2192 higher booking rate. Platform was confounding the aggregate."
+      :"Aggregated: more filters \u2192 lower booking rate. Mobile users use more filters and convert less for unrelated reasons \u2014 the trend is an artifact of mixing platforms.";
+  }
+  document.getElementById("simpAgg").addEventListener("click",function(){render(false);});
+  document.getElementById("simpSeg").addEventListener("click",function(){render(true);});
+  render(false);
+})();
+
+/* ---------- S7: decision tree walker ---------- */
+(function(){
+  var body=document.getElementById("dtBody"),crumbs=document.getElementById("dtCrumbs");
+  if(!body)return;
+  var Q={
+    start:{q:"Can you randomly assign units to treatment vs control?",o:[["Yes — assignment is under our control","rand1"],["No — randomization is off the table","obs1"]]},
+    rand1:{q:"Do units interfere with each other (shared inventory, network effects, one driver pool)?",o:[["No — units are independent","r_ab"],["Yes — interference matters","rand2"]]},
+    rand2:{q:"What is the structure of the interference?",o:[["Geographic / market-based","r_geo"],["Shared real-time state — pricing, dispatch, market-wide ranking","r_switch"],["Two-sided marketplace exposure","rand3"],["Social graph / connected users","r_cluster"]]},
+    rand3:{q:"What does the change primarily affect?",o:[["A shared market-level lever (prices, matching)","r_switch"],["Whole-market equilibrium (supply and demand)","r_geo"]]},
+    obs1:{q:"Why can't you randomize?",o:[["It launches to everyone at once","obs2"],["Assignment follows a threshold or rule","r_rdd"],["Users self-select into the treatment","obs3"],["We need the long-term effect of shipped work","r_holdout"],["The new system is too risky to expose to users","r_shadow"]]},
+    obs2:{q:"Do comparable untreated units exist (other cities, cohorts, countries)?",o:[["Yes — several comparable groups","r_did"],["Only one treated unit, many candidate donors","r_synth"],["No comparison group at all","r_its"]]},
+    obs3:{q:"Could you randomize an encouragement — a nudge toward adoption?",o:[["Yes — we can randomize a nudge","r_iv"],["No — purely observational data","r_psm"]]}
+  };
+  var R={
+    r_ab:{t:"Standard A/B test",d:"Randomize users or sessions, pre-register one primary metric, power it properly, and stack variance reduction — CUPED, stratification, triggered analysis.",a:"#s5",al:"Variance reduction (S5)"},
+    r_geo:{t:"Geo experiment / cluster randomization",d:"Randomize self-contained markets or clusters so interference stays inside units. Stratify or match pairs — power will be the binding constraint.",a:"#m-geo",al:"Geo & cluster card"},
+    r_switch:{t:"Switchback experiment",d:"Alternate the whole market between arms across randomized time windows; analyze at the window level with cluster-robust inference.",a:"#m-switchback",al:"Switchback card"},
+    r_cluster:{t:"Graph cluster randomization",d:"Partition the social graph into communities and randomize clusters — the network version of a geo experiment.",a:"#m-geo",al:"Geo & cluster card"},
+    r_rdd:{t:"Regression discontinuity",d:"Compare units just above vs just below the cutoff; verify no manipulation; report a local effect at the threshold.",a:"#m-rdd",al:"RDD card"},
+    r_did:{t:"Difference-in-differences",d:"Compare the treated group's before\u2192after change against untreated groups; validate parallel pre-trends and run placebo tests.",a:"#m-did",al:"DiD card"},
+    r_synth:{t:"Synthetic control",d:"Build a weighted donor combination that reproduces the treated unit's pre-period trajectory; the post-period gap is the effect.",a:"#m-synth",al:"Synthetic control card"},
+    r_its:{t:"Interrupted time series",d:"Model the pre-launch trend and measure the post-launch deviation from the projected counterfactual; rule out co-occurring shocks.",a:"#m-its",al:"ITS card"},
+    r_iv:{t:"Instrumental variables — encouragement design",d:"Randomize the nudge, use it as an instrument for adoption, and report a LATE for compliers.",a:"#m-iv",al:"IV card"},
+    r_psm:{t:"Propensity score matching",d:"Match treated to similar untreated units on pre-treatment covariates; report as adjusted-observational with sensitivity analysis.",a:"#m-psm",al:"PSM card"},
+    r_holdout:{t:"Long-term holdout",d:"Keep a small re-randomized slice on the old experience for months to price cumulative, durable impact including novelty decay.",a:"#m-holdout",al:"Holdout card"},
+    r_shadow:{t:"Shadow test",d:"Run the new system in parallel with zero exposure, validate predictions and latency at scale, then graduate to a real experiment.",a:"#m-shadow",al:"Shadow testing card"}
+  };
+  var path=[];
+  function esc(t){var d=document.createElement("div");d.textContent=t;return d.innerHTML;}
+  function render(node){
+    crumbs.innerHTML=path.map(function(p){return '<span class="dt-crumb">'+esc(p)+'</span>';}).join("");
+    if(Q[node]){
+      var q=Q[node],h='<div class="dt-q">'+esc(q.q)+'</div><div class="dt-opts">';
+      q.o.forEach(function(opt,i){
+        h+='<button class="dt-opt" data-next="'+opt[1]+'" data-lbl="'+esc(opt[0])+'"><span class="k">'+(i+1)+'</span>'+esc(opt[0])+'</button>';
+      });
+      h+='</div>';
+      if(path.length)h+='<div class="dt-actions"><button class="minibtn" id="dtRestart">&#8635; Start over</button></div>';
+      body.innerHTML=h;
+      body.querySelectorAll(".dt-opt").forEach(function(b){
+        b.addEventListener("click",function(){
+          path.push(b.getAttribute("data-lbl"));
+          render(b.getAttribute("data-next"));
+        });
+      });
+    }else{
+      var r=R[node];
+      body.innerHTML='<div class="dt-result"><h4>&#10003; '+esc(r.t)+'</h4><p>'+esc(r.d)+'</p>'
+        +'<a class="inline" href="'+r.a+'">Jump to: '+esc(r.al)+'</a></div>'
+        +'<div class="dt-actions"><button class="minibtn" id="dtRestart">&#8635; Start over</button></div>';
+    }
+    var rs=document.getElementById("dtRestart");
+    if(rs)rs.addEventListener("click",function(){path=[];render("start");});
+  }
+  render("start");
+})();
+
+/* ---------- Theme toggle (in-memory only) ---------- */
+(function(){
+  var html=document.documentElement,btn=document.getElementById("themeBtn"),
+      icon=document.getElementById("themeIcon"),label=document.getElementById("themeLabel");
+  var theme=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches)?"light":"dark";
+  function apply(){
+    html.setAttribute("data-theme",theme);
+    icon.textContent=theme==="dark"?"\u25D0":"\u25D1";
+    label.textContent=theme==="dark"?"Light":"Dark";
+  }
+  btn.addEventListener("click",function(){theme=theme==="dark"?"light":"dark";apply();});
+  apply();
+})();
+
+/* ---------- Mobile menu ---------- */
+(function(){
+  var btn=document.getElementById("menuBtn");
+  btn.addEventListener("click",function(){document.body.classList.toggle("nav-open");});
+  document.querySelectorAll("#nav a").forEach(function(a){
+    a.addEventListener("click",function(){document.body.classList.remove("nav-open");});
+  });
+})();
+
+/* ---------- Search ---------- */
+(function(){
+  var inp=document.getElementById("search"),count=document.getElementById("search-count");
+  var items=Array.prototype.slice.call(document.querySelectorAll(".topic,.method,.case"));
+  var sections=Array.prototype.slice.call(document.querySelectorAll(".section"));
+  function run(){
+    var q=inp.value.trim().toLowerCase();
+    if(!q){
+      items.forEach(function(it){it.classList.remove("hidden");});
+      sections.forEach(function(s){s.classList.remove("sec-hidden");});
+      count.textContent="";
+      return;
+    }
+    var n=0;
+    items.forEach(function(it){
+      var hit=it.textContent.toLowerCase().indexOf(q)>-1;
+      it.classList.toggle("hidden",!hit);
+      if(hit){it.open=true;n++;}
+    });
+    sections.forEach(function(s){
+      var cards=s.querySelectorAll(".topic,.method,.case");
+      if(cards.length){
+        var any=false;
+        for(var i=0;i<cards.length;i++){if(!cards[i].classList.contains("hidden")){any=true;break;}}
+        s.classList.toggle("sec-hidden",!any);
+      }else{
+        s.classList.toggle("sec-hidden",s.textContent.toLowerCase().indexOf(q)===-1);
+      }
+    });
+    count.textContent=n+" match"+(n===1?"":"es");
+  }
+  inp.addEventListener("input",run);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="/"&&document.activeElement!==inp&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){
+      e.preventDefault();inp.focus();
+    }
+    if(e.key==="Escape"&&document.activeElement===inp){inp.value="";run();inp.blur();}
+  });
+})();
+
+/* ---------- Expand / collapse per section ---------- */
+document.querySelectorAll(".exp-all").forEach(function(b){
+  b.addEventListener("click",function(){
+    b.closest(".section").querySelectorAll("details").forEach(function(d){d.open=true;});
+  });
+});
+document.querySelectorAll(".col-all").forEach(function(b){
+  b.addEventListener("click",function(){
+    b.closest(".section").querySelectorAll("details").forEach(function(d){d.open=false;});
+  });
+});
+
+/* ---------- Active nav link ---------- */
+(function(){
+  var links={};
+  document.querySelectorAll("#nav a").forEach(function(a){links[a.getAttribute("href").slice(1)]=a;});
+  if(!("IntersectionObserver" in window))return;
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        Object.keys(links).forEach(function(k){links[k].classList.remove("active");});
+        var l=links[en.target.id]; if(l)l.classList.add("active");
+      }
+    });
+  },{rootMargin:"-15% 0px -75% 0px"});
+  document.querySelectorAll(".section").forEach(function(s){obs.observe(s);});
+})();
+
+/* ---------- Cohort heatmap coloring ---------- */
+document.querySelectorAll("#cohortHeat td[data-v]").forEach(function(td){
+  var v=parseFloat(td.getAttribute("data-v"));
+  td.style.background="color-mix(in srgb, var(--acc) "+(v*0.5).toFixed(0)+"%, transparent)";
+});
+
+})();
+</script>
+</body>
+</html>
