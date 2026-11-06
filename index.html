@@ -4,76 +4,120 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nihal's Learning Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* Layout idea: a single column index of grouped link rows, filtered by a search box. Edit the PAGES list below to add files. */
-:root{--bg:#f6f5f1;--panel:#fff;--ink:#1b2430;--muted:#5d6877;--line:#dcdad2;--accent:#0f6b63;--soft:#e4f0ee;
---display:Georgia,'Times New Roman',serif;--body:system-ui,-apple-system,'Segoe UI',sans-serif}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121816;--panel:#1a2320;--ink:#e7ece9;--muted:#9aa8a2;--line:#2c3935;--accent:#4fc3b4;--soft:#1e2f2c;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#121816;--panel:#1a2320;--ink:#e7ece9;--muted:#9aa8a2;--line:#2c3935;--accent:#4fc3b4;--soft:#1e2f2c;color-scheme:dark}
+/* Layout idea: dark hero band with search and topic chips, then a responsive grid of cards, each with a colour stripe by topic. Add pages in the PAGES list at the bottom. */
+:root{
+  --bg:#f4f1ea; --panel:#ffffff; --ink:#17211f; --muted:#5b6865; --line:#ddd8cc;
+  --hero:#10302c; --hero-ink:#f3efe4; --accent:#0f766e;
+  --c-air:#c2410c; --c-stat:#0f766e; --c-ml:#4d6bd6; --c-other:#a16207;
+  --display:'Fraunces',Georgia,serif; --body:'DM Sans',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1514; --panel:#172120; --ink:#ebf1ee; --muted:#9fb0ab; --line:#2a3836; --hero:#0a1f1c; --accent:#4fd1c5;
+  --c-air:#fb923c; --c-stat:#4fd1c5; --c-ml:#8ea4f5; --c-other:#facc15; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1514; --panel:#172120; --ink:#ebf1ee; --muted:#9fb0ab; --line:#2a3836; --hero:#0a1f1c; --accent:#4fd1c5;
+  --c-air:#fb923c; --c-stat:#4fd1c5; --c-ml:#8ea4f5; --c-other:#facc15; color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--body)}
-main{max-width:760px;margin:0 auto;padding:32px 16px 64px}
-h1{font:700 30px/1.2 var(--display);margin:0 0 6px;text-wrap:balance}
-.sub{color:var(--muted);margin:0 0 20px}
-input{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink)}
-input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:26px 0 8px;font-weight:600}
-ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-a.row{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--ink);text-decoration:none}
-a.row:hover{border-color:var(--accent);background:var(--soft)}
-.name{font-weight:600}
-.file{color:var(--muted);font-size:13px;word-break:break-all}
-.go{color:var(--accent);font-weight:600;flex:none}
-.empty{color:var(--muted);display:none}
+.hero{background:var(--hero);color:var(--hero-ink);padding:44px 16px 34px;
+  background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:18px 18px}
+.wrap{max-width:1020px;margin:0 auto}
+.eyebrow{font-size:13px;letter-spacing:.1em;text-transform:uppercase;opacity:.75;margin:0 0 8px}
+h1{font:700 clamp(32px,6vw,52px)/1.08 var(--display);margin:0 0 10px;text-wrap:balance}
+.lead{margin:0 0 22px;max-width:560px;opacity:.85}
+.stats{display:flex;flex-wrap:wrap;gap:10px 28px;margin:0 0 22px}
+.stats b{display:block;font:700 26px var(--display)}
+.stats span{font-size:13px;opacity:.75}
+.search{width:100%;max-width:520px;font:inherit;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:var(--hero-ink)}
+.search::placeholder{color:rgba(243,239,228,.6)}
+.search:focus-visible,.chip:focus-visible,a.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{font:inherit;font-size:14px;padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:transparent;color:var(--hero-ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--hero-ink);color:var(--hero);border-color:var(--hero-ink)}
+main{padding:26px 16px 60px}
+h2{font:600 22px var(--display);margin:28px 0 12px;display:flex;align-items:center;gap:10px}
+h2 i{font:500 13px var(--body);color:var(--muted);font-style:normal}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+a.card{display:flex;flex-direction:column;gap:6px;padding:16px 16px 14px;background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--tone);border-radius:12px;color:var(--ink);text-decoration:none;transition:transform .12s,box-shadow .12s}
+a.card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.12)}
+.tag{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--tone)}
+.title{font:600 19px/1.25 var(--display);text-wrap:balance}
+.file{font-size:12.5px;color:var(--muted);word-break:break-all}
+.open{margin-top:auto;padding-top:8px;font-weight:600;color:var(--tone)}
+.empty{display:none;color:var(--muted);padding:20px 0}
+@media (prefers-reduced-motion:reduce){a.card{transition:none}a.card:hover{transform:none}}
 </style>
 </head>
 <body>
-<main>
+<header class="hero"><div class="wrap">
+  <p class="eyebrow">Nihal's notebook</p>
   <h1>Learning Hub</h1>
-  <p class="sub">Interactive guides and practice pages. Tap a row to open it.</p>
-  <label for="q" class="sub" style="display:block;margin-bottom:6px">Search</label>
-  <input id="q" type="search" placeholder="Try: airbnb, bayesian, ml" autocomplete="off">
+  <p class="lead">Interactive guides for experimentation, statistics, machine learning and interview practice. Open any card to start.</p>
+  <div class="stats" id="stats"></div>
+  <label for="q" style="position:absolute;left:-9999px">Search pages</label>
+  <input id="q" class="search" type="search" placeholder="Search: airbnb, bayesian, ml..." autocomplete="off">
+  <div class="chips" id="chips" role="group" aria-label="Filter by topic"></div>
+</div></header>
+<main><div class="wrap">
   <div id="list"></div>
   <p class="empty" id="empty">No page matches that search.</p>
-</main>
+</div></main>
 <script>
-// Add new pages here: { title, file, group }. The file name must match the repo exactly.
+// Add new pages here. The file name must match the repo exactly, spaces included.
+const GROUPS={
+ 'Airbnb interview prep':'var(--c-air)',
+ 'Statistics and experimentation':'var(--c-stat)',
+ 'Machine learning':'var(--c-ml)',
+ 'Other':'var(--c-other)'};
 const PAGES=[
- {group:'Airbnb interview prep',title:'Analytics Interview Cases (18 cases, calculators, quiz)',file:'airbnb_interview_cases.html'},
- {group:'Airbnb interview prep',title:'Lead Advanced Analytics Interview Guide',file:'airbnb lead advanced analytics interview guide.html'},
- {group:'Airbnb interview prep',title:'Round 1 Mockup',file:'airbnb_round1_mockup.html'},
- {group:'Statistics and experimentation',title:'Experimentation Guide',file:'experimentation guide.html'},
- {group:'Statistics and experimentation',title:'Experimentation Mastery',file:'experimentation-mastery.html'},
- {group:'Statistics and experimentation',title:'Bayesian Quick Guide',file:'bayesian_quick_guide.html'},
- {group:'Statistics and experimentation',title:'Confidence Intervals Guide',file:'confidence_intervals_guide.html'},
- {group:'Statistics and experimentation',title:'Probability Distributions Guide',file:'probability_distributions_guide.html'},
- {group:'Statistics and experimentation',title:'Statistics Interactive',file:'statistics_interactive.html'},
- {group:'Machine learning',title:'ML Models Guide',file:'ml_models_guide.html'},
- {group:'Machine learning',title:'ML Revision Guide',file:'ml_revision_guide.html'},
- {group:'Other',title:'Hindu Baby Name Explorer',file:'hindu baby name explorer.html'},
- {group:'Other',title:'Vishnu Sahasranamam Interactive',file:'Vishnu Sahasranamam Interactive.html'}
+ {group:'Airbnb interview prep',title:'Analytics Interview Cases',note:'18 cases with calculators and a quiz: experiments, causal, Bayes, forecasting, evaluation',file:'airbnb_interview_cases.html'},
+ {group:'Airbnb interview prep',title:'Lead Analytics Prep',note:'Role analysis, ranked competencies, question analysis and a prep dashboard',file:'airbnb lead advanced analytics interview guide.html'},
+ {group:'Airbnb interview prep',title:'Round 1 Technical Case Workbook',note:'Technical cases, whiteboard stats and probability, mock, reference sheets',file:'airbnb_round1_mockup.html'},
+ {group:'Statistics and experimentation',title:'Experimentation and Causal Inference Field Guide',note:'A/B testing, sample size and power, marketplace experiments, causal inference',file:'experimentation guide.html'},
+ {group:'Statistics and experimentation',title:'Experimentation Mastery',note:'Experiment design, metrics, power analysis, sequential testing',file:'experimentation-mastery.html'},
+ {group:'Statistics and experimentation',title:'Bayesian Statistics Quick Guide',note:'Core idea, 6-step map, worked examples, base-rate fallacy',file:'bayesian_quick_guide.html'},
+ {group:'Statistics and experimentation',title:'Confidence Intervals and Python',note:'Intuition, light formulas, Python for single-sample and A/B intervals',file:'confidence_intervals_guide.html'},
+ {group:'Statistics and experimentation',title:'Probability Distributions',note:'Choosing the right distribution, with a selection flowchart',file:'probability_distributions_guide.html'},
+ {group:'Statistics and experimentation',title:'Statistics Reference',note:'Interactive statistics reference',file:'statistics_interactive.html'},
+ {group:'Machine learning',title:'ML Models Field Guide',note:'Linear regression to XGBoost, including Holt-Winters and a model comparison',file:'ml_models_guide.html'},
+ {group:'Machine learning',title:'ML Interview Revision Guide',note:'Data checks, outliers, model choice, features, parameters, evaluation',file:'ml_revision_guide.html'},
+ {group:'Other',title:'Hindu Baby Name Explorer',note:'Lalitha, Lakshmi and Surya names: meanings, sources, shortlist, comparison',file:'hindu baby name explorer.html'},
+ {group:'Other',title:'Vishnu Sahasranama',note:'Offline reference to the thousand names with Devanagari, transliteration and meaning',file:'Vishnu Sahasranamam Interactive.html'}
 ];
-const list=document.getElementById('list'),empty=document.getElementById('empty'),q=document.getElementById('q');
+const $=id=>document.getElementById(id);
+let active='All';
+const names=['All',...Object.keys(GROUPS)];
+$('stats').innerHTML='<div><b>'+PAGES.length+'</b><span>pages</span></div><div><b>'+Object.keys(GROUPS).length+'</b><span>topics</span></div>';
+names.forEach(n=>{
+  const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=n;
+  b.setAttribute('aria-pressed',n===active);
+  b.onclick=()=>{active=n;[...$('chips').children].forEach(c=>c.setAttribute('aria-pressed',c===b));draw();};
+  $('chips').appendChild(b);
+});
 function draw(){
-  const t=q.value.trim().toLowerCase();let n=0;list.innerHTML='';
-  const groups=[...new Set(PAGES.map(p=>p.group))];
-  groups.forEach(g=>{
-    const items=PAGES.filter(p=>p.group===g&&(p.title+' '+p.file).toLowerCase().includes(t));
+  const t=$('q').value.trim().toLowerCase();let n=0;const list=$('list');list.innerHTML='';
+  Object.keys(GROUPS).forEach(g=>{
+    if(active!=='All'&&active!==g)return;
+    const items=PAGES.filter(p=>p.group===g&&(p.title+' '+p.file+' '+(p.note||'')).toLowerCase().includes(t));
     if(!items.length)return;n+=items.length;
-    const h=document.createElement('h2');h.textContent=g;list.appendChild(h);
-    const ul=document.createElement('ul');
+    const h=document.createElement('h2');h.textContent=g+' ';const c=document.createElement('i');c.textContent=items.length+(items.length===1?' page':' pages');h.appendChild(c);list.appendChild(h);
+    const grid=document.createElement('div');grid.className='grid';
     items.forEach(p=>{
-      const li=document.createElement('li'),a=document.createElement('a');
-      a.className='row';a.href=encodeURI(p.file);
-      const l=document.createElement('span'),nm=document.createElement('div'),fl=document.createElement('div'),go=document.createElement('span');
-      nm.className='name';nm.textContent=p.title;fl.className='file';fl.textContent=p.file;go.className='go';go.textContent='Open';
-      l.appendChild(nm);l.appendChild(fl);a.appendChild(l);a.appendChild(go);li.appendChild(a);ul.appendChild(li);
+      const a=document.createElement('a');a.className='card';a.href=encodeURI(p.file);a.style.setProperty('--tone',GROUPS[g]);
+      const mk=(cls,txt)=>{const d=document.createElement('div');d.className=cls;d.textContent=txt;return d;};
+      a.appendChild(mk('tag',g));a.appendChild(mk('title',p.title));
+      if(p.note)a.appendChild(mk('file',p.note));
+      a.appendChild(mk('file',p.file));a.appendChild(mk('open','Open page'));
+      grid.appendChild(a);
     });
-    list.appendChild(ul);
+    list.appendChild(grid);
   });
-  empty.style.display=n?'none':'block';
+  $('empty').style.display=n?'none':'block';
 }
-q.addEventListener('input',draw);draw();
+$('q').addEventListener('input',draw);draw();
 </script>
 </body>
 </html>
