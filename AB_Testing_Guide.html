@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>A/B Testing: Statistical Tests, MDE, Confidence Intervals & Rollout Decisions</title>
+<title>A/B Testing: Statistical Tests, MDE, Confidence Intervals, Rollout Decisions & Causal Methods</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
 
@@ -886,12 +886,35 @@
   .mistake-item.edge .mistake-icon { background: rgba(107,203,255,0.15); }
   .mistake-item.edge h4 { color: var(--accent4); }
 
+
+  /* ── CUPED / PSM / SYNTHETIC CONTROL ── */
+  .when-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+  .when-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; }
+  .when-card h4 { font-family: 'Syne', sans-serif; font-size: 0.95rem; margin-bottom: 0.6rem; }
+  .when-card ul { margin: 0; padding-left: 1.1rem; }
+  .when-card li { font-size: 0.86rem; line-height: 1.65; margin-bottom: 0.45rem; color: var(--text-muted); }
+  .when-card li strong { color: var(--text); }
+  .when-card.use { border-top: 3px solid var(--accent); }
+  .when-card.use h4 { color: var(--accent); }
+  .when-card.skip { border-top: 3px solid var(--accent2); }
+  .when-card.skip h4 { color: var(--accent2); }
+  .sc-chart-wrap { margin: 1.5rem 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+  .sc-chart { width: 100%; height: auto; display: block; }
+  .sc-grid { stroke: var(--border); stroke-width: 1; }
+  .sc-lab { fill: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .sc-act { stroke: var(--accent); stroke-width: 2.4; fill: none; }
+  .sc-syn { stroke: var(--accent4); stroke-width: 2.2; fill: none; stroke-dasharray: 6 4; }
+  .sc-launch { stroke: var(--accent3); stroke-width: 1.5; }
+  .sc-launch-t { fill: var(--accent3); }
+  .sc-gap { fill: rgba(79,255,176,0.14); stroke: none; }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 800px) {
     .page-wrap { grid-template-columns: 1fr; }
     nav.sidebar { position: relative; height: auto; }
     main { padding: 2rem 1.25rem 4rem; }
     .skew-compare { grid-template-columns: 1fr; }
+    .when-grid { grid-template-columns: 1fr; }
     .page-wrap { grid-template-columns: minmax(0, 1fr); }
     .forest-row { grid-template-columns: 1fr; gap: 0.35rem; }
     .forest-row.head .forest-label, .forest-row.head .forest-verdict { display: none; }
@@ -949,6 +972,19 @@
   <a href="#decision-edge">Step 4: Edge Cases</a>
   <a href="#decision-rollout">Step 5: Roll Out</a>
 
+  <div class="nav-section-title">Causal Methods</div>
+  <a href="#method-choice">Which Method Fits?</a>
+  <a href="#cuped">CUPED</a>
+  <a href="#cuped-code">CUPED in Python</a>
+  <a href="#cuped-when">CUPED: When / When Not</a>
+  <a href="#psm">Propensity Score</a>
+  <a href="#psm-code">PSM in Python</a>
+  <a href="#psm-details">Why the Code Is Written This Way</a>
+  <a href="#psm-when">PSM: When / When Not</a>
+  <a href="#synth">Synthetic Control</a>
+  <a href="#synth-code">Synthetic Control in Python</a>
+  <a href="#synth-when">SC: When / When Not</a>
+
   <div class="nav-section-title">Wrap-up</div>
   <a href="#pitfalls">Common Mistakes</a>
 </nav>
@@ -959,13 +995,13 @@
   <!-- HERO -->
   <div class="hero">
     <div class="hero-tag">// Statistical Experimentation Field Guide</div>
-    <h1>A/B Testing:<br><span>Statistical Tests,</span> MDE,<br>Confidence Intervals<br>& Rollout Decisions</h1>
+    <h1>A/B Testing:<br><span>Statistical Tests,</span> MDE,<br>Confidence Intervals,<br>Rollout Decisions<br>& Causal Methods</h1>
     <p class="hero-intro">
       Choosing the wrong statistical test is like using a ruler to measure temperature — you'll get a number, 
       but it won't mean anything. In real-world product experiments, <strong>the choice of test affects your 
       p-values, your power, and ultimately your product decisions.</strong> This guide walks you through when 
       to use which test, how to calculate MDE before you run a single impression, and the dirty secrets 
-      no textbook tells you about skewed revenue data — then shows you how to read confidence intervals and turn the results into a clear ship / don't-ship decision.
+      no textbook tells you about skewed revenue data — then shows you how to read confidence intervals and turn the results into a clear ship / don't-ship decision. The last chapters cover three methods for harder cases: <strong>CUPED</strong> to sharpen a noisy test, <strong>propensity scores</strong> when users chose the feature themselves, and <strong>synthetic control</strong> when only one city got it, each with a "when to use / when not to use" section.
     </p>
     <div class="hero-badges">
       <span class="badge">scipy.stats</span>
@@ -975,6 +1011,9 @@
       <span class="badge">Google Play Games Context</span>
       <span class="badge">Confidence Intervals</span>
       <span class="badge">Rollout Decisions</span>
+      <span class="badge">CUPED</span>
+      <span class="badge">Propensity Score</span>
+      <span class="badge">Synthetic Control</span>
     </div>
   </div>
 
@@ -3300,9 +3339,724 @@ Crash rate Δ CI [+0.25, +0.60] → FAIL (harm bigger than margin confirmed)</di
     </div>
   </div>
 
-  <!-- ══ SECTION 11: PITFALLS ══ -->
+  <!-- ══ SECTION 11: WHICH METHOD FITS ══ -->
+  <div class="section" id="method-choice">
+    <h2><span class="sec-num">11</span> Beyond the Basic A/B Test — Which Tool Fits?</h2>
+    <div class="section-divider"></div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">🧭 Start from how the groups were formed</div>
+      A randomized A/B test is the gold standard because random assignment makes the two groups comparable. The three methods in
+      the next sections each answer a different situation: <strong>CUPED</strong> sharpens a randomized test that is too noisy,
+      <strong>propensity score methods</strong> rebuild a fair comparison when users chose the feature themselves, and
+      <strong>synthetic control</strong> builds a comparison when only one place or group got the change.
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Situation</th><th>What goes wrong</th><th>Tool</th><th>What it does</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Randomized test, but the metric is noisy (rides, revenue)</td>
+            <td>Confidence interval too wide to decide</td>
+            <td><a href="#cuped" style="color:var(--accent4);"><strong>CUPED</strong></a></td>
+            <td>Removes noise using each user's pre-test behaviour. Same target, narrower CI.</td>
+          </tr>
+          <tr>
+            <td>Feature is live for everyone and users <em>opted in</em>; many users in both groups</td>
+            <td>Adopters differ from non-adopters, so the raw gap is biased</td>
+            <td><a href="#psm" style="color:var(--accent4);"><strong>Propensity score</strong></a> (matching, IPW)</td>
+            <td>Builds a comparison group that looks like the adopters on pre-launch behaviour.</td>
+          </tr>
+          <tr>
+            <td>Change launched in <em>one</em> city, market or group; other units untreated</td>
+            <td>No control group exists and one city is not like any single other city</td>
+            <td><a href="#synth" style="color:var(--accent4);"><strong>Synthetic control</strong></a></td>
+            <td>Blends untreated units into a stand-in that tracked the treated unit before launch.</td>
+          </tr>
+          <tr>
+            <td>Treated and control unit with parallel trends before launch</td>
+            <td>Natural trend contaminates a before/after comparison</td>
+            <td><a href="#did" style="color:var(--accent4);"><strong>Difference-in-Differences</strong></a></td>
+            <td>Nets out the trend the control unit shows (section 04E). Synthetic control is the weighted generalization.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div><h4>Was assignment random?</h4><p>Yes: analyse as a normal A/B test, and add CUPED if the interval is too wide and pre-period data exists.</p></div></div>
+      <div class="step"><div class="step-num">2</div><div><h4>No, and many users chose the feature?</h4><p>Use propensity score methods, and be explicit that the result rests on having measured every driver of adoption.</p></div></div>
+      <div class="step"><div class="step-num">3</div><div><h4>No, and only one place or group was treated?</h4><p>Use synthetic control if you have a long pre-launch history and a pool of untreated comparison units.</p></div></div>
+      <div class="step"><div class="step-num">4</div><div><h4>None of these fit?</h4><p>Say that the effect cannot be estimated cleanly, and design a randomized holdout for the next launch.</p></div></div>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">⚠️ Observational methods estimate; they do not prove</div>
+      CUPED does not change what a randomized test is measuring, so its answer is as trustworthy as the randomization. Propensity
+      scores and synthetic control have no randomization behind them. Their answers are only as good as assumptions you cannot fully
+      test, so state the assumptions, show the checks, and treat a randomized holdout as the final word whenever one is possible.
+    </div>
+  </div>
+
+  <!-- ══ SECTION 12: CUPED ══ -->
+  <div class="section" id="cuped">
+    <h2><span class="sec-num">12</span> CUPED — Variance Reduction Using Pre-Experiment Data</h2>
+    <div class="section-divider"></div>
+
+    <div class="callout callout-success">
+      <div class="callout-title">🎯 Core Intuition</div>
+      Rides per customer is noisy mainly because heavy riders take many more rides than light riders. That gap has nothing to do with
+      your feature, but by chance it lands unevenly in the two arms and blurs the result. <strong>CUPED (Controlled-experiment Using
+      Pre-Experiment Data)</strong> subtracts the part of each customer's outcome that their own past behaviour already predicted,
+      then compares the arms on what is left. Same experiment, same target, a narrower confidence interval.
+    </div>
+
+    <p>
+      CUPED is a <strong>post-experiment analysis step</strong>. The test runs exactly as normal. The only extra ingredient is each
+      customer's behaviour <em>before</em> assignment, which already sits in your tables. The adjustment is done for every customer
+      in both arms, and then the usual test-versus-control comparison is run on the adjusted column.
+    </p>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div><h4>Pick the covariate X</h4><p>The same metric as the outcome, measured over a window of equal length that ends <em>before</em> assignment (rides in the 14 days before launch).</p></div></div>
+      <div class="step"><div class="step-num">2</div><div><h4>Estimate θ once</h4><p>How many test-period rides to expect per pre-period ride. One number from both arms pooled (or one per segment).</p></div></div>
+      <div class="step"><div class="step-num">3</div><div><h4>Adjust every customer</h4><p>Subtract θ × (their X minus the average X) from their outcome Y. The average X is added back so units stay the same.</p></div></div>
+      <div class="step"><div class="step-num">4</div><div><h4>Compare the arms</h4><p>Difference in means, standard error and confidence interval, computed exactly as before but on the adjusted column.</p></div></div>
+      <div class="step"><div class="step-num">5</div><div><h4>Sanity-check</h4><p>The share of variance removed should be about the correlation squared. If it is near zero, CUPED did not help.</p></div></div>
+    </div>
+
+    <div class="formula-box">
+      <div class="formula-label">CUPED in two lines</div>
+      Y<sub>cuped</sub> = Y − θ · (X − X̄)  &nbsp;&nbsp; with &nbsp;&nbsp; θ = Cov(X, Y) / Var(X)<br>
+      Var(Y<sub>cuped</sub>) = Var(Y) · (1 − ρ²)
+      <div style="font-size:0.74rem;color:var(--text-muted);margin-top:0.75rem;line-height:1.7;">
+        Y = outcome during the test &nbsp;|&nbsp; X = same metric before assignment &nbsp;|&nbsp; X̄ = average of X &nbsp;|&nbsp;
+        ρ = correlation between X and Y. A correlation of 0.7 removes about half the variance.
+      </div>
+    </div>
+
+    <h3>A six-customer example</h3>
+    <p>
+      By bad luck the one heavy rider (customer 1) lands in control. Take θ = 1 and an average X of 6.33. The true lift is about +1 ride.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Arm</th><th>Customer</th><th>Rides before (X)</th><th>Rides during (Y)</th><th>Adjusted Y − θ(X − X̄)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Control</td><td>1</td><td>20</td><td>21</td><td>7.33</td></tr>
+          <tr><td>Control</td><td>2</td><td>2</td><td>2</td><td>6.33</td></tr>
+          <tr><td>Control</td><td>3</td><td>4</td><td>4</td><td>6.33</td></tr>
+          <tr><td>Test</td><td>4</td><td>2</td><td>3</td><td>7.33</td></tr>
+          <tr><td>Test</td><td>5</td><td>4</td><td>5</td><td>7.33</td></tr>
+          <tr><td>Test</td><td>6</td><td>6</td><td>7</td><td>7.33</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>Raw:</strong> control averages 9, test averages 5, so the feature appears to <em>lose</em> 4 rides. <strong>CUPED:</strong>
+      control averages 6.67 and test 7.33, a lift of +0.67. The heavy rider's luck has cancelled out. (A toy case: in real data θ is estimated.)
+    </p>
+
+    <div class="callout callout-info">
+      <div class="callout-title">🛡️ Why it adds no bias</div>
+      <ul style="margin:0.5rem 0 0;">
+        <li style="color:inherit;">X was measured <strong style="color:inherit;">before</strong> random assignment, so it cannot have been affected by the treatment and is independent of who got it.</li>
+        <li style="color:inherit;">Both arms receive the <strong style="color:inherit;">same</strong> adjustment, so the treatment effect is not shifted, only the spread of the metric shrinks.</li>
+        <li style="color:inherit;">It does not change <strong style="color:inherit;">what</strong> you measure: the target is still the average treatment effect, in the original units.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 12A: CUPED IN PYTHON ══ -->
+  <div class="section" id="cuped-code">
+    <h2><span class="sec-num">12A</span> CUPED in Python</h2>
+    <div class="section-divider"></div>
+    <p>Scenario: a Rapido banner promoting Scheduled Rides is tested on 10,000 customers (5,000 per arm). Metric: rides per customer over 14 days. The simulation builds in a true lift of +0.30.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+
+<span class="cm"># ── Simulated Rapido banner test: rides per customer over 14 days ──────────</span>
+rng <span class="op">=</span> np.random.default_rng(<span class="nu">11</span>)
+n <span class="op">=</span> <span class="nu">10_000</span>
+habit   <span class="op">=</span> rng.gamma(<span class="nu">2.0</span>, <span class="nu">1.5</span>, n)                  <span class="cm"># each customer's stable ride appetite</span>
+pre     <span class="op">=</span> rng.poisson(habit <span class="op">*</span> <span class="nu">2.2</span>)                <span class="cm"># X: rides in the 14 days BEFORE assignment</span>
+control <span class="op">=</span> rng.poisson(habit <span class="op">*</span> <span class="nu">2.2</span>)                <span class="cm"># rides during the test, without the banner</span>
+treated <span class="op">=</span> rng.permutation(np.r_[np.zeros(n <span class="op">/</span><span class="op">/</span> <span class="nu">2</span>), np.ones(n <span class="op">/</span><span class="op">/</span> <span class="nu">2</span>)])
+post    <span class="op">=</span> control <span class="op">+</span> treated <span class="op">*</span> rng.poisson(<span class="nu">0.30</span>, n)   <span class="cm"># Y: true banner lift = +0.30 rides</span>
+
+<span class="kw">def</span> <span class="fn">lift_ci</span>(y, t):
+    a, b <span class="op">=</span> y[t <span class="op">==</span> <span class="nu">1</span>], y[t <span class="op">==</span> <span class="nu">0</span>]
+    d  <span class="op">=</span> a.mean() <span class="op">-</span> b.mean()
+    se <span class="op">=</span> np.sqrt(a.var(ddof<span class="op">=</span><span class="nu">1</span>) <span class="op">/</span> len(a) <span class="op">+</span> b.var(ddof<span class="op">=</span><span class="nu">1</span>) <span class="op">/</span> len(b))
+    <span class="kw">return</span> d, se, d <span class="op">-</span> <span class="nu">1.96</span> <span class="op">*</span> se, d <span class="op">+</span> <span class="nu">1.96</span> <span class="op">*</span> se
+
+<span class="cm"># ── Steps 2-3: estimate theta once (both arms pooled), adjust every customer ──</span>
+theta <span class="op">=</span> np.cov(pre, post)[<span class="nu">0</span>, <span class="nu">1</span>] <span class="op">/</span> pre.var(ddof<span class="op">=</span><span class="nu">1</span>)
+post_cuped <span class="op">=</span> post <span class="op">-</span> theta <span class="op">*</span> (pre <span class="op">-</span> pre.mean())
+
+<span class="cm"># ── Step 4: the usual A/B comparison, now on the adjusted column ──────────</span>
+<span class="kw">for</span> label, y <span class="kw">in</span> [(<span class="st">"Raw"</span>, post), (<span class="st">"CUPED"</span>, post_cuped)]:
+    d, se, lo, hi <span class="op">=</span> lift_ci(y, treated)
+    <span class="fn">print</span>(<span class="st">f"{label:&lt;6} lift {d:+.3f}   SE {se:.3f}   95% CI [{lo:+.3f}, {hi:+.3f}]   width {hi - lo:.3f}"</span>)
+
+<span class="cm"># ── Step 5: sanity checks ───────────────────────────────────────────────</span>
+rho <span class="op">=</span> np.corrcoef(pre, post)[<span class="nu">0</span>, <span class="nu">1</span>]
+<span class="fn">print</span>(<span class="st">f"\ntheta = {theta:.2f}   correlation(pre, post) = {rho:.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"variance removed: {1 - post_cuped.var() / post.var():.1%}   (theory: rho^2 = {rho**2:.1%})"</span>)
+
+<span class="cm"># ── Same thing as a regression: coefficient on 'treated' is the CUPED lift ───</span>
+X <span class="op">=</span> sm.add_constant(np.column_stack([treated, pre <span class="op">-</span> pre.mean()]))
+fit <span class="op">=</span> sm.OLS(post, X).fit(cov_type<span class="op">=</span><span class="st">"HC1"</span>)
+<span class="fn">print</span>(<span class="st">f"Regression: lift {fit.params[1]:+.3f}   95% CI {np.round(fit.conf_int()[1], 3)}"</span>)
+
+<span class="cm"># ── What it buys: customers per arm to detect +0.30 rides (80% power) ────────</span>
+z <span class="op">=</span> <span class="nu">1.96</span> <span class="op">+</span> <span class="nu">0.8416</span>
+<span class="kw">for</span> label, y <span class="kw">in</span> [(<span class="st">"Raw"</span>, post), (<span class="st">"CUPED"</span>, post_cuped)]:
+    <span class="fn">print</span>(<span class="st">f"{label:&lt;6} needs {2 * (z * y.std() / 0.30) ** 2:,.0f} customers per arm"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+<div class="output-pre">Raw    lift +0.302   SE 0.108   95% CI [+0.091, +0.514]   width 0.423
+CUPED  lift +0.353   SE 0.070   95% CI [+0.217, +0.489]   width 0.273
+
+theta = 0.78   correlation(pre, post) = 0.76
+variance removed: 58.4%   (theory: rho^2 = 58.4%)
+Regression: lift +0.353   95% CI [0.217 0.489]
+Raw    needs 5,088 customers per arm
+CUPED  needs 2,114 customers per arm</div>
+      <div class="output-comment">
+        Both intervals contain the true +0.30, so CUPED is not "more right", it is more precise: the interval is about 35% narrower
+        (width 0.273 against 0.423). Raw already excluded zero here, but its lower bound (+0.091) leaves open that the lift is tiny. CUPED
+        lifts that bound to +0.217. With a correlation of 0.76, 58.4% of the variance is removed, exactly the ρ² the theory predicts.
+        The regression version (outcome on treatment plus centred X) gives the same lift, which is why most platforms implement CUPED as
+        a regression. The last two lines are the payoff: about 58% fewer customers for the same power.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 12B: WHEN TO USE CUPED ══ -->
+  <div class="section" id="cuped-when">
+    <h2><span class="sec-num">12B</span> When to Use CUPED — and When Not To</h2>
+    <div class="section-divider"></div>
+
+    <div class="when-grid">
+      <div class="when-card use">
+        <h4>✅ Use it when</h4>
+        <ul>
+          <li>The experiment is <strong>randomized</strong> and the metric is noisy: rides, revenue, sessions, minutes played.</li>
+          <li>Users have <strong>history</strong> in a comparable window before assignment.</li>
+          <li>The pre-period <strong>predicts the outcome</strong> (correlation roughly 0.3 or higher).</li>
+          <li>Detecting a small lift needs a large sample or a long runtime, so a 20–50% saving matters.</li>
+          <li>A result is <strong>borderline</strong>: the interval just clears zero but not your minimum worthwhile lift.</li>
+        </ul>
+      </div>
+      <div class="when-card skip">
+        <h4>🚫 Skip it when</h4>
+        <ul>
+          <li>The audience is <strong>new users</strong> with no history (sign-up or onboarding tests).</li>
+          <li>The metric has <strong>no pre-period version</strong>, such as something that only exists after the feature launches.</li>
+          <li>The correlation is <strong>low</strong> (below about 0.2): under 4% of the variance is removed.</li>
+          <li>The metric is already stable, or the interval is tight and the decision is clear.</li>
+          <li>Only <strong>post-assignment</strong> data is available as a covariate: never use it (see below).</li>
+          <li>Randomization or logging is broken. CUPED reduces noise; it cannot repair bias.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>How much it helps: variance removed is ρ²</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Correlation ρ (pre vs test period)</th><th>Variance removed (ρ²)</th><th>CI narrower by</th><th>Customers needed</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>0.2</td><td>4%</td><td>about 1%</td><td>about 96% of original</td></tr>
+          <tr><td>0.3</td><td>9%</td><td>about 5%</td><td>about 91%</td></tr>
+          <tr><td>0.5</td><td>25%</td><td>about 13%</td><td>about 75%</td></tr>
+          <tr><td>0.7</td><td>49%</td><td>about 29%</td><td>about 51%</td></tr>
+          <tr><td>0.9</td><td>81%</td><td>about 56%</td><td>about 19%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">⚠️ Rules that keep CUPED safe</div>
+      <ul style="margin:0.5rem 0 0;">
+        <li style="color:inherit;"><strong style="color:inherit;">Pre-assignment only.</strong> If the treatment could have changed X, the adjustment removes part of the real effect.</li>
+        <li style="color:inherit;"><strong style="color:inherit;">One θ, both arms pooled</strong> (or one θ per stratum if you randomize within segments). A separate θ per arm can bias the lift.</li>
+        <li style="color:inherit;"><strong style="color:inherit;">Users with no history</strong> get X = the average X, so their adjustment is zero. Keep them in the test; do not drop them.</li>
+        <li style="color:inherit;"><strong style="color:inherit;">Fix the covariate and window before looking at results.</strong> Trying versions until one looks best inflates false positives.</li>
+        <li style="color:inherit;"><strong style="color:inherit;">Stratified randomization</strong> (for example city × segment): include the strata in the analysis as well. Gains are smaller than on an unstratified test because the segment already explains part of the variance, and the correlation within a segment can be lower than across everyone pooled.</li>
+      </ul>
+    </div>
+
+    <p>
+      <strong>Proportion metrics</strong> such as "rode at least once" can use CUPED too, with the pre-period ride <em>count</em> as X. Expect smaller gains: a 0/1 outcome
+      has a bounded variance, and there is almost nothing to remove when the rate is near 0% or 100%. As with any metric, check the correlation first.
+    </p>
+  </div>
+
+  <!-- ══ SECTION 13: PROPENSITY SCORE ══ -->
+  <div class="section" id="psm">
+    <h2><span class="sec-num">13</span> Propensity Score Methods — Impact Without Randomization</h2>
+    <div class="section-divider"></div>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">🎯 The Problem</div>
+      Scheduled Rides went live for everyone and some customers opted in. Adopters take far more rides than non-adopters, but
+      adopters were already heavier riders <em>before</em> the feature existed. Crediting the whole gap to the feature is selection
+      bias. We need to compare adopters with non-adopters who looked the same before launch.
+    </div>
+
+    <p>
+      A <strong>propensity score</strong> is each user's probability of adopting, given what we knew about them before the launch. Two users with
+      the same score had the same chance of opting in, so which of them actually did is close to a coin flip. That makes them comparable.
+      The score compresses many covariates into one number we can match or weight on.
+    </p>
+
+    <div class="formula-box">
+      <div class="formula-label">The propensity score</div>
+      e(x) = P( T = 1 | X = x )
+      <div style="font-size:0.74rem;color:var(--text-muted);margin-top:0.75rem;line-height:1.7;">
+        T = 1 if the user adopted &nbsp;|&nbsp; X = covariates measured <strong>before</strong> launch (rides, regularity, tenure, cancellation rate)
+        &nbsp;|&nbsp; fitted with a logistic regression: target = adopted (0/1), inputs = X
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div><h4>Fit the score model</h4><p>Logistic regression of adopted on pre-launch covariates, without a regularization penalty. One score per user.</p></div></div>
+      <div class="step"><div class="step-num">2</div><div><h4>Check overlap</h4><p>Adopters and non-adopters must cover the same range of scores. Where one group has no counterpart, no comparison is possible.</p></div></div>
+      <div class="step"><div class="step-num">3</div><div><h4>Estimate the effect</h4><p>Match each adopter to a lookalike non-adopter, or reweight all non-adopters (IPW), or regress with covariates. These are alternatives.</p></div></div>
+      <div class="step"><div class="step-num">4</div><div><h4>Check balance, then bootstrap</h4><p>After matching or weighting, covariates should differ by under 0.1 standard deviations. Get the CI by rerunning the whole pipeline on resamples.</p></div></div>
+    </div>
+
+    <h3>Three ways to use the score</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Method</th><th>How it works</th><th>Strength</th><th>Watch out for</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Matching</strong> (1 nearest neighbour)</td>
+            <td>Each adopter gets the non-adopter with the closest score. Effect = average gap between pairs.</td>
+            <td>Easy to explain and to check (balance in the matched sample).</td>
+            <td>Discards unmatched controls; sensitive to the caliper and to matching with or without replacement.</td>
+          </tr>
+          <tr>
+            <td><strong>IPW</strong> (inverse probability weighting)</td>
+            <td>Adopters weight 1; each non-adopter weighs <code>e / (1 − e)</code>, so lookalikes of adopters count more.</td>
+            <td>Uses every user and avoids a hard cut-off.</td>
+            <td>Users with scores near 1 get huge weights and can dominate; clip scores.</td>
+          </tr>
+          <tr>
+            <td><strong>Regression adjustment</strong></td>
+            <td>Regress the outcome on the adopted flag plus covariates. The flag's coefficient is the effect.</td>
+            <td>Independent cross-check that does not use the score.</td>
+            <td>Relies on a roughly linear relationship between covariates and outcome.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>The assumptions behind all of them</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Assumption</th><th>Plain meaning</th><th>Can you check it?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>No unmeasured confounding</strong></td><td>Everything that drives both adoption and the outcome is in your covariates.</td><td><strong>No.</strong> Only argue it, and test sensitivity to a hidden driver.</td></tr>
+          <tr><td><strong>Overlap (positivity)</strong></td><td>Every kind of adopter has non-adopters who look like them.</td><td>Yes: compare score distributions.</td></tr>
+          <tr><td><strong>Covariates are pre-treatment</strong></td><td>Nothing used to predict adoption was itself changed by the feature.</td><td>Yes: audit the timing of every covariate.</td></tr>
+          <tr><td><strong>No spillovers (SUTVA)</strong></td><td>One user's adoption does not change another user's outcome.</td><td>Partly: think through shared-capacity effects.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      The effect estimated here is the <strong>ATT</strong>, the average effect on the users who adopted, which is usually the business question.
+      The ATE (the effect if everyone adopted) needs additional assumptions because non-adopters may react differently.
+    </p>
+  </div>
+
+  <!-- ══ SECTION 13A: PSM IN PYTHON ══ -->
+  <div class="section" id="psm-code">
+    <h2><span class="sec-num">13A</span> Propensity Score Matching in Python</h2>
+    <div class="section-divider"></div>
+    <p>
+      Scenario: Scheduled Rides launched to everyone and 4,639 of 30,000 customers opted in (15.5%). Metric: rides per customer in the 30 days after launch.
+      The simulation builds in a true effect of +1.8 rides, and a hidden commuter habit that makes adopters ride more regardless.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+<span class="kw">from</span> sklearn.neighbors <span class="kw">import</span> NearestNeighbors      <span class="cm"># pip install scikit-learn</span>
+
+<span class="cm"># ── Simulated Scheduled Rides launch: everyone got the feature, some opted in ──</span>
+rng <span class="op">=</span> np.random.default_rng(<span class="nu">7</span>)
+n <span class="op">=</span> <span class="nu">30_000</span>
+habit     <span class="op">=</span> rng.normal(size<span class="op">=</span>n)                                      <span class="cm"># commuter habit</span>
+rides_pre <span class="op">=</span> np.maximum(<span class="nu">0</span>, <span class="nu">8</span> <span class="op">+</span> <span class="nu">4</span> <span class="op">*</span> habit <span class="op">+</span> rng.normal(<span class="nu">0</span>, <span class="nu">3</span>, n))      <span class="cm"># rides/month BEFORE launch</span>
+regular   <span class="op">=</span> np.clip(<span class="nu">0.45</span> <span class="op">+</span> <span class="nu">0.15</span> <span class="op">*</span> habit <span class="op">+</span> rng.normal(<span class="nu">0</span>, <span class="nu">0.12</span>, n), <span class="nu">0</span>, <span class="nu">1</span>)
+tenure    <span class="op">=</span> rng.gamma(<span class="nu">2.0</span>, <span class="nu">8.0</span>, n)                                  <span class="cm"># months on the app</span>
+cancel    <span class="op">=</span> np.clip(<span class="nu">0.12</span> <span class="op">-</span> <span class="nu">0.03</span> <span class="op">*</span> habit <span class="op">+</span> rng.normal(<span class="nu">0</span>, <span class="nu">0.05</span>, n), <span class="nu">0</span>, <span class="nu">0.5</span>)
+names <span class="op">=</span> [<span class="st">"Rides (pre)"</span>, <span class="st">"Regularity"</span>, <span class="st">"Tenure"</span>, <span class="st">"Cancel rate"</span>]
+X <span class="op">=</span> np.column_stack([rides_pre, regular, tenure, cancel])
+Z <span class="op">=</span> (X <span class="op">-</span> X.mean(<span class="nu">0</span>)) <span class="op">/</span> X.std(<span class="nu">0</span>)
+
+p_adopt <span class="op">=</span> <span class="nu">1</span> <span class="op">/</span> (<span class="nu">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>(<span class="op">-</span><span class="nu">2.3</span> <span class="op">+</span> <span class="nu">0.7</span> <span class="op">*</span> Z[:, <span class="nu">0</span>] <span class="op">+</span> <span class="nu">0.8</span> <span class="op">*</span> Z[:, <span class="nu">1</span>] <span class="op">+</span> <span class="nu">0.3</span> <span class="op">*</span> Z[:, <span class="nu">2</span>] <span class="op">-</span> <span class="nu">0.25</span> <span class="op">*</span> Z[:, <span class="nu">3</span>])))
+t <span class="op">=</span> (rng.random(n) <span class="op">&lt;</span> p_adopt).astype(float)                         <span class="cm"># 1 = opted in</span>
+y <span class="op">=</span> np.maximum(<span class="nu">0</span>, <span class="nu">0.8</span> <span class="op">*</span> rides_pre <span class="op">+</span> <span class="nu">1.2</span> <span class="op">*</span> habit <span class="op">+</span> <span class="nu">1.5</span> <span class="op">+</span> rng.normal(<span class="nu">0</span>, <span class="nu">2.5</span>, n)) <span class="op">+</span> <span class="nu">1.8</span> <span class="op">*</span> t   <span class="cm"># TRUE effect = +1.8</span>
+
+<span class="cm"># ── Step 1: propensity score = P(opt in | pre-launch behaviour) ───────────────</span>
+ps <span class="op">=</span> np.clip(sm.Logit(t, sm.add_constant(Z)).fit(disp<span class="op">=</span><span class="nu">0</span>).predict(), <span class="nu">1e-4</span>, <span class="nu">1</span> <span class="op">-</span> <span class="nu">1e-4</span>)
+<span class="fn">print</span>(<span class="st">"Propensity score, 5th / 50th / 95th percentile"</span>)
+<span class="fn">print</span>(<span class="st">"  adopters     "</span>, np.percentile(ps[t <span class="op">==</span> <span class="nu">1</span>], [<span class="nu">5</span>, <span class="nu">50</span>, <span class="nu">95</span>]).round(<span class="nu">3</span>))
+<span class="fn">print</span>(<span class="st">"  non-adopters "</span>, np.percentile(ps[t <span class="op">==</span> <span class="nu">0</span>], [<span class="nu">5</span>, <span class="nu">50</span>, <span class="nu">95</span>]).round(<span class="nu">3</span>))
+
+<span class="cm"># ── Step 2: match each adopter to the nearest non-adopter (1 neighbour, caliper) ──</span>
+<span class="kw">def</span> <span class="fn">match</span>(ps, t, caliper_sd<span class="op">=</span><span class="nu">0.2</span>):
+    lg <span class="op">=</span> np.log(ps <span class="op">/</span> (<span class="nu">1</span> <span class="op">-</span> ps))
+    t_idx, c_idx <span class="op">=</span> np.where(t <span class="op">==</span> <span class="nu">1</span>)[<span class="nu">0</span>], np.where(t <span class="op">==</span> <span class="nu">0</span>)[<span class="nu">0</span>]
+    dist, pos <span class="op">=</span> NearestNeighbors(n_neighbors<span class="op">=</span><span class="nu">1</span>).fit(lg[c_idx, <span class="kw">None</span>]).kneighbors(lg[t_idx, <span class="kw">None</span>])
+    keep <span class="op">=</span> dist.ravel() <span class="op">&lt;=</span> caliper_sd <span class="op">*</span> lg.std()
+    <span class="kw">return</span> t_idx[keep], c_idx[pos.ravel()][keep]
+
+ti, ci <span class="op">=</span> match(ps, t)
+<span class="fn">print</span>(<span class="st">f"\nMatched {len(ti) / t.sum():.1%} of adopters using {len(set(ci)):,} distinct controls"</span>)
+
+<span class="cm"># ── Balance check: standardized mean difference, before vs after ─────────────</span>
+<span class="fn">print</span>(<span class="st">f"\n{'':&lt;13}{'SMD before':&gt;11}{'SMD after':&gt;11}"</span>)
+<span class="kw">for</span> j, name <span class="kw">in</span> enumerate(names):
+    sd <span class="op">=</span> np.sqrt((X[t <span class="op">==</span> <span class="nu">1</span>, j].var() <span class="op">+</span> X[t <span class="op">==</span> <span class="nu">0</span>, j].var()) <span class="op">/</span> <span class="nu">2</span>)
+    <span class="fn">print</span>(<span class="st">f"{name:&lt;13}{(X[t==1, j].mean() - X[t==0, j].mean()) / sd:11.3f}{(X[ti, j].mean() - X[ci, j].mean()) / sd:11.3f}"</span>)
+
+<span class="cm"># ── Effect estimates (ATT: effect on those who adopted) ─────────────────────</span>
+att_match <span class="op">=</span> (y[ti] <span class="op">-</span> y[ci]).mean()
+w <span class="op">=</span> np.where(t <span class="op">==</span> <span class="nu">1</span>, <span class="nu">1.0</span>, ps <span class="op">/</span> (<span class="nu">1</span> <span class="op">-</span> ps))                            <span class="cm"># adopters 1, controls re-shaped to look like adopters</span>
+att_ipw <span class="op">=</span> sm.WLS(y, sm.add_constant(t), weights<span class="op">=</span>w).fit(cov_type<span class="op">=</span><span class="st">"HC1"</span>).params[<span class="nu">1</span>]
+att_ols <span class="op">=</span> sm.OLS(y, sm.add_constant(np.column_stack([t, Z]))).fit(cov_type<span class="op">=</span><span class="st">"HC1"</span>).params[<span class="nu">1</span>]
+
+<span class="cm"># Bootstrap CI for matching: redo the WHOLE pipeline (score model included) each time</span>
+draws <span class="op">=</span> []
+<span class="kw">for</span> _ <span class="kw">in</span> range(<span class="nu">100</span>):
+    i <span class="op">=</span> rng.integers(<span class="nu">0</span>, n, n)
+    ps_b <span class="op">=</span> np.clip(sm.Logit(t[i], sm.add_constant(Z[i])).fit(disp<span class="op">=</span><span class="nu">0</span>).predict(), <span class="nu">1e-4</span>, <span class="nu">1</span> <span class="op">-</span> <span class="nu">1e-4</span>)
+    a, b <span class="op">=</span> match(ps_b, t[i])
+    draws.append((y[i][a] <span class="op">-</span> y[i][b]).mean())
+lo, hi <span class="op">=</span> np.percentile(draws, [<span class="nu">2.5</span>, <span class="nu">97.5</span>])
+
+<span class="fn">print</span>(<span class="st">f"\nTRUE effect (built into the simulation)  +1.80"</span>)
+<span class="fn">print</span>(<span class="st">f"Naive difference in means                {y[t == 1].mean() - y[t == 0].mean():+.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Propensity matching                      {att_match:+.2f}   bootstrap 95% CI [{lo:+.2f}, {hi:+.2f}]"</span>)
+<span class="fn">print</span>(<span class="st">f"IPW (weighted regression)                {att_ipw:+.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Regression adjustment                    {att_ols:+.2f}"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+<div class="output-pre">Propensity score, 5th / 50th / 95th percentile
+  adopters      [0.048 0.315 0.794]
+  non-adopters  [0.007 0.067 0.41 ]
+
+Matched 99.9% of adopters using 3,165 distinct controls
+
+              SMD before  SMD after
+Rides (pre)        1.141      0.007
+Regularity         1.167     -0.012
+Tenure             0.247      0.010
+Cancel rate       -0.708     -0.004
+
+TRUE effect (built into the simulation)  +1.80
+Naive difference in means                +6.98
+Propensity matching                      +1.92   bootstrap 95% CI [+1.71, +2.07]
+IPW (weighted regression)                +1.91
+Regression adjustment                    +1.95</div>
+      <div class="output-comment">
+        <strong>Naive +6.98</strong> credits the feature with the adopters' existing habits, nearly four times the truth. <strong>Overlap:</strong>
+        adopters score higher (median 0.315 against 0.067) but the ranges overlap, so matches exist; 99.9% of adopters were matched.
+        <strong>Balance:</strong> before matching, adopters differ by more than a standard deviation on rides and regularity; after, every difference is under 0.02,
+        far below the 0.1 target. <strong>Estimates:</strong> matching +1.92 (bootstrap CI +1.71 to +2.07), IPW +1.91 and regression +1.95 all land near the true +1.80.
+        They sit slightly above it because the simulation's hidden commuter habit still leaks into the outcome: matching only balances what you measured.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 13B: IMPLEMENTATION CHOICES ══ -->
+  <div class="section" id="psm-details">
+    <h2><span class="sec-num">13B</span> Why the Code Is Written This Way</h2>
+    <div class="section-divider"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Choice in the code</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Unpenalized logistic regression</strong><br><code>sm.Logit</code> (or <code>penalty=None</code> in sklearn)</td>
+            <td>sklearn's <code>LogisticRegression</code> applies an L2 penalty by default, which shrinks coefficients and squeezes scores toward the average adoption rate. We are not predicting new users, so there is no overfitting to guard against; we want honest probabilities. IPW suffers most, since its weights are built from the score values. (In newer sklearn, <code>penalty=None</code> is deprecated and <code>C=np.inf</code> does the same.)</td>
+          </tr>
+          <tr>
+            <td><strong>Match on the logit of the score</strong></td>
+            <td>Raw scores bunch up near 0 and 1, so distances there are misleading. The logit spreads them evenly.</td>
+          </tr>
+          <tr>
+            <td><strong>KNN with one neighbour, fitted on controls</strong></td>
+            <td>Each adopter is queried against the pool of non-adopters and gets exactly one twin. A control can be the twin of several adopters (matching with replacement), because heavy-habit adopters have few lookalikes.</td>
+          </tr>
+          <tr>
+            <td><strong>Caliper of 0.2 standard deviations of the logit</strong></td>
+            <td>If the nearest twin is still too far away, drop that adopter rather than force a poor comparison. Report how many were dropped.</td>
+          </tr>
+          <tr>
+            <td><strong>IPW through <code>sm.WLS</code> with <code>cov_type="HC1"</code></strong></td>
+            <td>The weighted regression coefficient equals the adopters' mean minus the weighted mean of controls, and also returns a standard error. By default WLS treats weights as precision weights, assuming heavily weighted users have <em>less</em> noisy outcomes, which is wrong for these weights. HC1 is a robust standard error that drops that assumption.</td>
+          </tr>
+          <tr>
+            <td><strong>Bootstrap the whole pipeline</strong></td>
+            <td>Refit the score model on every resample. Reusing one fixed set of scores ignores that they were estimated, and understates the uncertainty.</td>
+          </tr>
+          <tr>
+            <td><strong>Matching vs IPW</strong></td>
+            <td>Both are ways to use the same scores. You do not need both, and IPW is not a step after matching. Run both and compare: agreement is reassuring but is not proof, since both adjust for the same covariates. IPW has nothing to do with SRM, which is a check for randomized experiments.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 13C: WHEN TO USE PSM ══ -->
+  <div class="section" id="psm-when">
+    <h2><span class="sec-num">13C</span> When to Use Propensity Scores — and When Not To</h2>
+    <div class="section-divider"></div>
+
+    <div class="when-grid">
+      <div class="when-card use">
+        <h4>✅ Use it when</h4>
+        <ul>
+          <li>You <strong>cannot randomize</strong>: the feature already launched to everyone, or withholding it is unethical or too costly.</li>
+          <li>Users <strong>self-selected</strong> into the feature or program (opt-in, eligibility, targeting).</li>
+          <li>You have <strong>rich pre-launch behaviour</strong> that plausibly drives both adoption and the outcome.</li>
+          <li>There are <strong>many users in both groups</strong> and the score distributions overlap.</li>
+          <li>You need a <strong>defensible estimate now</strong>, and will validate with a holdout later.</li>
+        </ul>
+      </div>
+      <div class="when-card skip">
+        <h4>🚫 Do not use it when</h4>
+        <ul>
+          <li>You <strong>can</strong> randomize. A proper A/B test beats any adjustment, and PSM will not fix a badly designed one.</li>
+          <li>Important drivers are <strong>unmeasured</strong> (motivation, intent, offline factors). The estimate stays biased and the CI will look deceptively tight.</li>
+          <li>Users have <strong>no pre-launch history</strong>, such as brand-new users: there is nothing to build scores from.</li>
+          <li><strong>Overlap fails</strong>: nearly everyone with a given profile adopted, or nobody did, so no lookalikes exist.</li>
+          <li>Treatment is <strong>one place or one cohort</strong>, not many individuals (use synthetic control instead).</li>
+          <li>Covariates were measured <strong>after</strong> the feature launched, or the feature may have changed them.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">⚠️ The hidden-confounder trap</div>
+      Matching, IPW and regression all adjust for the same covariates, so they can agree with each other and still be wrong together.
+      If an unmeasured trait such as motivation drives both opt-in and the outcome, every method is biased in the same direction, and the
+      intervals can be narrow and still miss the truth. A confidence interval measures noise, not bias. Report a propensity estimate as
+      "<em>under the assumption that all drivers of adoption were measured</em>", run a sensitivity check, and confirm with a randomized holdout
+      when you can.
+    </div>
+  </div>
+
+  <!-- ══ SECTION 14: SYNTHETIC CONTROL ══ -->
+  <div class="section" id="synth">
+    <h2><span class="sec-num">14</span> Synthetic Control — One Treated Unit, No Randomization</h2>
+    <div class="section-divider"></div>
+
+    <div class="callout callout-success">
+      <div class="callout-title">🎯 Core Intuition</div>
+      Scheduled Rides launched in Bengaluru only. No other single city looks like Bengaluru, so no single city is a fair control. But a
+      <em>weighted blend</em> of cities can track Bengaluru's rides almost perfectly <strong>before</strong> launch. If that blend, "synthetic Bengaluru",
+      stays on the old path after launch while real Bengaluru jumps away, the gap is the effect of the feature.
+    </div>
+
+    <p>
+      It is a close relative of Difference-in-Differences (section 04E). DiD compares the treated unit with one control and assumes the two had parallel trends.
+      Synthetic control <em>chooses</em> the weights over many untreated units so that the pre-launch paths match, which removes the need to pick the "right" control by hand.
+    </p>
+
+    <div class="formula-box">
+      <div class="formula-label">Synthetic control</div>
+      choose w ≥ 0, Σ w<sub>j</sub> = 1 to minimise  Σ<sub>t &lt; launch</sub> ( Y<sub>1t</sub> − Σ<sub>j</sub> w<sub>j</sub> Y<sub>jt</sub> )²<br>
+      effect<sub>t</sub> = Y<sub>1t</sub> − Σ<sub>j</sub> w<sub>j</sub> Y<sub>jt</sub> &nbsp;&nbsp; for t ≥ launch
+      <div style="font-size:0.74rem;color:var(--text-muted);margin-top:0.75rem;line-height:1.7;">
+        Y<sub>1t</sub> = treated unit's metric in week t &nbsp;|&nbsp; Y<sub>jt</sub> = donor city j's metric &nbsp;|&nbsp; w = donor weights, never negative, adding to 1
+        (so the blend is an average and cannot extrapolate beyond the donors)
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div><h4>Choose the donor pool</h4><p>Units that never received the change and could plausibly resemble the treated unit. Drop any that were exposed to the same event or a similar change.</p></div></div>
+      <div class="step"><div class="step-num">2</div><div><h4>Fit the weights on the pre-launch period</h4><p>Constrained least squares so the weighted blend reproduces the treated unit's path before launch. Check the fit is tight.</p></div></div>
+      <div class="step"><div class="step-num">3</div><div><h4>Read the post-launch gap</h4><p>Actual minus synthetic, week by week. The average gap is the estimated effect.</p></div></div>
+      <div class="step"><div class="step-num">4</div><div><h4>Test with placebos</h4><p>Pretend each donor was the treated unit and compute its "effect". If the real city's gap is unusual among the placebo gaps, it is unlikely to be chance.</p></div></div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 14A: SYNTHETIC CONTROL IN PYTHON ══ -->
+  <div class="section" id="synth-code">
+    <h2><span class="sec-num">14A</span> Synthetic Control in Python</h2>
+    <div class="section-divider"></div>
+    <p>
+      Scenario: Scheduled Rides launched in Bengaluru in week 30 of 40. Fifteen other cities never got it. Metric: weekly rides per customer. The simulation builds in a true effect of +0.8.
+    </p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy.optimize <span class="kw">import</span> minimize
+
+<span class="cm"># ── Simulated: Scheduled Rides launched in ONE city (Bengaluru) at week 30 ────</span>
+<span class="cm"># Weekly rides per customer for 15 untreated "donor" cities + Bengaluru</span>
+rng <span class="op">=</span> np.random.default_rng(<span class="nu">5</span>)
+weeks, launch, k <span class="op">=</span> <span class="nu">40</span>, <span class="nu">30</span>, <span class="nu">15</span>
+season <span class="op">=</span> np.column_stack([np.sin(<span class="nu">2</span> <span class="op">*</span> np.pi <span class="op">*</span> np.arange(weeks) <span class="op">/</span> <span class="nu">13</span>),        <span class="cm"># shared seasonality</span>
+                          np.cumsum(rng.normal(<span class="nu">0</span>, <span class="nu">0.15</span>, weeks))])           <span class="cm"># shared drift</span>
+donors <span class="op">=</span> rng.uniform(<span class="nu">3</span>, <span class="nu">6</span>, (k, <span class="nu">1</span>)) <span class="op">+</span> rng.normal(size<span class="op">=</span>(k, <span class="nu">2</span>)) @ season.T <span class="op">+</span> rng.normal(<span class="nu">0</span>, <span class="nu">0.10</span>, (k, weeks))
+true_w <span class="op">=</span> np.zeros(k); true_w[[<span class="nu">2</span>, <span class="nu">7</span>, <span class="nu">10</span>]] <span class="op">=</span> [<span class="nu">0.5</span>, <span class="nu">0.3</span>, <span class="nu">0.2</span>]                  <span class="cm"># Bengaluru "is" a blend of 3 cities</span>
+city <span class="op">=</span> true_w @ donors <span class="op">+</span> rng.normal(<span class="nu">0</span>, <span class="nu">0.10</span>, weeks)
+city[launch:] <span class="op">+</span><span class="op">=</span> <span class="nu">0.8</span>                                                        <span class="cm"># TRUE effect: +0.8 rides/customer/week</span>
+
+<span class="cm"># ── Step 1: find donor weights (&gt;= 0, sum to 1) that reproduce the PRE-launch path ──</span>
+<span class="kw">def</span> <span class="fn">fit_weights</span>(target_pre, donors_pre):
+    m <span class="op">=</span> donors_pre.shape[<span class="nu">0</span>]
+    res <span class="op">=</span> minimize(<span class="kw">lambda</span> w: np.sum((target_pre <span class="op">-</span> w @ donors_pre) <span class="op">**</span> <span class="nu">2</span>), np.full(m, <span class="nu">1</span> <span class="op">/</span> m),
+                   bounds<span class="op">=</span>[(<span class="nu">0</span>, <span class="nu">1</span>)] <span class="op">*</span> m, constraints<span class="op">=</span>{<span class="st">"type"</span>: <span class="st">"eq"</span>, <span class="st">"fun"</span>: <span class="kw">lambda</span> w: w.sum() <span class="op">-</span> <span class="nu">1</span>},
+                   method<span class="op">=</span><span class="st">"SLSQP"</span>)
+    <span class="kw">return</span> res.x
+
+w <span class="op">=</span> fit_weights(city[:launch], donors[:, :launch])
+synthetic <span class="op">=</span> w @ donors                                                      <span class="cm"># Bengaluru without the feature</span>
+
+<span class="cm"># ── Step 2: the gap after launch is the effect ───────────────────────────────</span>
+gap <span class="op">=</span> city <span class="op">-</span> synthetic
+pre_rmspe, post_rmspe <span class="op">=</span> np.sqrt((gap[:launch] <span class="op">**</span> <span class="nu">2</span>).mean()), np.sqrt((gap[launch:] <span class="op">**</span> <span class="nu">2</span>).mean())
+<span class="fn">print</span>(<span class="st">"Top donor weights:"</span>, {<span class="st">f"city_{i}"</span>: round(float(w[i]), <span class="nu">2</span>) <span class="kw">for</span> i <span class="kw">in</span> np.argsort(<span class="op">-</span>w)[:<span class="nu">3</span>]})
+<span class="fn">print</span>(<span class="st">f"Pre-launch fit error (RMSPE): {pre_rmspe:.3f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Average effect after launch : {gap[launch:].mean():+.2f} rides/customer/week   (true +0.80)"</span>)
+
+<span class="cm"># ── Step 3: inference by placebo. Pretend each donor city was the treated one ──</span>
+ratios <span class="op">=</span> [post_rmspe <span class="op">/</span> pre_rmspe]
+<span class="kw">for</span> j <span class="kw">in</span> range(k):
+    rest <span class="op">=</span> np.delete(donors, j, axis<span class="op">=</span><span class="nu">0</span>)
+    wj <span class="op">=</span> fit_weights(donors[j, :launch], rest[:, :launch])
+    g <span class="op">=</span> donors[j] <span class="op">-</span> wj @ rest
+    ratios.append(np.sqrt((g[launch:] <span class="op">**</span> <span class="nu">2</span>).mean()) <span class="op">/</span> np.sqrt((g[:launch] <span class="op">**</span> <span class="nu">2</span>).mean()))
+rank <span class="op">=</span> int((np.array(ratios) <span class="op">&gt;=</span> ratios[<span class="nu">0</span>]).sum())
+<span class="fn">print</span>(<span class="st">f"Post/pre error ratio: Bengaluru {ratios[0]:.1f}   vs placebo cities, median {np.median(ratios[1:]):.1f}, max {max(ratios[1:]):.1f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Bengaluru ranks {rank} of {k + 1}  -&gt;  placebo p-value = {rank / (k + 1):.3f}"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+<div class="output-pre">Top donor weights: {'city_2': 0.53, 'city_10': 0.25, 'city_7': 0.21}
+Pre-launch fit error (RMSPE): 0.096
+Average effect after launch : +0.83 rides/customer/week   (true +0.80)
+Post/pre error ratio: Bengaluru 8.7   vs placebo cities, median 1.9, max 4.3
+Bengaluru ranks 1 of 16  -&gt;  placebo p-value = 0.062</div>
+      <div class="output-comment">
+        The weights recover the city's makeup (true weights were 0.5, 0.3 and 0.2). The pre-launch fit error of 0.096 rides is tiny next to the post-launch gap,
+        and the average gap of +0.83 is close to the true +0.80. In the placebo test, Bengaluru's post-to-pre error ratio (8.7) is larger than every placebo city's (max 4.3),
+        so it ranks 1 of 16. With 15 donors the smallest possible p-value is 1/16 = 0.0625, so you cannot get below 0.05 without a larger donor pool.
+      </div>
+    </div>
+
+    <div class="sc-chart-wrap"><div class="output-label" style="margin-bottom:.5rem">▶ Actual vs synthetic Bengaluru (simulated data from the code above)</div>
+<svg class="sc-chart" viewBox="0 0 720 300" role="img" aria-label="Weekly rides per customer: Bengaluru and synthetic Bengaluru track each other until launch in week 30, then Bengaluru rises above">
+<line class="sc-grid" x1="52" x2="704" y1="185.6" y2="185.6"/><text class="sc-lab" x="44" y="189.6" text-anchor="end">3.5</text><line class="sc-grid" x1="52" x2="704" y1="108.6" y2="108.6"/><text class="sc-lab" x="44" y="112.6" text-anchor="end">4.0</text><line class="sc-grid" x1="52" x2="704" y1="31.6" y2="31.6"/><text class="sc-lab" x="44" y="35.6" text-anchor="end">4.5</text><text class="sc-lab" x="52.0" y="278" text-anchor="middle">0</text><text class="sc-lab" x="135.6" y="278" text-anchor="middle">5</text><text class="sc-lab" x="219.2" y="278" text-anchor="middle">10</text><text class="sc-lab" x="302.8" y="278" text-anchor="middle">15</text><text class="sc-lab" x="386.4" y="278" text-anchor="middle">20</text><text class="sc-lab" x="469.9" y="278" text-anchor="middle">25</text><text class="sc-lab" x="553.5" y="278" text-anchor="middle">30</text><text class="sc-lab" x="637.1" y="278" text-anchor="middle">35</text>
+<polygon class="sc-gap" points="553.5,50.8 570.3,62.0 587.0,87.3 603.7,88.8 620.4,53.2 637.1,60.0 653.8,87.0 670.6,63.9 687.3,63.3 704.0,85.8 704.0,192.2 687.3,200.3 670.6,209.1 653.8,211.9 637.1,187.3 620.4,182.1 603.7,190.6 587.0,214.1 570.3,205.0 553.5,193.5"/>
+<line class="sc-launch" x1="553.5" x2="553.5" y1="20" y2="260"/>
+<text class="sc-lab sc-launch-t" x="547.5" y="30" text-anchor="end">launch (week 30)</text>
+<polyline class="sc-syn" points="52.0,170.4 68.7,185.4 85.4,197.3 102.2,203.4 118.9,170.7 135.6,176.8 152.3,177.8 169.0,160.8 185.7,148.7 202.5,177.9 219.2,166.0 235.9,168.6 252.6,164.7 269.3,167.7 286.1,180.2 302.8,186.0 319.5,167.1 336.2,170.2 352.9,203.5 369.6,194.0 386.4,159.4 403.1,178.9 419.8,178.1 436.5,168.3 453.2,172.0 469.9,163.5 486.7,179.9 503.4,204.1 520.1,189.8 536.8,185.0 553.5,193.5 570.3,205.0 587.0,214.1 603.7,190.6 620.4,182.1 637.1,187.3 653.8,211.9 670.6,209.1 687.3,200.3 704.0,192.2"/>
+<polyline class="sc-act" points="52.0,181.7 68.7,177.1 85.4,214.7 102.2,229.2 118.9,196.2 135.6,159.5 152.3,199.2 169.0,152.1 185.7,138.8 202.5,163.1 219.2,169.2 235.9,173.4 252.6,163.2 269.3,173.1 286.1,194.2 302.8,161.0 319.5,175.6 336.2,140.2 352.9,190.1 369.6,199.4 386.4,153.8 403.1,156.8 419.8,200.0 436.5,182.0 453.2,186.6 469.9,159.8 486.7,171.4 503.4,201.7 520.1,198.5 536.8,189.7 553.5,50.8 570.3,62.0 587.0,87.3 603.7,88.8 620.4,53.2 637.1,60.0 653.8,87.0 670.6,63.9 687.3,63.3 704.0,85.8"/>
+<text class="sc-lab" x="378.0" y="296" text-anchor="middle">week</text>
+<g transform="translate(64,28)"><line class="sc-act" x1="0" x2="26" y1="0" y2="0"/><text class="sc-lab" x="32" y="4">Bengaluru (actual)</text>
+<line class="sc-syn" x1="0" x2="26" y1="18" y2="18"/><text class="sc-lab" x="32" y="22">Synthetic Bengaluru</text></g>
+</svg>
+<p style="font-size:.8rem;color:var(--text-muted);margin-top:.5rem">Before launch the two lines overlap, which is what a good synthetic control looks like. After launch the shaded gap is the estimated effect. Simulated, illustrative data.</p></div>
+  </div>
+
+  <!-- ══ SECTION 14B: WHEN TO USE SYNTHETIC CONTROL ══ -->
+  <div class="section" id="synth-when">
+    <h2><span class="sec-num">14B</span> When to Use Synthetic Control — and When Not To</h2>
+    <div class="section-divider"></div>
+
+    <div class="when-grid">
+      <div class="when-card use">
+        <h4>✅ Use it when</h4>
+        <ul>
+          <li>The change hit <strong>one unit or a few</strong>: a city, state, country, store cluster or partner.</li>
+          <li>You <strong>cannot randomize</strong> at that level: a regulatory change, a city launch, an ops decision.</li>
+          <li>You have a <strong>long pre-launch history</strong> (many weeks) and a <strong>pool of untreated units</strong>, ideally ten or more.</li>
+          <li>A blend of donors can reproduce the treated unit's pre-launch path <strong>closely</strong>.</li>
+          <li>The metric is measured <strong>at unit level over time</strong> (weekly city rides, regional revenue).</li>
+        </ul>
+      </div>
+      <div class="when-card skip">
+        <h4>🚫 Do not use it when</h4>
+        <ul>
+          <li>You can <strong>randomize users</strong>, or many units were treated and a standard A/B test or propensity analysis fits.</li>
+          <li>The <strong>pre-launch fit is poor</strong>. If no blend tracks the treated unit, the gap afterwards is not interpretable.</li>
+          <li>There are <strong>few pre-launch periods</strong> (a handful of weeks) or <strong>few donors</strong>: weights will overfit and placebo tests cannot be significant.</li>
+          <li>The treated unit is <strong>outside the donor range</strong> (the biggest or most unusual city): weights that sum to 1 cannot extrapolate.</li>
+          <li>Donors are <strong>contaminated</strong>: they got a similar change, or the treatment spills over to them.</li>
+          <li>Something else changed in the treated unit at the same time (a price change, a campaign), so the gap blends several causes.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">⚠️ Checks before you trust the number</div>
+      <ul style="margin:0.5rem 0 0;">
+        <li style="color:inherit;"><strong style="color:inherit;">Pre-launch fit.</strong> Plot actual against synthetic. If they do not overlap before launch, stop.</li>
+        <li style="color:inherit;"><strong style="color:inherit;">Placebo test.</strong> Real city's gap should be extreme among placebo gaps, and the smallest possible p-value is 1 divided by the number of units.</li>
+        <li style="color:inherit;"><strong style="color:inherit;">Leave-one-out.</strong> Drop the donor with the biggest weight and refit. A result that collapses depends on a single city.</li>
+        <li style="color:inherit;"><strong style="color:inherit;">Time placebo.</strong> Pretend the launch was earlier than it was. A gap before the real launch means the model is picking up noise.</li>
+        <li style="color:inherit;"><strong style="color:inherit;">Do not use post-launch data to choose weights or donors.</strong> That bakes the answer into the fit.</li>
+      </ul>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th></th><th>Difference-in-Differences</th><th>Synthetic control</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Comparison group</strong></td><td>One chosen control (or equal-weight average)</td><td>Weighted blend, weights fitted to the pre-launch path</td></tr>
+          <tr><td><strong>Key assumption</strong></td><td>Parallel trends with the chosen control</td><td>A blend of donors can reproduce the treated unit's path</td></tr>
+          <tr><td><strong>Needs</strong></td><td>Few pre-periods are enough</td><td>Many pre-periods and many donors</td></tr>
+          <tr><td><strong>Inference</strong></td><td>Regression with an interaction term</td><td>Placebo tests across donors</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 15: PITFALLS ══ -->
   <div class="section" id="pitfalls">
-    <h2><span class="sec-num">11</span> Practical Insights & Common Mistakes</h2>
+    <h2><span class="sec-num">15</span> Practical Insights & Common Mistakes</h2>
     <div class="section-divider"></div>
 
     <div class="mistake-list">
@@ -3386,6 +4140,23 @@ Crash rate Δ CI [+0.25, +0.60] → FAIL (harm bigger than margin confirmed)</di
           <p>A small p-value says the effect probably isn't zero — not that it is big enough to matter, or that nothing else broke.
           Before launching, place the confidence interval against your minimum worthwhile lift (δ<sub>min</sub>) and check every guardrail
           against its margin. See <a href="#decision" style="color:var(--accent4);">Post-Experiment Decision Making</a>.</p>
+        </div>
+      </div>
+      <div class="mistake-item">
+        <div class="mistake-icon">⏱️</div>
+        <div class="mistake-text">
+          <h4>Using post-assignment data as a CUPED covariate</h4>
+          <p>CUPED only works with a covariate measured before users were assigned. If the treatment can change it, the adjustment subtracts part of the real effect.
+          Fix the covariate and window before looking at results. See <a href="#cuped-when" style="color:var(--accent4);">CUPED: when and when not</a>.</p>
+        </div>
+      </div>
+      <div class="mistake-item">
+        <div class="mistake-icon">🧪</div>
+        <div class="mistake-text">
+          <h4>Calling an observational estimate "causal" without checking the assumptions</h4>
+          <p>Propensity score and synthetic control results depend on assumptions you cannot fully test: no unmeasured confounders, a good overlap, a close pre-launch fit.
+          A tight confidence interval measures noise, not bias. State the assumptions and validate with a randomized holdout when possible.
+          See <a href="#psm-when" style="color:var(--accent4);">PSM</a> and <a href="#synth-when" style="color:var(--accent4);">synthetic control</a>.</p>
         </div>
       </div>
     </div>
