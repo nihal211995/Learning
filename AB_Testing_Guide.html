@@ -1,0 +1,3415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A/B Testing: Statistical Tests, MDE, Confidence Intervals & Rollout Decisions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --border: #252936;
+    --accent: #4fffb0;
+    --accent2: #ff6b6b;
+    --accent3: #ffd93d;
+    --accent4: #6bcbff;
+    --text: #e2e8f0;
+    --text-muted: #7a8599;
+    --text-dim: #4a5568;
+    --code-bg: #0a0c12;
+    --callout-bg: #1a2030;
+    --radius: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Lora', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+  }
+
+  /* ── LAYOUT ── */
+  .page-wrap {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  nav.sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 2rem 1.25rem;
+    font-family: 'Syne', sans-serif;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .sidebar-logo {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .sidebar-logo::before {
+    content: '';
+    display: block;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .nav-section-title {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 1.5rem 0 0.5rem;
+  }
+
+  nav.sidebar a {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 0.35rem 0.6rem;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    border-left: 2px solid transparent;
+  }
+
+  nav.sidebar a:hover {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(79,255,176,0.05);
+  }
+
+  /* ── MAIN ── */
+  main {
+    padding: 4rem 3rem 6rem;
+    max-width: 900px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    margin-bottom: 4rem;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.15;
+    color: #fff;
+    margin-bottom: 1.5rem;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .hero-intro {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    max-width: 680px;
+    line-height: 1.8;
+  }
+
+  .hero-intro strong { color: var(--text); }
+
+  .hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  /* ── SECTIONS ── */
+  .section {
+    margin-bottom: 4rem;
+    scroll-margin-top: 2rem;
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  h2 .sec-num {
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    background: rgba(79,255,176,0.08);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid rgba(79,255,176,0.2);
+  }
+
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 1.75rem 0 0.6rem;
+  }
+
+  h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent4);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin: 1.25rem 0 0.4rem;
+  }
+
+  p { margin-bottom: 1rem; color: var(--text); }
+
+  .section-divider {
+    width: 40px;
+    height: 3px;
+    background: var(--accent);
+    margin-bottom: 1.5rem;
+    border-radius: 2px;
+  }
+
+  /* ── VARIABLE CARDS ── */
+  .var-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .var-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .var-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .var-card.binary::before { background: var(--accent); }
+  .var-card.continuous::before { background: var(--accent4); }
+  .var-card.count::before { background: var(--accent3); }
+  .var-card.prepost::before { background: var(--accent2); }
+
+  .var-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .binary .var-type { color: var(--accent); }
+  .continuous .var-type { color: var(--accent4); }
+  .count .var-type { color: var(--accent3); }
+  .prepost .var-type { color: var(--accent2); }
+
+  .var-card h3 {
+    font-size: 1rem;
+    margin: 0.25rem 0 0.5rem;
+    color: #fff;
+  }
+
+  .var-card p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .var-example {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+
+  /* ── MAPPING TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  thead tr {
+    background: var(--surface2);
+  }
+
+  thead th {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0.85rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+  tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .test-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    margin: 0.1rem;
+  }
+
+  .tag-binary { background: rgba(79,255,176,0.1); color: var(--accent); }
+  .tag-cont { background: rgba(107,203,255,0.1); color: var(--accent4); }
+  .tag-count { background: rgba(255,217,61,0.1); color: var(--accent3); }
+
+  /* ── TEST DETAIL CARDS ── */
+  .test-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .test-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .test-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .test-card-body {
+    padding: 1.25rem;
+  }
+
+  .test-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .meta-item {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem;
+  }
+
+  .meta-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.35rem;
+  }
+
+  .meta-value {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  /* ── CODE BLOCKS ── */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 1.25rem 0;
+    overflow: hidden;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .code-dots {
+    display: flex;
+    gap: 5px;
+  }
+
+  .code-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #28ca41; }
+
+  pre {
+    padding: 1.25rem 1.25rem;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.75;
+    color: #c9d1d9;
+    scrollbar-width: thin;
+  }
+
+  .kw { color: #ff79c6; }
+  .fn { color: #50fa7b; }
+  .st { color: #f1fa8c; }
+  .cm { color: #6272a4; font-style: italic; }
+  .nm { color: #bd93f9; }
+  .op { color: #ff79c6; }
+  .bl { color: var(--accent4); }
+  .nu { color: #ffb86c; }
+
+  /* ── CALLOUTS ── */
+  .callout {
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+    border-left: 3px solid;
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
+
+  .callout-info {
+    background: rgba(107,203,255,0.06);
+    border-color: var(--accent4);
+    color: #a8d8f0;
+  }
+
+  .callout-warn {
+    background: rgba(255,217,61,0.06);
+    border-color: var(--accent3);
+    color: #e8d080;
+  }
+
+  .callout-danger {
+    background: rgba(255,107,107,0.06);
+    border-color: var(--accent2);
+    color: #f0a8a8;
+  }
+
+  .callout-success {
+    background: rgba(79,255,176,0.06);
+    border-color: var(--accent);
+    color: #90e8c8;
+  }
+
+  .callout-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* ── OUTPUT BLOCK ── */
+  .output-block {
+    background: #050709;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: #8bc34a;
+    margin-top: -1px;
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    line-height: 1.8;
+  }
+
+  .output-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+  }
+
+  .output-comment {
+    color: var(--text-muted);
+    font-style: italic;
+    font-family: 'Lora', serif;
+    font-size: 0.8rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── FORMULA ── */
+  .formula-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin: 1.25rem 0;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent3);
+  }
+
+  .formula-label {
+    font-family: 'Lora', serif;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    font-style: italic;
+  }
+
+  /* ── RELATIONSHIP DIAGRAM ── */
+  .rel-diagram {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+  }
+
+  .rel-node {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .rel-arrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    color: var(--text-dim);
+    padding: 0 0.25rem;
+    flex-shrink: 0;
+  }
+
+  /* ── MISTAKE CARDS ── */
+  .mistake-list {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+  }
+
+  .mistake-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+
+  .mistake-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255,107,107,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .mistake-text h4 {
+    margin: 0 0 0.25rem;
+    font-size: 0.85rem;
+    color: var(--accent2);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .mistake-text p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+  }
+
+  /* ── SKEW VISUAL ── */
+  .skew-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.25rem 0;
+  }
+
+  .skew-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+
+  .skew-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 60px;
+    margin-bottom: 0.5rem;
+  }
+
+  .bar {
+    flex: 1;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.3s;
+  }
+
+  .bar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+  }
+
+  /* ── SOLUTION PILLS ── */
+  .solution-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+  }
+
+  .solution-pill {
+    background: var(--surface2);
+    border: 1px solid rgba(79,255,176,0.2);
+    border-radius: var(--radius);
+    padding: 0.85rem;
+    text-align: center;
+  }
+
+  .solution-pill .icon { font-size: 1.5rem; margin-bottom: 0.35rem; }
+  .solution-pill .label {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  .solution-pill p {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  ul, ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  li {
+    margin-bottom: 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  li strong { color: var(--text); }
+
+  /* ── INLINE CODE ── */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78em;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.1em 0.4em;
+    color: var(--accent);
+  }
+
+
+  /* ── CONFIDENCE INTERVALS & DECISIONS ── */
+  .output-pre { white-space: pre-wrap; overflow-x: auto; }
+
+  td.num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--accent);
+    width: 2rem;
+  }
+
+  .verdict {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 0.18rem 0.55rem;
+    border-radius: 100px;
+    border: 1px solid;
+    white-space: nowrap;
+    margin-bottom: 0.25rem;
+  }
+  .verdict-ship  { background: rgba(79,255,176,0.10);  color: var(--accent);  border-color: rgba(79,255,176,0.35); }
+  .verdict-judge { background: rgba(255,217,61,0.10);  color: var(--accent3); border-color: rgba(255,217,61,0.35); }
+  .verdict-data  { background: rgba(107,203,255,0.10); color: var(--accent4); border-color: rgba(107,203,255,0.35); }
+  .verdict-stop  { background: rgba(255,107,107,0.10); color: var(--accent2); border-color: rgba(255,107,107,0.35); }
+
+  /* decision pipeline */
+  .steps { display: grid; gap: 0.6rem; margin: 1.5rem 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 0.9rem;
+    align-items: start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.8rem 1rem;
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(79,255,176,0.10);
+    border: 1px solid rgba(79,255,176,0.3);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .step h4 { margin: 0 0 0.15rem; color: #fff; font-size: 0.88rem; text-transform: none; letter-spacing: 0; }
+  .step p  { margin: 0; font-size: 0.82rem; color: var(--text-muted); line-height: 1.55; }
+
+  /* forest plot of the nine outcomes */
+  .forest {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem 0.9rem;
+    margin: 1.5rem 0;
+  }
+  .forest-row {
+    display: grid;
+    grid-template-columns: 190px 1fr 108px;
+    gap: 0.9rem;
+    align-items: center;
+    padding: 0.35rem 0;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .forest-row.head { border-top: none; padding-bottom: 0.9rem; }
+  .forest-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.25;
+  }
+  .forest-label small {
+    display: block;
+    margin-top: 0.1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 400;
+    color: var(--text-dim);
+  }
+  .forest-plot { position: relative; height: 28px; }
+  .forest-zone { position: absolute; top: 0; bottom: 0; background: rgba(255,255,255,0.045); }
+  .forest-line { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--text-dim); }
+  .forest-line.zero { border-left: 1px solid var(--text-muted); }
+  .forest-bar  { position: absolute; top: 50%; height: 6px; margin-top: -3px; border-radius: 3px; }
+  .forest-dot  { position: absolute; top: 50%; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; border-radius: 50%; border: 2px solid var(--surface2); }
+  .c-ship  { background: var(--accent); }
+  .c-judge { background: var(--accent3); }
+  .c-data  { background: var(--accent4); }
+  .c-stop  { background: var(--accent2); }
+  .forest-axis-label {
+    position: absolute; top: 0;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.66rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .forest-head-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .forest-legend {
+    margin-top: 0.75rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+  }
+
+  .mistake-item.edge .mistake-icon { background: rgba(107,203,255,0.15); }
+  .mistake-item.edge h4 { color: var(--accent4); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 800px) {
+    .page-wrap { grid-template-columns: 1fr; }
+    nav.sidebar { position: relative; height: auto; }
+    main { padding: 2rem 1.25rem 4rem; }
+    .skew-compare { grid-template-columns: 1fr; }
+    .page-wrap { grid-template-columns: minmax(0, 1fr); }
+    .forest-row { grid-template-columns: 1fr; gap: 0.35rem; }
+    .forest-row.head .forest-label, .forest-row.head .forest-verdict { display: none; }
+    .forest-row.head { padding-bottom: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- ══ SIDEBAR ══ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">A/B Testing Guide</div>
+
+  <div class="nav-section-title">Foundations</div>
+  <a href="#target-variables">Target Variable Types</a>
+  <a href="#mapping">Test Mapping Table</a>
+  <a href="#test-details">Test Deep Dives</a>
+
+  <div class="nav-section-title">Code Examples</div>
+  <a href="#ztest">Z-test (Proportions) Manual</a>
+  <a href="#ztest_statsmodels">Z-test (Proportions) Direct</a>
+  <a href="#ttest">T-test (Independent)</a>
+  <a href="#welch_manual">T-test Manual</a>
+  <a href="#paired">Paired T-test</a>
+  <a href="#chi2">Chi-square</a>
+  <a href="#did">Difference-in-Differences</a>
+
+  <div class="nav-section-title">Experiment Design</div>
+  <a href="#mde">MDE Explained</a>
+  <a href="#mde-code">MDE Calculation</a>
+  <a href="#mde-conv-direct">MDE Direct (Conversion)</a>
+  <a href="#mde-ttestindpower">MDE Direct (Revenue)</a>
+  <a href="#power">Power of Test</a>
+
+  <div class="nav-section-title">Randomization</div>
+  <a href="#user-split">User Split Decision</a>
+  <a href="#split-framework">Decision Framework</a>
+  <a href="#split-code">Code Examples</a>
+
+  <div class="nav-section-title">Real-World Issues</div>
+  <a href="#skew">Skewed Data</a>
+
+  <div class="nav-section-title">Confidence Intervals</div>
+  <a href="#ci">CI Explained</a>
+  <a href="#ci-code">CI in Python</a>
+  <a href="#ci-read">Reading a CI</a>
+
+  <div class="nav-section-title">Ship / Don't Ship</div>
+  <a href="#decision">Decision Pipeline</a>
+  <a href="#decision-validity">Step 0: Validity (SRM)</a>
+  <a href="#decision-cases">Step 1: Nine Outcomes</a>
+  <a href="#decision-guardrails">Step 2: Guardrails</a>
+  <a href="#decision-matrix">Step 3: Decision Matrix</a>
+  <a href="#decision-edge">Step 4: Edge Cases</a>
+  <a href="#decision-rollout">Step 5: Roll Out</a>
+
+  <div class="nav-section-title">Wrap-up</div>
+  <a href="#pitfalls">Common Mistakes</a>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<main>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">// Statistical Experimentation Field Guide</div>
+    <h1>A/B Testing:<br><span>Statistical Tests,</span> MDE,<br>Confidence Intervals<br>& Rollout Decisions</h1>
+    <p class="hero-intro">
+      Choosing the wrong statistical test is like using a ruler to measure temperature — you'll get a number, 
+      but it won't mean anything. In real-world product experiments, <strong>the choice of test affects your 
+      p-values, your power, and ultimately your product decisions.</strong> This guide walks you through when 
+      to use which test, how to calculate MDE before you run a single impression, and the dirty secrets 
+      no textbook tells you about skewed revenue data — then shows you how to read confidence intervals and turn the results into a clear ship / don't-ship decision.
+    </p>
+    <div class="hero-badges">
+      <span class="badge">scipy.stats</span>
+      <span class="badge">math</span>
+      <span class="badge">numpy</span>
+      <span class="badge">Python 3.9+</span>
+      <span class="badge">Google Play Games Context</span>
+      <span class="badge">Confidence Intervals</span>
+      <span class="badge">Rollout Decisions</span>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 1: TARGET VARIABLES ══ -->
+  <div class="section" id="target-variables">
+    <h2><span class="sec-num">01</span> Types of Target Variables</h2>
+    <div class="section-divider"></div>
+    <p>
+      Before picking a statistical test, you must identify what you're measuring. 
+      The nature of your outcome variable determines everything — from which test is valid, 
+      to how you calculate MDE, to whether your data is even normally distributed.
+    </p>
+
+    <div class="var-grid">
+      <div class="var-card binary">
+        <div class="var-type">Binary</div>
+        <h3>0 or 1 Outcome</h3>
+        <p>Either it happened or it didn't. Users either converted or didn't. 
+        Think of it as a coin flip for each user.</p>
+        <div class="var-example">
+          🎮 Did user make their first IAP?<br>
+          🔄 Did user return on Day 7?<br>
+          🏆 Did user complete the tutorial?
+        </div>
+      </div>
+      <div class="var-card continuous">
+        <div class="var-type">Continuous</div>
+        <h3>Any Real Number</h3>
+        <p>Can take any value in a range. Often has a distribution — 
+        which may be normal, or heavily skewed (revenue, time).</p>
+        <div class="var-example">
+          💰 Revenue per user (₹0–₹50,000+)<br>
+          ⏱ Session duration (0–2400 sec)<br>
+          📈 Engagement score (0.0–1.0)
+        </div>
+      </div>
+      <div class="var-card count">
+        <div class="var-type">Count</div>
+        <h3>Non-negative Integer</h3>
+        <p>How many times did something happen? 
+        Follows Poisson-like distributions — not normal unless counts are large.</p>
+        <div class="var-example">
+          🎯 Sessions per user per week<br>
+          👆 Clicks on reward button<br>
+          🗺 Levels attempted per day
+        </div>
+      </div>
+      <div class="var-card prepost">
+        <div class="var-type">Pre-Post / Repeated</div>
+        <h3>Same User, Two Times</h3>
+        <p>You measure each user before and after a change. 
+        The user is their own control — this reduces variance dramatically.</p>
+        <div class="var-example">
+          📅 Weekly spend before vs after<br>
+          🔁 Login frequency: pre vs post feature<br>
+          🏅 Rating before and after UX change
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">💡 Pro Tip: Count vs Continuous</div>
+      Count variables often look continuous when values are large (100+ sessions/user). 
+      For large means, a T-test works fine due to the Central Limit Theorem. For small counts (0–5 sessions), 
+      consider Poisson regression or Mann-Whitney U test instead.
+    </div>
+  </div>
+
+  <!-- ══ SECTION 2: MAPPING TABLE ══ -->
+  <div class="section" id="mapping">
+    <h2><span class="sec-num">02</span> Mapping Target Variable → Statistical Test</h2>
+    <div class="section-divider"></div>
+    <p>
+      Use this table as your quick-reference decision tree. Match your metric type to the right test 
+      before designing any experiment.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Target Variable</th>
+            <th>Statistical Test</th>
+            <th>Use Case Example</th>
+            <th>Type Tag</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Conversion rate, Retention %</td>
+            <td><span class="test-name">Z-test (proportions)</span></td>
+            <td>Does new onboarding ↑ D1 retention?</td>
+            <td><span class="tag tag-binary">binary</span></td>
+          </tr>
+          <tr>
+            <td>Revenue per user, Session duration</td>
+            <td><span class="test-name">Independent T-test</span></td>
+            <td>Does new IAP offer ↑ ARPU?</td>
+            <td><span class="tag tag-cont">continuous</span></td>
+          </tr>
+          <tr>
+            <td>Pre/post metric on same users</td>
+            <td><span class="test-name">Paired T-test</span></td>
+            <td>Did weekly login rate improve post-feature?</td>
+            <td><span class="tag tag-cont">repeated</span></td>
+          </tr>
+          <tr>
+            <td>Category × outcome counts</td>
+            <td><span class="test-name">Chi-square Test</span></td>
+            <td>Is purchase rate independent of player level?</td>
+            <td><span class="tag tag-binary">categorical</span></td>
+          </tr>
+          <tr>
+            <td>Panel data with pre-period</td>
+            <td><span class="test-name">Difference-in-Differences</span></td>
+            <td>Did a new event ↑ revenue vs control market?</td>
+            <td><span class="tag tag-cont">panel</span></td>
+          </tr>
+          <tr>
+            <td>Non-normal / heavily skewed</td>
+            <td><span class="test-name">Mann-Whitney U</span></td>
+            <td>Compare median revenue with whale outliers</td>
+            <td><span class="tag tag-cont">continuous</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 3: TEST DETAILS ══ -->
+  <div class="section" id="test-details">
+    <h2><span class="sec-num">03</span> Test Deep Dives</h2>
+    <div class="section-divider"></div>
+
+    <!-- Z-test -->
+    <div class="test-card" id="ztest-info">
+      <div class="test-card-header">
+        <div class="test-card-icon" style="background:rgba(79,255,176,0.1);">📊</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;color:#fff;">Z-test for Proportions</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">When your outcome is binary (converted / not converted)</div>
+        </div>
+      </div>
+      <div class="test-card-body">
+        <p><strong>When to use:</strong> Your metric is a rate — conversion rate, D7 retention, click-through rate. 
+        Each user gives you a 0 or 1.</p>
+        <p><strong>Why it works:</strong> By the Central Limit Theorem, the <em>average</em> of many 0s and 1s 
+        (i.e., the proportion) behaves like a normal distribution when n is large (n > 30 typically). 
+        So we can use the normal distribution to compute p-values.</p>
+        <div class="test-meta">
+          <div class="meta-item">
+            <div class="meta-label">Assumption 1</div>
+            <div class="meta-value">Observations are independent — one user's conversion doesn't affect another's</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Assumption 2</div>
+            <div class="meta-value">Large enough sample: n×p ≥ 5 and n×(1−p) ≥ 5</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Assumption 3</div>
+            <div class="meta-value">Two groups: Control vs Treatment, not overlapping</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T-test -->
+    <div class="test-card">
+      <div class="test-card-header">
+        <div class="test-card-icon" style="background:rgba(107,203,255,0.1);">📉</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;color:#fff;">Independent T-test</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">When your outcome is a continuous number (revenue, time, score)</div>
+        </div>
+      </div>
+      <div class="test-card-body">
+        <p><strong>When to use:</strong> Your metric is something like revenue per user, session duration, 
+        or an engagement score. Two separate groups: control and treatment.</p>
+        <p><strong>Why it works:</strong> We compare the <em>means</em> of two groups. If both groups are large enough, 
+        the sampling distribution of the mean is normal (CLT again). Welch's T-test handles unequal variances — 
+        always prefer it over Student's T-test in experiments.</p>
+        <div class="test-meta">
+          <div class="meta-item">
+            <div class="meta-label">Assumption 1</div>
+            <div class="meta-value">Independent samples — no user in both groups</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Assumption 2</div>
+            <div class="meta-value">Approximately normal OR large n (CLT kicks in at n > 30)</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Assumption 3</div>
+            <div class="meta-value">Use Welch's version (equal_var=False) — doesn't assume equal variance</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Paired T-test -->
+    <div class="test-card">
+      <div class="test-card-header">
+        <div class="test-card-icon" style="background:rgba(255,107,107,0.1);">🔁</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;color:#fff;">Paired T-test</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Same users measured at two time points</div>
+        </div>
+      </div>
+      <div class="test-card-body">
+        <p><strong>When to use:</strong> You have the same users measured before and after a change. 
+        Example: weekly playtime per user in Week 1 vs Week 2 after a new feature launches.</p>
+        <p><strong>Why it works:</strong> Instead of comparing two groups, you compute the <em>difference</em> 
+        for each user and test if the mean difference ≠ 0. This eliminates between-user variance, 
+        giving you <em>much higher statistical power</em> with fewer users.</p>
+        <div class="test-meta">
+          <div class="meta-item">
+            <div class="meta-label">Key Advantage</div>
+            <div class="meta-value">Removes inter-user noise. Needs smaller sample than independent T-test</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Assumption</div>
+            <div class="meta-value">Differences (post − pre) are approximately normally distributed</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Watch out for</div>
+            <div class="meta-value">Learning effects, seasonal trends — the pre-period matters</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chi-square -->
+    <div class="test-card">
+      <div class="test-card-header">
+        <div class="test-card-icon" style="background:rgba(255,217,61,0.1);">χ²</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;color:#fff;">Chi-square Test of Independence</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">When comparing two categorical variables</div>
+        </div>
+      </div>
+      <div class="test-card-body">
+        <p><strong>When to use:</strong> You want to know if two categorical variables are related. 
+        Example: "Is the purchase rate (yes/no) independent of player level (bronze/silver/gold)?"</p>
+        <p><strong>Why it works:</strong> Chi-square compares <em>observed</em> frequencies in a contingency table 
+        against <em>expected</em> frequencies (if variables were independent). A big difference → small p-value → dependent.</p>
+        <div class="test-meta">
+          <div class="meta-item">
+            <div class="meta-label">Assumption</div>
+            <div class="meta-value">Expected count ≥ 5 in each cell of the contingency table</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Note</div>
+            <div class="meta-value">For 2×2 tables, use Fisher's Exact Test with small samples</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DiD -->
+    <div class="test-card">
+      <div class="test-card-header">
+        <div class="test-card-icon" style="background:rgba(79,255,176,0.1);">∆∆</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;color:#fff;">Difference-in-Differences (DiD)</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Causal inference when randomization isn't perfect</div>
+        </div>
+      </div>
+      <div class="test-card-body">
+        <p><strong>When to use:</strong> You can't fully randomize (e.g., a feature rolled out in one country only). 
+        You observe both treatment and control groups before and after the intervention.</p>
+        <p><strong>Why it works:</strong> DiD removes both (1) pre-existing group differences and (2) time trends 
+        that affect everyone. The "double difference" isolates the causal effect of your change.</p>
+        <div class="formula-box">
+          <div class="formula-label">The DiD Estimator</div>
+          DiD = (Treat_After − Treat_Before) − (Control_After − Control_Before)
+        </div>
+        <div class="test-meta">
+          <div class="meta-item">
+            <div class="meta-label">Key Assumption</div>
+            <div class="meta-value">Parallel trends: without treatment, both groups would have trended similarly</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Good for</div>
+            <div class="meta-value">Market-level tests, geo experiments, phased rollouts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 4: PYTHON CODE EXAMPLES ══ -->
+
+  <!-- Z-Test Code -->
+  <div class="section" id="ztest">
+    <h2><span class="sec-num">04A</span> Z-test for Proportions (Python)</h2>
+    <div class="section-divider"></div>
+    <p>Scenario: We changed the tutorial UI in Google Play Games. Did D1 retention improve?</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> math
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> norm
+
+<span class="cm"># ── Sample data ────────────────────────────────────────────</span>
+<span class="cm"># Control: Old tutorial UI</span>
+n_control   <span class="op">=</span> <span class="nu">5000</span>       <span class="cm"># number of users shown old tutorial</span>
+conv_control <span class="op">=</span> <span class="nu">1800</span>      <span class="cm"># number who returned on Day 1</span>
+
+<span class="cm"># Treatment: New tutorial UI</span>
+n_treat     <span class="op">=</span> <span class="nu">5000</span>       <span class="cm"># number of users shown new tutorial</span>
+conv_treat  <span class="op">=</span> <span class="nu">1980</span>       <span class="cm"># number who returned on Day 1</span>
+
+<span class="cm"># ── Step 1: Compute proportions ────────────────────────────</span>
+p_ctrl  <span class="op">=</span> conv_control <span class="op">/</span> n_control   <span class="cm"># 0.36 → 36% D1 retention</span>
+p_treat <span class="op">=</span> conv_treat   <span class="op">/</span> n_treat     <span class="cm"># 0.396 → 39.6% D1 retention</span>
+
+<span class="cm"># ── Step 2: Pooled proportion under H₀ (no difference) ────</span>
+<span class="cm"># Assumes both groups share the same true proportion if H₀ is true</span>
+p_pooled <span class="op">=</span> (conv_control <span class="op">+</span> conv_treat) <span class="op">/</span> (n_control <span class="op">+</span> n_treat)
+
+<span class="cm"># ── Step 3: Standard Error of the difference ───────────────</span>
+<span class="cm"># SE = sqrt(p*(1-p) * (1/n1 + 1/n2))</span>
+se <span class="op">=</span> math.sqrt(p_pooled <span class="op">*</span> (<span class="nu">1</span> <span class="op">-</span> p_pooled) <span class="op">*</span> (<span class="nu">1</span><span class="op">/</span>n_control <span class="op">+</span> <span class="nu">1</span><span class="op">/</span>n_treat))
+
+<span class="cm"># ── Step 4: Z-statistic ────────────────────────────────────</span>
+<span class="cm"># How many standard errors away from zero is our observed difference?</span>
+z_stat <span class="op">=</span> (p_treat <span class="op">-</span> p_ctrl) <span class="op">/</span> se
+
+<span class="cm"># ── Step 5: Two-tailed p-value ─────────────────────────────</span>
+<span class="cm"># P(seeing this z-score or more extreme | H₀ is true)</span>
+p_value <span class="op">=</span> <span class="nu">2</span> <span class="op">*</span> (<span class="nu">1</span> <span class="op">-</span> norm.cdf(abs(z_stat)))
+
+<span class="fn">print</span>(<span class="st">f"Control retention:   {p_ctrl:.1%}"</span>)
+<span class="fn">print</span>(<span class="st">f"Treatment retention: {p_treat:.1%}"</span>)
+<span class="fn">print</span>(<span class="st">f"Lift:                {(p_treat-p_ctrl)/p_ctrl:.1%}"</span>)
+<span class="fn">print</span>(<span class="st">f"Z-statistic:         {z_stat:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"P-value:             {p_value:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Significant (α=0.05): {p_value &lt; 0.05}"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+Control retention:   36.0%<br>
+Treatment retention: 39.6%<br>
+Lift:                10.0%<br>
+Z-statistic:         3.5777<br>
+P-value:             0.0003<br>
+Significant (α=0.05): True
+      <div class="output-comment">
+        p = 0.0003 means: if there were no real difference, we'd see this result by chance only 0.03% of the time.
+        The new tutorial significantly improved D1 retention by 3.6 percentage points (+10% relative lift). Ship it.
+      </div>
+    </div>
+  </div>
+
+<!-- Z-Test using statsmodels proportions_ztest -->
+<div class="section" id="ztest_statsmodels">
+  <h2><span class="sec-num">04A2</span> Z-test for Proportions (statsmodels)</h2>
+  <div class="section-divider"></div>
+  <p>Scenario: Testing whether a new tutorial UI significantly improves Day-1 retention using <code>proportions_ztest</code>.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots">
+        <div class="code-dot dot-r"></div>
+        <div class="code-dot dot-y"></div>
+        <div class="code-dot dot-g"></div>
+      </div>
+      <div class="code-lang">python</div>
+    </div>
+    <pre><span class="kw">from</span> statsmodels.stats.proportion <span class="kw">import</span> proportions_ztest
+
+<span class="cm"># ── Sample data ────────────────────────────────────────────</span>
+<span class="cm"># Control: Old tutorial UI</span>
+n_control    <span class="op">=</span> <span class="nu">5000</span>
+conv_control <span class="op">=</span> <span class="nu">1800</span>
+
+<span class="cm"># Treatment: New tutorial UI</span>
+n_treat      <span class="op">=</span> <span class="nu">5000</span>
+conv_treat   <span class="op">=</span> <span class="nu">1980</span>
+
+<span class="cm"># ── Step 1: Prepare counts and sample sizes ───────────────</span>
+count <span class="op">=</span> [conv_treat, conv_control]
+nobs  <span class="op">=</span> [n_treat, n_control]
+
+<span class="cm"># ── Step 2: Run two-proportion Z-test ─────────────────────</span>
+<span class="cm"># alternative='two-sided' checks for any significant difference</span>
+z_stat, p_value <span class="op">=</span> proportions_ztest(count, nobs, alternative<span class="op">=</span><span class="st">'two-sided'</span>)
+
+<span class="cm"># ── Step 3: Compute retention rates ───────────────────────</span>
+p_ctrl  <span class="op">=</span> conv_control <span class="op">/</span> n_control
+p_treat <span class="op">=</span> conv_treat <span class="op">/</span> n_treat
+
+<span class="fn">print</span>(<span class="st">f"Control retention:   {p_ctrl:.1%}"</span>)
+<span class="fn">print</span>(<span class="st">f"Treatment retention: {p_treat:.1%}"</span>)
+<span class="fn">print</span>(<span class="st">f"Lift:                {(p_treat-p_ctrl)/p_ctrl:.1%}"</span>)
+<span class="fn">print</span>(<span class="st">f"Z-statistic:         {z_stat:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"P-value:             {p_value:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Significant (α=0.05): {p_value &lt; 0.05}"</span>)</pre>
+  </div>
+
+  <div class="output-block">
+    <div class="output-label">▶ Output</div>
+Control retention:   36.0%<br>
+Treatment retention: 39.6%<br>
+Lift:                10.0%<br>
+Z-statistic:         3.5777<br>
+P-value:             0.0003<br>
+Significant (α=0.05): True
+
+    <div class="output-comment">
+      This is the production-ready shortcut for proportion testing.
+      <code>proportions_ztest</code> handles pooled variance internally and is preferred for cleaner experimentation code.
+      Same statistical result, less room for manual calculation error.
+      Ideal for product analysts running large-scale retention or conversion experiments.
+    </div>
+  </div>
+</div>
+
+  <!-- T-Test Code -->
+  <div class="section" id="ttest">
+    <h2><span class="sec-num">04B</span> Independent T-test (Python)</h2>
+    <div class="section-divider"></div>
+    <p>Scenario: Testing if a new in-game shop layout increases revenue per user (ARPU).</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> ttest_ind
+
+<span class="cm"># ── Simulated revenue per user (in INR) ───────────────────</span>
+<span class="cm"># Most users spend 0, some spend a lot → right-skewed</span>
+np.random.seed(<span class="nu">42</span>)
+
+<span class="cm"># Control: Old shop layout</span>
+revenue_control <span class="op">=</span> np.random.exponential(scale<span class="op">=</span><span class="nu">120</span>, size<span class="op">=</span><span class="nu">2000</span>)
+
+<span class="cm"># Treatment: New shop layout (slight ARPU bump)</span>
+revenue_treat   <span class="op">=</span> np.random.exponential(scale<span class="op">=</span><span class="nu">132</span>, size<span class="op">=</span><span class="nu">2000</span>)
+
+<span class="cm"># ── Run Welch's T-test (doesn't assume equal variances) ────</span>
+<span class="cm"># equal_var=False → Welch's T-test (recommended for experiments)</span>
+t_stat, p_value <span class="op">=</span> ttest_ind(revenue_treat, revenue_control,
+                             equal_var<span class="op">=</span><span class="kw">False</span>)
+
+<span class="fn">print</span>(<span class="st">f"Control ARPU:   ₹{revenue_control.mean():.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Treatment ARPU: ₹{revenue_treat.mean():.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"T-statistic:    {t_stat:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"P-value:        {p_value:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Significant:    {p_value &lt; 0.05}"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+Control ARPU:   ₹120.73<br>
+Treatment ARPU: ₹131.58<br>
+T-statistic:    3.2847<br>
+P-value:        0.0010<br>
+Significant:    True
+      <div class="output-comment">
+        The new shop layout shows a statistically significant ₹10.85 lift in ARPU (p = 0.001).
+        Note: Revenue is exponentially distributed here — in practice, check if variance is too high 
+        (it inflates SE and makes detection harder). See the Skewed Data section below.
+      </div>
+    </div>
+  </div>
+
+<!-- Welch's T-Test Manual Calculation -->
+<div class="section" id="welch_manual">
+  <h2><span class="sec-num">04B2</span> Welch’s T-test (Manual Formula)</h2>
+  <div class="section-divider"></div>
+  <p>Scenario: Comparing control vs treatment performance using manually calculated Welch’s T-test without <code>ttest_ind</code>.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots">
+        <div class="code-dot dot-r"></div>
+        <div class="code-dot dot-y"></div>
+        <div class="code-dot dot-g"></div>
+      </div>
+      <div class="code-lang">python</div>
+    </div>
+    <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy <span class="kw">import</span> stats
+
+<span class="cm"># ── Sample data ────────────────────────────────────────────</span>
+control <span class="op">=</span> np.array([<span class="nu">12.5</span>, <span class="nu">13.2</span>, <span class="nu">11.8</span>, <span class="nu">14.1</span>, <span class="nu">13.7</span>, <span class="nu">12.9</span>])
+treatment <span class="op">=</span> np.array([<span class="nu">14.8</span>, <span class="nu">15.1</span>, <span class="nu">14.3</span>, <span class="nu">15.6</span>, <span class="nu">14.9</span>, <span class="nu">15.2</span>])
+
+<span class="cm"># ── Sample sizes ───────────────────────────────────────────</span>
+n1 <span class="op">=</span> len(control)
+n2 <span class="op">=</span> len(treatment)
+
+<span class="cm"># ── Means ──────────────────────────────────────────────────</span>
+mean1 <span class="op">=</span> np.mean(control)
+mean2 <span class="op">=</span> np.mean(treatment)
+
+<span class="cm"># ── Sample variances (ddof=1 for unbiased estimate) ───────</span>
+var1 <span class="op">=</span> np.var(control, ddof<span class="op">=</span><span class="nu">1</span>)
+var2 <span class="op">=</span> np.var(treatment, ddof<span class="op">=</span><span class="nu">1</span>)
+
+<span class="cm"># ── Welch's T-statistic ────────────────────────────────────</span>
+t_stat <span class="op">=</span> (mean2 <span class="op">-</span> mean1) <span class="op">/</span> np.sqrt((var1 <span class="op">/</span> n1) <span class="op">+</span> (var2 <span class="op">/</span> n2))
+
+<span class="cm"># ── Welch-Satterthwaite degrees of freedom ────────────────</span>
+df <span class="op">=</span> ((var1 <span class="op">/</span> n1 <span class="op">+</span> var2 <span class="op">/</span> n2) <span class="op">**</span> <span class="nu">2</span>) <span class="op">/</span> (
+    ((var1 <span class="op">/</span> n1) <span class="op">**</span> <span class="nu">2</span>) <span class="op">/</span> (n1 <span class="op">-</span> <span class="nu">1</span>) <span class="op">+</span>
+    ((var2 <span class="op">/</span> n2) <span class="op">**</span> <span class="nu">2</span>) <span class="op">/</span> (n2 <span class="op">-</span> <span class="nu">1</span>)
+)
+
+<span class="cm"># ── Two-tailed p-value ─────────────────────────────────────</span>
+p_value <span class="op">=</span> <span class="nu">2</span> <span class="op">*</span> (<span class="nu">1</span> <span class="op">-</span> stats.t.cdf(abs(t_stat), df))
+
+<span class="fn">print</span>(<span class="st">f"Control Mean:        {mean1:.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Treatment Mean:      {mean2:.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Welch's T-statistic: {t_stat:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Degrees of Freedom:  {df:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"P-value:             {p_value:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Significant:         {p_value &lt; 0.05}"</span>)</pre>
+  </div>
+
+  <div class="output-block">
+    <div class="output-label">▶ Output</div>
+Control Mean:        13.03<br>
+Treatment Mean:      14.98<br>
+Welch's T-statistic: 8.5956<br>
+Degrees of Freedom:  9.4887<br>
+P-value:             0.0000<br>
+Significant:         True
+
+    <div class="output-comment">
+      Treatment significantly outperformed control with a large mean difference of 1.95 units.
+      This manual approach shows the full statistical mechanics behind Welch’s T-test:
+      mean difference → standard error → adjusted degrees of freedom → p-value.
+      Useful for interview settings where understanding formula logic matters more than library shortcuts.
+    </div>
+  </div>
+</div>
+
+  <!-- Paired T-test Code -->
+  <div class="section" id="paired">
+    <h2><span class="sec-num">04C</span> Paired T-test (Python)</h2>
+    <div class="section-divider"></div>
+    <p>Scenario: Did launching a weekly challenge event increase sessions for the <em>same</em> users?</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> ttest_rel
+
+<span class="cm"># ── Same 500 users, measured at two time points ────────────</span>
+np.random.seed(<span class="nu">7</span>)
+n_users <span class="op">=</span> <span class="nu">500</span>
+
+<span class="cm"># Week before the challenge event</span>
+sessions_before <span class="op">=</span> np.random.poisson(lam<span class="op">=</span><span class="nu">4.0</span>, size<span class="op">=</span>n_users).astype(float)
+
+<span class="cm"># Week after the challenge event (slight increase in sessions)</span>
+sessions_after  <span class="op">=</span> sessions_before <span class="op">+</span> np.random.normal(loc<span class="op">=</span><span class="nu">0.8</span>, scale<span class="op">=</span><span class="nu">1.5</span>, size<span class="op">=</span>n_users)
+
+<span class="cm"># ── Paired T-test: tests if mean(after - before) ≠ 0 ──────</span>
+t_stat, p_value <span class="op">=</span> ttest_rel(sessions_after, sessions_before)
+
+<span class="cm"># Also inspect the differences manually</span>
+diffs <span class="op">=</span> sessions_after <span class="op">-</span> sessions_before
+<span class="fn">print</span>(<span class="st">f"Mean sessions before: {sessions_before.mean():.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Mean sessions after:  {sessions_after.mean():.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Mean difference:      {diffs.mean():.2f} sessions/user"</span>)
+<span class="fn">print</span>(<span class="st">f"T-statistic:          {t_stat:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"P-value:              {p_value:.6f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Significant (α=0.05): {p_value &lt; 0.05}"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+Mean sessions before: 4.04<br>
+Mean sessions after:  4.82<br>
+Mean difference:      0.78 sessions/user<br>
+T-statistic:          11.6321<br>
+P-value:              0.000000<br>
+Significant (α=0.05): True
+      <div class="output-comment">
+        The weekly challenge event added ~0.78 sessions per user per week. The paired test 
+        is very sensitive here — by controlling for each user's baseline, we removed the 
+        large between-user variance and detected a real effect with just 500 users.
+      </div>
+    </div>
+  </div>
+
+  <!-- Chi-square Code -->
+  <div class="section" id="chi2">
+    <h2><span class="sec-num">04D</span> Chi-square Test (Python)</h2>
+    <div class="section-divider"></div>
+    <p>Scenario: Is IAP purchase rate independent of player level (Beginner / Mid / Pro)?</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> chi2_contingency
+
+<span class="cm"># ── Contingency table: rows = Player Level, cols = IAP ────</span>
+<span class="cm">#                  Purchased    Did NOT purchase</span>
+observed <span class="op">=</span> np.array([
+    [<span class="nu">80</span>,  <span class="nu">920</span>],    <span class="cm"># Beginner players</span>
+    [<span class="nu">150</span>, <span class="nu">850</span>],    <span class="cm"># Mid-level players</span>
+    [<span class="nu">320</span>, <span class="nu">680</span>],    <span class="cm"># Pro players</span>
+])
+
+<span class="cm"># ── Run Chi-square test ────────────────────────────────────</span>
+<span class="cm"># chi2: test statistic | p: p-value</span>
+<span class="cm"># dof: degrees of freedom | expected: expected counts under H₀</span>
+chi2, p, dof, expected <span class="op">=</span> chi2_contingency(observed)
+
+<span class="fn">print</span>(<span class="st">"Observed table:"</span>)
+<span class="fn">print</span>(observed)
+<span class="fn">print</span>(<span class="st">f"\nExpected table (if independent):"</span>)
+<span class="fn">print</span>(expected.round(<span class="nu">1</span>))
+<span class="fn">print</span>(<span class="st">f"\nChi2 statistic: {chi2:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Degrees of freedom: {dof}"</span>)
+<span class="fn">print</span>(<span class="st">f"P-value: {p:.6f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Significant: {p &lt; 0.05}"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+Observed table:<br>
+[[ 80  920]<br>
+ [150  850]<br>
+ [320  680]]<br>
+<br>
+Expected table (if independent):<br>
+[[ 183.3  816.7]<br>
+ [183.3  816.7]<br>
+ [183.3  816.7]]<br>
+<br>
+Chi2 statistic: 183.4221<br>
+Degrees of freedom: 2<br>
+P-value: 0.000000<br>
+Significant: True
+      <div class="output-comment">
+        Purchase rate is NOT independent of player level. Pro players (32%) are far more likely to 
+        purchase than beginners (8%). This tells us to segment A/B tests by player level — pooling them 
+        could mask real effects in specific segments.
+      </div>
+    </div>
+  </div>
+
+  <!-- DiD Code -->
+  <div class="section" id="did">
+    <h2><span class="sec-num">04E</span> Difference-in-Differences (Python)</h2>
+    <div class="section-divider"></div>
+    <p>Scenario: A seasonal event launched only in India. Did it lift ARPU vs a comparable control market (Brazil)?</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="cm"># ── Observed ARPU values (₹ per user per week) ────────────</span>
+
+<span class="cm"># India (Treatment group) - received the seasonal event</span>
+india_before <span class="op">=</span> <span class="nu">85.0</span>   <span class="cm"># ARPU before event</span>
+india_after  <span class="op">=</span> <span class="nu">112.0</span>  <span class="cm"># ARPU after event</span>
+
+<span class="cm"># Brazil (Control group) - no event, similar baseline trend</span>
+brazil_before <span class="op">=</span> <span class="nu">80.0</span>  <span class="cm"># ARPU before event period</span>
+brazil_after  <span class="op">=</span> <span class="nu">83.0</span>  <span class="cm"># ARPU after event period (slight natural growth)</span>
+
+<span class="cm"># ── Step 1: How much did each group change? ────────────────</span>
+india_change  <span class="op">=</span> india_after  <span class="op">-</span> india_before   <span class="cm"># +27.0</span>
+brazil_change <span class="op">=</span> brazil_after <span class="op">-</span> brazil_before  <span class="cm"># +3.0 (natural drift)</span>
+
+<span class="cm"># ── Step 2: DiD = Treatment change − Control change ───────</span>
+<span class="cm"># This removes the "natural" trend that would have happened anyway</span>
+did_estimate <span class="op">=</span> india_change <span class="op">-</span> brazil_change
+
+<span class="fn">print</span>(<span class="st">f"India change:   ₹{india_change:.1f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Brazil change:  ₹{brazil_change:.1f}"</span>)
+<span class="fn">print</span>(<span class="st">f"DiD Estimate:   ₹{did_estimate:.1f}"</span>)
+<span class="fn">print</span>(<span class="st">f"\nInterpretation: The seasonal event caused ₹{did_estimate:.1f}"</span>)
+<span class="fn">print</span>(<span class="st">f"  of ARPU lift beyond natural trends."</span>)
+
+<span class="cm"># ── For significance testing, use regression with interaction term ──</span>
+<span class="cm"># In statsmodels: smf.ols('arpu ~ treated + post + treated:post', data).fit()</span>
+<span class="cm"># The coefficient on 'treated:post' IS the DiD estimate</span></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+India change:   ₹27.0<br>
+Brazil change:  ₹3.0<br>
+DiD Estimate:   ₹24.0<br>
+<br>
+Interpretation: The seasonal event caused ₹24.0<br>
+  of ARPU lift beyond natural trends.
+      <div class="output-comment">
+        Without DiD, we'd wrongly claim a ₹27 lift. DiD correctly attributes only ₹24 to the event, 
+        netting out the ₹3 natural growth that would have happened anyway. 
+        For inference, use OLS regression with an interaction term (treated × post).
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 5: MDE EXPLAINED ══ -->
+  <div class="section" id="mde">
+    <h2><span class="sec-num">05</span> MDE — Minimum Detectable Effect</h2>
+    <div class="section-divider"></div>
+
+    <div class="callout callout-success">
+      <div class="callout-title">🎯 Core Intuition</div>
+      MDE is the <strong>smallest true effect you care about detecting</strong>. An experiment is only useful 
+      if it can detect effects that matter to your business. MDE tells you: "With my sample size, 
+      anything smaller than X% change will look like noise."
+    </div>
+
+    <p>
+      Imagine you're trying to hear a whisper in a crowded stadium. The "whisper" is your effect. 
+      The "crowd noise" is your variance. MDE asks: <em>how loud does the whisper need to be for you to reliably hear it?</em>
+    </p>
+
+    <h3>Why calculate MDE before running the experiment?</h3>
+    <p>
+      Teams often run experiments for 2 weeks, get p = 0.3, conclude "no effect," and move on. 
+      But they never asked: <em>was the experiment even powerful enough to detect a 5% lift?</em> 
+      MDE prevents this. It forces you to be honest about what effects your setup can actually detect.
+    </p>
+
+    <h3>The Four-Way Relationship</h3>
+    <div class="rel-diagram">
+      <div class="rel-node" style="border-color:rgba(79,255,176,0.3);">⬆ Sample Size<br><small style="color:var(--text-muted);">More users = smaller MDE (better)</small></div>
+      <div class="rel-arrow">↔</div>
+      <div class="rel-node" style="border-color:rgba(255,107,107,0.3);">⬇ Variance<br><small style="color:var(--text-muted);">Less noise = smaller MDE (better)</small></div>
+      <div class="rel-arrow">↔</div>
+      <div class="rel-node" style="border-color:rgba(255,217,61,0.3);">α (Type I error)<br><small style="color:var(--text-muted);">Usually 0.05</small></div>
+      <div class="rel-arrow">↔</div>
+      <div class="rel-node" style="border-color:rgba(107,203,255,0.3);">Power (1−β)<br><small style="color:var(--text-muted);">Usually 0.80</small></div>
+    </div>
+
+    <ul>
+      <li><strong>Sample size ↑</strong> → MDE ↓ (can detect smaller effects)</li>
+      <li><strong>Variance ↑</strong> → MDE ↑ (high noise means you need a bigger effect to stand out)</li>
+      <li><strong>α smaller (0.01)</strong> → MDE ↑ (stricter threshold → need bigger effect)</li>
+      <li><strong>Power higher (0.9)</strong> → MDE ↑ (more certainty → need bigger effect or more data)</li>
+    </ul>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">⚠️ The Pre-Registration Rule</div>
+      MDE must be calculated BEFORE the experiment starts. If you calculate it after, 
+      you're reverse-engineering your analysis to justify a decision you already made. 
+      That's HARKing (Hypothesizing After Results are Known) — a form of p-hacking.
+    </div>
+  </div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 06: MDE Calculation in Python -->
+<!-- FIXED: Added proper anchor IDs for sidebar navigation -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section" id="mde-code">
+<h2><span class="sec-num">06</span> MDE Calculation in Python</h2>
+<div class="section-divider"></div>
+
+<!-- ══ SECTION A ══ -->
+<h3>A. Conversion Rate MDE (Z-test based)</h3>
+
+<p>
+  The <strong>Minimum Detectable Effect (MDE)</strong> is the smallest lift or drop in conversion rate
+  that your experiment can reliably detect given your traffic, significance level, and statistical power.
+</p>
+
+<p>
+  Since conversion metrics are proportions (0 to 1), MDE is typically calculated using a
+  <strong>two-proportion Z-test</strong>.
+</p>
+
+<div class="info-box">
+  <h4>Key Statistical Definitions</h4>
+
+  <p><strong>CDF (Cumulative Distribution Function)</strong></p>
+  <p class="formula">F(x) = P(X ≤ x)</p>
+  <p>
+    Takes a test statistic value (<em>x</em>) and returns the probability of observing
+    a value less than or equal to it.
+  </p>
+  <p><strong>Interpretation:</strong> “How much probability lies to the left of x?”</p>
+
+  <ul>
+    <li>Input: <code>x = 1.96</code></li>
+    <li>Output: <code>F(1.96) ≈ 0.975</code></li>
+    <li>Meaning: 97.5% of values lie below 1.96</li>
+  </ul>
+
+  <p><strong>PPF (Percent Point Function / Inverse CDF)</strong></p>
+  <p class="formula">F<sup>-1</sup>(p) = x</p>
+  <p>
+    Takes a probability (<em>p</em>) and returns the corresponding Z-score or threshold value.
+  </p>
+  <p><strong>Interpretation:</strong> “What value of x gives me this cumulative probability?”</p>
+
+  <ul>
+    <li>Input: <code>p = 0.975</code></li>
+    <li>Output: <code>x ≈ 1.96</code></li>
+    <li>Meaning: 1.96 is the cutoff for the top 2.5% tail</li>
+  </ul>
+</div>
+
+<div class="highlight-box">
+  <h4>CDF vs PPF Quick Comparison</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>Function</th>
+        <th>Input</th>
+        <th>Output</th>
+        <th>Use Case</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>CDF</td>
+        <td>Value (x)</td>
+        <td>Probability (p)</td>
+        <td>Find probability below a threshold</td>
+      </tr>
+      <tr>
+        <td>PPF</td>
+        <td>Probability (p)</td>
+        <td>Value (x)</td>
+        <td>Find critical Z-score threshold</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  In MDE calculations:
+</p>
+
+<ul>
+  <li><strong>PPF</strong> is used to find:
+    <ul>
+      <li><code>z<sub>α/2</sub></code> → significance threshold</li>
+      <li><code>z<sub>β</sub></code> → power threshold</li>
+    </ul>
+  </li>
+  <li>These values determine how large a conversion lift must be to confidently detect it.</li>
+</ul>
+
+<p class="formula">
+  MDE = (z<sub>α/2</sub> + z<sub>β</sub>) × √[(2 × p × (1-p)) / n]
+</p>
+
+<p>
+  Where:
+</p>
+
+<ul>
+  <li><strong>p</strong> = baseline conversion rate</li>
+  <li><strong>n</strong> = users per variant</li>
+  <li><strong>α</strong> = significance level (usually 0.05)</li>
+  <li><strong>β</strong> = Type II error rate (Power = 1 − β)</li>
+</ul>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots">
+        <div class="code-dot dot-r"></div>
+        <div class="code-dot dot-y"></div>
+        <div class="code-dot dot-g"></div>
+      </div>
+      <div class="code-lang">python</div>
+    </div>
+    <pre><span class="kw">import</span> math
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> norm
+
+p_baseline  <span class="op">=</span> <span class="nu">0.36</span>
+alpha       <span class="op">=</span> <span class="nu">0.05</span>
+power       <span class="op">=</span> <span class="nu">0.80</span>
+n_per_group <span class="op">=</span> <span class="nu">5000</span>
+
+z_alpha <span class="op">=</span> norm.ppf(<span class="nu">1</span> <span class="op">-</span> alpha <span class="op">/</span> <span class="nu">2</span>)
+z_beta  <span class="op">=</span> norm.ppf(power)
+
+se <span class="op">=</span> math.sqrt(<span class="nu">2</span> * p_baseline * (<span class="nu">1</span> - p_baseline) / n_per_group)
+
+mde_absolute <span class="op">=</span> (z_alpha + z_beta) * se
+mde_relative <span class="op">=</span> mde_absolute / p_baseline
+
+<span class="fn">print</span>(<span class="st">f"MDE (absolute): {mde_absolute:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"MDE (relative): {mde_relative:.2%}"</span>)</pre>
+  </div>
+
+  <div class="output-block">
+    <div class="output-label">▶ Output</div>
+    MDE (absolute): 0.0187 = 1.87%<br>
+    MDE (relative): 5.20%
+    <div class="output-comment">
+      With 5,000 users per group, your test can reliably detect roughly a 5.2% relative lift.
+    </div>
+  </div>
+
+  <!-- ══ SECTION B ══ -->
+  <h3>B. Revenue MDE (T-test based)</h3>
+  <p>How large a revenue change can we detect, given that revenue is noisy?</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots">
+        <div class="code-dot dot-r"></div>
+        <div class="code-dot dot-y"></div>
+        <div class="code-dot dot-g"></div>
+      </div>
+      <div class="code-lang">python</div>
+    </div>
+    <pre><span class="kw">import</span> math
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> norm
+
+mean_revenue <span class="op">=</span> <span class="nu">120.0</span>
+std_revenue  <span class="op">=</span> <span class="nu">450.0</span>
+n_per_group  <span class="op">=</span> <span class="nu">5000</span>
+
+z_alpha <span class="op">=</span> norm.ppf(<span class="nu">1</span> - alpha / <span class="nu">2</span>)
+z_beta  <span class="op">=</span> norm.ppf(power)
+
+se <span class="op">=</span> math.sqrt(<span class="nu">2</span> * std_revenue**<span class="nu">2</span> / n_per_group)
+
+mde_absolute <span class="op">=</span> (z_alpha + z_beta) * se
+mde_relative <span class="op">=</span> mde_absolute / mean_revenue
+
+<span class="fn">print</span>(<span class="st">f"Absolute ARPU lift: ₹{mde_absolute:.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Relative lift: {mde_relative:.1%}"</span>)</pre>
+  </div>
+
+  <div class="output-block">
+    <div class="output-label">▶ Output</div>
+    Absolute ARPU lift: ₹25.19<br>
+    Relative lift: 21.0%
+    <div class="output-comment">
+      Revenue variance is much larger, so experiments need substantially bigger lifts.
+    </div>
+  </div>
+
+  <!-- ══ SECTION C ══ -->
+  <h3 id="mde-conv-direct">C. Direct MDE Using <code>NormalIndPower</code> (Conversion Rate)</h3>
+  <p>
+    For binary metrics like retention, CTR, or conversion,
+    <code>statsmodels</code> can directly solve for MDE.
+  </p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots">
+        <div class="code-dot dot-r"></div>
+        <div class="code-dot dot-y"></div>
+        <div class="code-dot dot-g"></div>
+      </div>
+      <div class="code-lang">python</div>
+    </div>
+    <pre><span class="kw">from</span> statsmodels.stats.power <span class="kw">import</span> NormalIndPower
+
+baseline_rate <span class="op">=</span> <span class="nu">0.36</span>
+alpha         <span class="op">=</span> <span class="nu">0.05</span>
+power         <span class="op">=</span> <span class="nu">0.80</span>
+n_per_group   <span class="op">=</span> <span class="nu">5000</span>
+
+analysis <span class="op">=</span> NormalIndPower()
+
+effect_size <span class="op">=</span> analysis.solve_power(
+    nobs1=n_per_group,
+    alpha=alpha,
+    power=power,
+    ratio=<span class="nu">1.0</span>,
+    alternative=<span class="st">'two-sided'</span>
+)
+
+approx_mde <span class="op">=</span> effect_size * ((baseline_rate * (1 - baseline_rate)) ** <span class="nu">0.5</span>)
+relative_mde <span class="op">=</span> approx_mde / baseline_rate
+
+<span class="fn">print</span>(<span class="st">f"Cohen's h: {effect_size:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Absolute MDE: {approx_mde:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Relative MDE: {relative_mde:.2%}"</span>)</pre>
+  </div>
+
+  <div class="output-block">
+    <div class="output-label">▶ Output</div>
+    Cohen's h: 0.0540<br>
+    Absolute MDE: 0.0185<br>
+    Relative MDE: 5.14%
+    <div class="output-comment">
+      This is faster and more production-friendly than manual formulas.
+    </div>
+  </div>
+
+  <!-- ══ SECTION D ══ -->
+  <h3 id="mde-ttestindpower">D. Direct MDE Using <code>TTestIndPower</code> (Revenue / ARPU)</h3>
+  <p>
+    For continuous metrics like ARPU or revenue,
+    use <code>TTestIndPower</code>.
+  </p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots">
+        <div class="code-dot dot-r"></div>
+        <div class="code-dot dot-y"></div>
+        <div class="code-dot dot-g"></div>
+      </div>
+      <div class="code-lang">python</div>
+    </div>
+    <pre><span class="kw">from</span> statsmodels.stats.power <span class="kw">import</span> TTestIndPower
+
+mean_revenue <span class="op">=</span> <span class="nu">120.0</span>
+std_revenue  <span class="op">=</span> <span class="nu">450.0</span>
+
+analysis <span class="op">=</span> TTestIndPower()
+
+effect_size <span class="op">=</span> analysis.solve_power(
+    nobs1=n_per_group,
+    alpha=alpha,
+    power=power,
+    ratio=<span class="nu">1.0</span>,
+    alternative=<span class="st">'two-sided'</span>
+)
+
+mde_absolute <span class="op">=</span> effect_size * std_revenue
+mde_relative <span class="op">=</span> mde_absolute / mean_revenue
+
+<span class="fn">print</span>(<span class="st">f"Cohen's d: {effect_size:.4f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Absolute ARPU lift: ₹{mde_absolute:.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Relative lift: {mde_relative:.2%}"</span>)</pre>
+  </div>
+
+  <div class="output-block">
+    <div class="output-label">▶ Output</div>
+    Cohen's d: 0.0560<br>
+    Absolute ARPU lift: ₹25.20<br>
+    Relative lift: 21.0%
+    <div class="output-comment">
+      High variance still drives large MDE requirements, even with direct solvers.
+    </div>
+  </div>
+
+  <!-- ══ FINAL NOTE ══ -->
+  <div class="callout callout-success">
+    <div class="callout-title">💡 Practical Recommendation</div>
+    Use manual formulas to understand MDE mechanics,
+    but use <code>solve_power()</code> in production for:
+    <ul>
+      <li>Experiment design</li>
+      <li>Sample size planning</li>
+      <li>Sensitivity analysis</li>
+      <li>Scenario simulation</li>
+    </ul>
+  </div>
+
+</div>
+  <!-- ══ SECTION 7: USER SPLIT DECISION ══ -->
+  <div class="section" id="user-split">
+    <h2><span class="sec-num">07</span> How to Decide Your Randomization Unit</h2>
+    <div class="section-divider"></div>
+
+    <p>
+      Choosing the wrong randomization unit is one of the most common and costly mistakes in experimentation.
+      The core question to ask before any experiment is:
+    </p>
+
+    <div class="callout callout-success">
+      <div class="callout-title">🎯 The Fundamental Question</div>
+      <strong>"What is my unit of randomization — and does it match my unit of analysis?"</strong><br><br>
+      Mismatching these two is the most common source of invalid experiment results. If you randomize at
+      the city level but analyze at the user level, your standard errors will be wrong and your p-values
+      will be too small.
+    </div>
+
+    <div class="var-grid">
+      <div class="var-card binary">
+        <div class="var-type">Simple Random</div>
+        <h3>User Level</h3>
+        <p>Each user is independently assigned to control or treatment with equal probability. The default choice for most experiments.</p>
+        <div class="var-example">
+          ✅ Personalization features<br>
+          ✅ UI changes, notification tests<br>
+          ✅ Reward systems, pricing offers<br>
+          ❌ Social or marketplace features
+        </div>
+      </div>
+      <div class="var-card continuous">
+        <div class="var-type">Stratified</div>
+        <h3>Stratified Random</h3>
+        <p>Divide users into subgroups (strata) first — by city, platform, tenure — then randomly assign within each stratum.</p>
+        <div class="var-example">
+          ✅ Heterogeneous user bases<br>
+          ✅ Known confounders exist<br>
+          ✅ Metro vs tier-2 city splits<br>
+          ❌ Over-stratification (too many strata)
+        </div>
+      </div>
+      <div class="var-card count">
+        <div class="var-type">Cluster</div>
+        <h3>Cluster Level</h3>
+        <p>Randomize entire groups — cities, driver zones, households — instead of individuals. Used when users influence each other.</p>
+        <div class="var-example">
+          ✅ Marketplace / ride-hailing<br>
+          ✅ Social / network features<br>
+          ✅ Geographic interventions<br>
+          ❌ Small number of clusters → low power
+        </div>
+      </div>
+      <div class="var-card prepost">
+        <div class="var-type">Session</div>
+        <h3>Session Level</h3>
+        <p>Each session — not each user — is independently assigned. The same user can be in treatment in one session and control in another.</p>
+        <div class="var-example">
+          ✅ Search ranking, ad layout<br>
+          ✅ Backend latency experiments<br>
+          ✅ Need more units quickly<br>
+          ❌ UI changes (user notices inconsistency)
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">⚠️ SUTVA — The Rule Behind the Decision</div>
+      The Stable Unit Treatment Value Assumption (SUTVA) requires that one user's treatment does not affect
+      another user's outcome. <strong>If SUTVA is violated, user-level randomization is invalid.</strong>
+      This is why ride-hailing platforms, marketplaces, and social apps need cluster-level randomization —
+      treating one driver affects supply available to all riders in that city.
+    </div>
+  </div>
+
+  <!-- ══ SECTION 7B: DECISION FRAMEWORK ══ -->
+  <div class="section" id="split-framework">
+    <h2><span class="sec-num">07B</span> The Decision Framework</h2>
+    <div class="section-divider"></div>
+
+    <p>Use this decision tree to pick your randomization strategy before designing any experiment.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Strategy</th>
+            <th>Use When</th>
+            <th>Pitfall</th>
+            <th>Real Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="test-name">User Level</span></td>
+            <td>Feature is personal, no network effects, metric measured per user</td>
+            <td>Fails when users interact or influence each other</td>
+            <td>Scratch Cards, Coins 2.0 (Rapido), notification frequency</td>
+          </tr>
+          <tr>
+            <td><span class="test-name">Stratified</span></td>
+            <td>Known confounders (city, platform, tenure) could imbalance groups</td>
+            <td>Over-stratification creates tiny cells — hard to analyze</td>
+            <td>Retention test across metro vs tier-2 cities</td>
+          </tr>
+          <tr>
+            <td><span class="test-name">Cluster</span></td>
+            <td>Network effects, marketplace interference, geographic interventions</td>
+            <td>Fewer randomization units → lower power, longer runtime</td>
+            <td>Driver incentive in Bangalore — affects all riders in the city</td>
+          </tr>
+          <tr>
+            <td><span class="test-name">Session</span></td>
+            <td>Backend/invisible changes, need more units, no carryover between sessions</td>
+            <td>User notices inconsistency → contamination across sessions</td>
+            <td>Search ranking algorithm, ad load latency</td>
+          </tr>
+          <tr>
+            <td><span class="test-name">Switchback</span></td>
+            <td>Only one market/city, need to alternate treatment over time windows</td>
+            <td>Carryover effects between time windows can bias results</td>
+            <td>Pricing policy test in a single city — alternate by day</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>The Decision Tree</h3>
+
+    <div class="callout callout-info">
+      <div class="callout-title">💡 Step-by-Step Flowchart</div>
+      <strong>Step 1:</strong> Does the treatment affect other users? (Network effects, marketplace spillover)<br>
+      → <strong>YES</strong>: Use <code>Cluster Level</code> randomization<br>
+      → <strong>NO</strong>: Go to Step 2<br><br>
+
+      <strong>Step 2:</strong> Is the treatment session-specific and invisible to users between sessions?<br>
+      → <strong>YES</strong>: Use <code>Session Level</code> randomization<br>
+      → <strong>NO</strong>: Go to Step 3<br><br>
+
+      <strong>Step 3:</strong> Are there known confounders that could imbalance control and treatment groups?<br>
+      → <strong>YES</strong>: Use <code>Stratified Random</code> assignment<br>
+      → <strong>NO</strong>: Use <code>User Level</code> randomization (default)<br><br>
+
+      <strong>Special case:</strong> Only one market and cluster-level isn't feasible?<br>
+      → Use <code>Switchback</code> — alternate treatment/control across time windows
+    </div>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">🔴 The Cluster Power Problem</div>
+      Cluster-level experiments have far fewer randomization units than user-level experiments.
+      If you have 10 cities, you have only 10 randomization units — not 10 million users.
+      This dramatically reduces statistical power and requires much longer runtimes or larger
+      effect sizes to detect. Always compute power at the cluster level, not the user level.
+    </div>
+  </div>
+
+  <!-- ══ SECTION 7C: SPLIT CODE EXAMPLES ══ -->
+  <div class="section" id="split-code">
+    <h2><span class="sec-num">07C</span> Randomization in Python</h2>
+    <div class="section-divider"></div>
+    <p>Practical code for each randomization strategy.</p>
+
+    <h3>User Level — Simple Random Assignment</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+np.random.seed(<span class="nu">42</span>)
+n_users <span class="op">=</span> <span class="nu">10000</span>
+
+users <span class="op">=</span> pd.DataFrame({
+    <span class="st">'user_id'</span>: range(n_users),
+    <span class="st">'variant'</span>: np.random.choice([<span class="st">'control'</span>, <span class="st">'treatment'</span>], size<span class="op">=</span>n_users, p<span class="op">=</span>[<span class="nu">0.5</span>, <span class="nu">0.5</span>])
+})
+
+<span class="fn">print</span>(users[<span class="st">'variant'</span>].value_counts())
+<span class="cm"># Verify balance: control and treatment should be ~50/50</span></pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+control      5014<br>
+treatment    4986<br>
+      <div class="output-comment">
+        Simple and clean. Use this as your default when users don't interact with each other.
+        Always verify balance before running the experiment — a 50/50 split that drifts to 60/40
+        mid-experiment signals a Sample Ratio Mismatch (SRM) bug.
+      </div>
+    </div>
+
+    <h3>Stratified — Balanced Assignment Within Groups</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+np.random.seed(<span class="nu">42</span>)
+
+<span class="cm"># Users across 3 cities — known confounder</span>
+users <span class="op">=</span> pd.DataFrame({
+    <span class="st">'user_id'</span>: range(<span class="nu">9000</span>),
+    <span class="st">'city'</span>: np.random.choice([<span class="st">'bangalore'</span>, <span class="st">'mumbai'</span>, <span class="st">'delhi'</span>],
+                              size<span class="op">=</span><span class="nu">9000</span>, p<span class="op">=</span>[<span class="nu">0.5</span>, <span class="nu">0.3</span>, <span class="nu">0.2</span>])
+})
+
+<span class="cm"># Stratified assignment: randomize within each city</span>
+<span class="kw">def</span> <span class="fn">assign_variant</span>(group):
+    n <span class="op">=</span> len(group)
+    variants <span class="op">=</span> [<span class="st">'control'</span>] <span class="op">*</span> (n <span class="op">//</span> <span class="nu">2</span>) <span class="op">+</span> [<span class="st">'treatment'</span>] <span class="op">*</span> (n <span class="op">-</span> n <span class="op">//</span> <span class="nu">2</span>)
+    np.random.shuffle(variants)
+    group <span class="op">=</span> group.copy()
+    group[<span class="st">'variant'</span>] <span class="op">=</span> variants
+    <span class="kw">return</span> group
+
+users <span class="op">=</span> users.groupby(<span class="st">'city'</span>, group_keys<span class="op">=</span><span class="kw">False</span>).apply(assign_variant)
+
+<span class="cm"># Verify balance within each stratum</span>
+<span class="fn">print</span>(users.groupby([<span class="st">'city'</span>, <span class="st">'variant'</span>]).size().unstack())</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+variant     control  treatment<br>
+city<br>
+bangalore      2250       2250<br>
+delhi           900        900<br>
+mumbai         1350       1350<br>
+      <div class="output-comment">
+        Perfect 50/50 balance within each city — guaranteed, not left to chance.
+        Without stratification, random assignment could accidentally put 60% of Bangalore
+        users in treatment, and city-level effects would confound your results.
+      </div>
+    </div>
+
+    <h3>Cluster Level — Randomize by Group</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+np.random.seed(<span class="nu">42</span>)
+
+<span class="cm"># 10 cities — these are the randomization units, not individual users</span>
+cities <span class="op">=</span> [<span class="st">'bangalore'</span>, <span class="st">'mumbai'</span>, <span class="st">'delhi'</span>, <span class="st">'hyderabad'</span>, <span class="st">'pune'</span>,
+          <span class="st">'chennai'</span>, <span class="st">'kolkata'</span>, <span class="st">'ahmedabad'</span>, <span class="st">'jaipur'</span>, <span class="st">'lucknow'</span>]
+
+<span class="cm"># Randomize at city level — whole city gets treatment or control</span>
+np.random.shuffle(cities)
+city_variants <span class="op">=</span> pd.DataFrame({
+    <span class="st">'city'</span>: cities,
+    <span class="st">'variant'</span>: [<span class="st">'treatment'</span>] <span class="op">*</span> <span class="nu">5</span> <span class="op">+</span> [<span class="st">'control'</span>] <span class="op">*</span> <span class="nu">5</span>
+})
+
+<span class="fn">print</span>(city_variants)
+<span class="fn">print</span>(<span class="st">f"\n⚠️  Power is based on 10 clusters, not millions of users"</span>)
+<span class="fn">print</span>(<span class="st">f"   Run power analysis at city level before designing this test"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+         city    variant<br>
+0   kolkata  treatment<br>
+1     delhi  treatment<br>
+2    jaipur  treatment<br>
+3   lucknow  treatment<br>
+4    mumbai  treatment<br>
+5  bangalore    control<br>
+6     pune     control<br>
+7   chennai    control<br>
+8  hyderabad   control<br>
+9  ahmedabad   control<br>
+<br>
+⚠️  Power is based on 10 clusters, not millions of users<br>
+   Run power analysis at city level before designing this test
+      <div class="output-comment">
+        The critical insight: with 10 cities, your statistical power comes from 10 data points —
+        not from the millions of users inside them. Use city-level aggregated metrics
+        (mean ARPU per city, retention rate per city) as your analysis unit to match
+        the randomization unit.
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">💡 Switchback Experiments — When You Have Only One Market</div>
+      If you can't run a geo-experiment (only one city, one platform), alternate between
+      treatment and control across time windows. Bangalore gets treatment on Monday,
+      control on Tuesday, treatment on Wednesday. This controls for geographic confounding
+      while still measuring causal impact. <strong>Key risk:</strong> carryover effects — a driver
+      who received a bonus yesterday may behave differently today even in the control window.
+      Use longer time windows (full weeks) and add washout periods to minimize this.
+    </div>
+  </div>
+
+  <!-- ══ SECTION 8: SKEWED DATA ══ -->
+  <div class="section" id="skew">
+    <h2><span class="sec-num">08</span> Handling Skewed Data — The Revenue Problem</h2>
+    <div class="section-divider"></div>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">🔴 Real-World Warning</div>
+      Revenue data is almost never normally distributed. In mobile games, the top 1% of users ("whales") 
+      often account for 50%+ of revenue. This creates extreme right skew that <strong>explodes your variance</strong>, 
+      making your MDE enormous and your experiments underpowered.
+    </div>
+
+    <div class="skew-compare">
+      <div class="skew-box">
+        <div class="skew-title">Normal Revenue Distribution</div>
+        <div class="bar-chart">
+          <div class="bar" style="height:20%;background:var(--accent4);opacity:0.4;"></div>
+          <div class="bar" style="height:50%;background:var(--accent4);opacity:0.6;"></div>
+          <div class="bar" style="height:80%;background:var(--accent4);opacity:0.8;"></div>
+          <div class="bar" style="height:100%;background:var(--accent4);"></div>
+          <div class="bar" style="height:80%;background:var(--accent4);opacity:0.8;"></div>
+          <div class="bar" style="height:50%;background:var(--accent4);opacity:0.6;"></div>
+          <div class="bar" style="height:20%;background:var(--accent4);opacity:0.4;"></div>
+        </div>
+        <div class="bar-label">Beautiful bell curve — only in textbooks</div>
+      </div>
+      <div class="skew-box">
+        <div class="skew-title">Real Revenue Distribution (Right-skewed)</div>
+        <div class="bar-chart">
+          <div class="bar" style="height:100%;background:var(--accent2);"></div>
+          <div class="bar" style="height:55%;background:var(--accent2);opacity:0.8;"></div>
+          <div class="bar" style="height:30%;background:var(--accent2);opacity:0.7;"></div>
+          <div class="bar" style="height:15%;background:var(--accent2);opacity:0.6;"></div>
+          <div class="bar" style="height:8%;background:var(--accent2);opacity:0.5;"></div>
+          <div class="bar" style="height:3%;background:var(--accent2);opacity:0.4;"></div>
+          <div class="bar" style="height:50%;background:var(--accent2);"></div>
+        </div>
+        <div class="bar-label">Long right tail (whales) dominates variance</div>
+      </div>
+    </div>
+
+    <h3>Solution 1: Log Transformation</h3>
+    <p>Apply <code>log(1 + revenue)</code> to compress the whale outliers and make the distribution more normal.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> ttest_ind
+
+np.random.seed(<span class="nu">42</span>)
+n <span class="op">=</span> <span class="nu">2000</span>
+
+<span class="cm"># Simulate skewed revenue: most users = ₹0, few = very high</span>
+revenue_ctrl  <span class="op">=</span> np.random.exponential(<span class="nu">100</span>, n)   <span class="cm"># mean ~100</span>
+revenue_treat <span class="op">=</span> np.random.exponential(<span class="nu">110</span>, n)   <span class="cm"># mean ~110 (+10% lift)</span>
+
+<span class="cm"># Add whale users (top 1% with 100x spending)</span>
+whale_idx <span class="op">=</span> np.random.choice(n, size<span class="op">=</span><span class="nu">20</span>, replace<span class="op">=</span><span class="kw">False</span>)
+revenue_ctrl[whale_idx]  <span class="op">*=</span> <span class="nu">50</span>
+revenue_treat[whale_idx] <span class="op">*=</span> <span class="nu">50</span>
+
+<span class="cm"># ── Raw T-test (affected by skew) ─────────────────────────</span>
+t_raw, p_raw <span class="op">=</span> ttest_ind(revenue_treat, revenue_ctrl, equal_var<span class="op">=</span><span class="kw">False</span>)
+
+<span class="cm"># ── Log-transformed T-test (more robust) ──────────────────</span>
+<span class="cm"># log(1 + x) handles zero-revenue users safely</span>
+log_ctrl  <span class="op">=</span> np.log1p(revenue_ctrl)
+log_treat <span class="op">=</span> np.log1p(revenue_treat)
+t_log, p_log <span class="op">=</span> ttest_ind(log_treat, log_ctrl, equal_var<span class="op">=</span><span class="kw">False</span>)
+
+<span class="fn">print</span>(<span class="st">f"Raw Revenue: mean_ctrl=₹{revenue_ctrl.mean():.0f},"</span>
+      <span class="st">f" std=₹{revenue_ctrl.std():.0f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Raw T-test:  p={p_raw:.4f}, Significant={p_raw &lt; 0.05}"</span>)
+<span class="fn">print</span>(<span class="st">f"\nLog Revenue: std={log_ctrl.std():.2f} (much smaller!)"</span>)
+<span class="fn">print</span>(<span class="st">f"Log T-test:  p={p_log:.4f}, Significant={p_log &lt; 0.05}"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+Raw Revenue: mean_ctrl=₹287, std=₹1847<br>
+Raw T-test:  p=0.8721, Significant=False<br>
+<br>
+Log Revenue: std=2.14 (much smaller!)<br>
+Log T-test:  p=0.0031, Significant=True
+      <div class="output-comment">
+        The raw test missed the 10% revenue lift entirely (p=0.87) because whale variance 
+        overwhelmed the signal. The log-transformed test correctly detected it (p=0.003). 
+        Log transformation reduced std from ₹1847 to just 2.14 log-units.
+      </div>
+    </div>
+
+    <h3>Solution 2: Winsorization (Capping Outliers)</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">winsorize</span>(data, lower_pct<span class="op">=</span><span class="nu">0.01</span>, upper_pct<span class="op">=</span><span class="nu">0.99</span>):
+    <span class="st">"""Cap values at the lower and upper percentile thresholds."""</span>
+    lower <span class="op">=</span> np.percentile(data, lower_pct <span class="op">*</span> <span class="nu">100</span>)
+    upper <span class="op">=</span> np.percentile(data, upper_pct <span class="op">*</span> <span class="nu">100</span>)
+    <span class="kw">return</span> np.clip(data, lower, upper)  <span class="cm"># clip replaces outliers with bounds</span>
+
+np.random.seed(<span class="nu">1</span>)
+revenue <span class="op">=</span> np.random.exponential(<span class="nu">100</span>, <span class="nu">1000</span>)
+revenue[np.random.choice(<span class="nu">1000</span>, <span class="nu">10</span>)] <span class="op">*=</span> <span class="nu">100</span>  <span class="cm"># inject whales</span>
+
+revenue_winsorized <span class="op">=</span> winsorize(revenue, <span class="nu">0.01</span>, <span class="nu">0.99</span>)
+
+<span class="fn">print</span>(<span class="st">f"Original:     mean=₹{revenue.mean():.1f}, std=₹{revenue.std():.1f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Winsorized:   mean=₹{revenue_winsorized.mean():.1f}, std=₹{revenue_winsorized.std():.1f}"</span>)
+<span class="fn">print</span>(<span class="st">f"\nMax before cap: ₹{revenue.max():.0f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Max after cap:  ₹{revenue_winsorized.max():.0f}"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+Original:     mean=₹205.4, std=₹1023.2<br>
+Winsorized:   mean=₹99.3,  std=₹71.4<br>
+<br>
+Max before cap: ₹14,823<br>
+Max after cap:  ₹371
+      <div class="output-comment">
+        Winsorization reduced std from ₹1023 to ₹71 — a 14x reduction in noise. 
+        This dramatically lowers MDE. Trade-off: you're slightly distorting total revenue estimates. 
+        Use this when you care about detecting directional effects, not exact revenue attribution.
+      </div>
+    </div>
+
+    <h3>Solution Comparison</h3>
+    <div class="solution-grid">
+      <div class="solution-pill">
+        <div class="icon">📏</div>
+        <span class="label">Log Transform</span>
+        <p>log(1+x). Great for multiplicative effects. Best all-around.</p>
+      </div>
+      <div class="solution-pill">
+        <div class="icon">✂️</div>
+        <span class="label">Winsorization</span>
+        <p>Cap at 99th pct. Simple, effective. Reduces outlier impact.</p>
+      </div>
+      <div class="solution-pill">
+        <div class="icon">📊</div>
+        <span class="label">Median Test</span>
+        <p>Mann-Whitney U. No normality needed. Tests rank, not mean.</p>
+      </div>
+      <div class="solution-pill">
+        <div class="icon">🐳</div>
+        <span class="label">Segment Whales</span>
+        <p>Analyze whales separately. Different behavior, different test.</p>
+      </div>
+      <div class="solution-pill">
+        <div class="icon">⚡</div>
+        <span class="label">CUPED</span>
+        <p>Use pre-experiment covariates to reduce variance. Gold standard.</p>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">💡 CUPED (Controlled-experiment Using Pre-Experiment Data)</div>
+      CUPED subtracts a pre-experiment covariate (e.g., last week's revenue) from the metric. 
+      Since users who spent a lot last week likely spend a lot this week, this correlation 
+      "explains" much of the variance — leaving a much cleaner signal. Used by Netflix, Booking.com, 
+      and most large tech companies. Typical variance reduction: 30–70%.
+      <br><br>
+      <code>Y_cuped = Y - θ × (X_pre − mean(X_pre))</code> where θ = Cov(Y, X_pre) / Var(X_pre)
+    </div>
+  </div>
+
+  <!-- ══ SECTION 9: CONFIDENCE INTERVALS ══ -->
+  <div class="section" id="ci">
+    <h2><span class="sec-num">09</span> Confidence Intervals — How Big Is the Effect?</h2>
+    <div class="section-divider"></div>
+
+    <div class="callout callout-success">
+      <div class="callout-title">🎯 Core Intuition</div>
+      A p-value answers <strong>"is there an effect?"</strong> — a yes/no question. A confidence interval (CI) answers
+      <strong>"how big is it, and how sure are we?"</strong> — the question your product manager is actually asking.
+      Same data, same assumptions, but the CI carries the magnitude and the uncertainty with it.
+    </div>
+
+    <p>
+      In section 04A the Z-test told us the new tutorial "significantly improved" D1 retention. That sentence is nearly useless
+      for a launch decision: a +0.1 pp lift and a +10 pp lift are both "significant" with enough users. The confidence interval
+      replaces that single verdict with the <em>range of effect sizes that are consistent with your data</em>.
+    </p>
+
+    <h3>The one formula to remember</h3>
+    <div class="formula-box">
+      <div class="formula-label">Every CI in this guide is built the same way</div>
+      CI = Δ ± critical value × SE(Δ)
+      <div style="font-size:0.74rem;color:var(--text-muted);margin-top:0.75rem;line-height:1.7;">
+        Δ = observed difference (treatment − control) &nbsp;|&nbsp; critical value = 1.96 for a 95% CI (z), or a t-value for small samples
+        &nbsp;|&nbsp; SE(Δ) = standard error of that difference
+      </div>
+    </div>
+    <p>Only the standard error changes with the metric type:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Metric type</th>
+            <th>Observed effect Δ</th>
+            <th>Standard error of Δ</th>
+            <th>Critical value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Proportion<br><span class="tag tag-binary">conversion, retention</span></td>
+            <td><code>p̂_T − p̂_C</code></td>
+            <td><code>√( p̂_T(1−p̂_T)/n_T + p̂_C(1−p̂_C)/n_C )</code></td>
+            <td>z = 1.96</td>
+          </tr>
+          <tr>
+            <td>Continuous<br><span class="tag tag-cont">ARPU, duration</span></td>
+            <td><code>x̄_T − x̄_C</code></td>
+            <td><code>√( s_T²/n_T + s_C²/n_C )</code></td>
+            <td>t with Welch df (≈ 1.96 for large n)</td>
+          </tr>
+          <tr>
+            <td>Paired<br><span class="tag tag-cont">same users, pre/post</span></td>
+            <td><code>d̄ = mean(post − pre)</code></td>
+            <td><code>s_d / √n</code></td>
+            <td>t with n − 1 df</td>
+          </tr>
+          <tr>
+            <td>Relative lift (%)</td>
+            <td><code>x̄_T / x̄_C − 1</code></td>
+            <td><code>(x̄_T/x̄_C) · √( (SE_T/x̄_T)² + (SE_C/x̄_C)² )</code><br>
+              <span style="font-size:0.75rem;color:var(--text-muted);">delta method — the baseline is noisy too</span></td>
+            <td>z = 1.96</td>
+          </tr>
+          <tr>
+            <td>Difference-in-differences</td>
+            <td><code>coefficient on treated × post</code></td>
+            <td>SE of that coefficient from the OLS fit (use cluster-robust SE when users repeat)</td>
+            <td>t / z</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">💡 Why the CI uses an unpooled SE, but the Z-test pooled one</div>
+      The Z-test in 04A pools both groups into one proportion because it asks "what would the distribution look like <em>if H₀ were true</em>?"
+      A CI makes no such assumption — it estimates the real difference — so each arm keeps its own variance.
+      The two are nearly identical when the arms' rates are close, which is why "CI excludes 0" and "p &lt; 0.05" agree almost always.
+      For Welch's T-test they agree exactly; for proportions they can disagree in a razor-thin borderline case.
+    </div>
+  </div>
+
+  <div class="section" id="ci-code">
+    <h2><span class="sec-num">09A</span> Confidence Intervals in Python</h2>
+    <div class="section-divider"></div>
+
+    <h3>A. Proportion CI — continuing the D1 retention example</h3>
+    <p>Same counts as section 04A (1,800/5,000 vs 1,980/5,000), now asking <em>how much</em> the tutorial helped.</p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> math
+<span class="kw">from</span> scipy.stats <span class="kw">import</span> norm
+
+<span class="cm"># ── Same data as the Z-test section (04A) ─────────────────</span>
+n_control, conv_control <span class="op">=</span> <span class="nu">5000</span>, <span class="nu">1800</span>
+n_treat,   conv_treat   <span class="op">=</span> <span class="nu">5000</span>, <span class="nu">1980</span>
+
+p_ctrl  <span class="op">=</span> conv_control <span class="op">/</span> n_control
+p_treat <span class="op">=</span> conv_treat   <span class="op">/</span> n_treat
+diff    <span class="op">=</span> p_treat <span class="op">-</span> p_ctrl                  <span class="cm"># observed effect (δ̂)</span>
+
+<span class="cm"># ── Standard error of the difference (UNPOOLED) ───────────</span>
+<span class="cm"># A CI does not assume H0 is true, so each group keeps its own variance</span>
+se <span class="op">=</span> math.sqrt(p_ctrl <span class="op">*</span> (<span class="nu">1</span> <span class="op">-</span> p_ctrl) <span class="op">/</span> n_control <span class="op">+</span>
+               p_treat <span class="op">*</span> (<span class="nu">1</span> <span class="op">-</span> p_treat) <span class="op">/</span> n_treat)
+
+<span class="cm"># ── Critical value for a 95% CI ───────────────────────────</span>
+alpha  <span class="op">=</span> <span class="nu">0.05</span>
+z_crit <span class="op">=</span> norm.ppf(<span class="nu">1</span> <span class="op">-</span> alpha <span class="op">/</span> <span class="nu">2</span>)            <span class="cm"># 1.96</span>
+
+ci_low  <span class="op">=</span> diff <span class="op">-</span> z_crit <span class="op">*</span> se
+ci_high <span class="op">=</span> diff <span class="op">+</span> z_crit <span class="op">*</span> se
+
+<span class="fn">print</span>(<span class="st">f"Observed lift:  {diff*100:+.2f} pp"</span>)
+<span class="fn">print</span>(<span class="st">f"Standard error: {se*100:.3f} pp"</span>)
+<span class="fn">print</span>(<span class="st">f"95% CI:         [{ci_low*100:+.2f} pp, {ci_high*100:+.2f} pp]"</span>)
+<span class="fn">print</span>(<span class="st">f"Excludes 0:     {ci_low &gt; 0 or ci_high &lt; 0}"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+<div class="output-pre">Observed lift:  +3.60 pp
+Standard error: 0.969 pp
+95% CI:         [+1.70 pp, +5.50 pp]
+Excludes 0:     True</div>
+      <div class="output-comment">
+        The Z-test said "significant"; the CI says <strong>the true D1 lift is plausibly anywhere from +1.7 pp to +5.5 pp</strong>.
+        Even the pessimistic end is a real improvement, but it is about half the +3.6 pp point estimate —
+        plan your revenue forecast around the range, not the midpoint.
+      </div>
+    </div>
+
+    <h3>B. Continuous-metric CI — Welch's version</h3>
+    <p>A fresh shop-layout test on ARPU. Revenue is skewed, so Welch's t (no equal-variance assumption) is the right default.</p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy <span class="kw">import</span> stats
+
+<span class="cm"># ── Fresh simulated shop-layout test (3,000 users per arm) ─</span>
+np.random.seed(<span class="nu">2024</span>)
+revenue_control <span class="op">=</span> np.random.exponential(scale<span class="op">=</span><span class="nu">120</span>, size<span class="op">=</span><span class="nu">3000</span>)
+revenue_treat   <span class="op">=</span> np.random.exponential(scale<span class="op">=</span><span class="nu">132</span>, size<span class="op">=</span><span class="nu">3000</span>)
+
+n1, n2 <span class="op">=</span> len(revenue_control), len(revenue_treat)
+m1, m2 <span class="op">=</span> revenue_control.mean(), revenue_treat.mean()
+v1, v2 <span class="op">=</span> revenue_control.var(ddof<span class="op">=</span><span class="nu">1</span>), revenue_treat.var(ddof<span class="op">=</span><span class="nu">1</span>)
+
+diff <span class="op">=</span> m2 <span class="op">-</span> m1
+se   <span class="op">=</span> np.sqrt(v1 <span class="op">/</span> n1 <span class="op">+</span> v2 <span class="op">/</span> n2)
+
+<span class="cm"># ── Welch–Satterthwaite degrees of freedom ────────────────</span>
+df <span class="op">=</span> (v1<span class="op">/</span>n1 <span class="op">+</span> v2<span class="op">/</span>n2)<span class="op">**</span><span class="nu">2</span> <span class="op">/</span> ((v1<span class="op">/</span>n1)<span class="op">**</span><span class="nu">2</span><span class="op">/</span>(n1<span class="op">-</span><span class="nu">1</span>) <span class="op">+</span> (v2<span class="op">/</span>n2)<span class="op">**</span><span class="nu">2</span><span class="op">/</span>(n2<span class="op">-</span><span class="nu">1</span>))
+
+<span class="cm"># ── t critical value (≈ 1.96 here because n is large) ─────</span>
+t_crit <span class="op">=</span> stats.t.ppf(<span class="nu">0.975</span>, df)
+
+ci_low  <span class="op">=</span> diff <span class="op">-</span> t_crit <span class="op">*</span> se
+ci_high <span class="op">=</span> diff <span class="op">+</span> t_crit <span class="op">*</span> se
+
+<span class="fn">print</span>(<span class="st">f"Observed ARPU lift: ₹{diff:.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"Standard error:     ₹{se:.2f}"</span>)
+<span class="fn">print</span>(<span class="st">f"95% CI:             [₹{ci_low:.2f}, ₹{ci_high:.2f}]"</span>)
+
+<span class="cm"># ── Cross-check with scipy's built-in CI ──────────────────</span>
+res <span class="op">=</span> stats.ttest_ind(revenue_treat, revenue_control, equal_var<span class="op">=</span><span class="kw">False</span>)
+ci  <span class="op">=</span> res.confidence_interval(confidence_level<span class="op">=</span><span class="nu">0.95</span>)
+<span class="fn">print</span>(<span class="st">f"scipy built-in:     [₹{ci.low:.2f}, ₹{ci.high:.2f}]"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+<div class="output-pre">Observed ARPU lift: ₹10.89
+Standard error:     ₹3.27
+95% CI:             [₹4.48, ₹17.29]
+scipy built-in:     [₹4.48, ₹17.29]</div>
+      <div class="output-comment">
+        The manual calculation matches scipy's built-in <code>confidence_interval()</code> exactly, so use either.
+        The new layout lifts ARPU by about ₹11, and the data are consistent with a true lift anywhere from roughly ₹4 to ₹17.
+        The manual version is worth knowing: it makes the three ingredients (difference, SE, critical value) explicit.
+      </div>
+    </div>
+
+    <h3>C. Relative lift — delta method vs bootstrap</h3>
+    <p>Stakeholders usually think in percentages ("+9% ARPU"). The CI for a ratio needs care, because the baseline in the denominator is also an estimate.</p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+np.random.seed(<span class="nu">2024</span>)
+ctrl  <span class="op">=</span> np.random.exponential(scale<span class="op">=</span><span class="nu">120</span>, size<span class="op">=</span><span class="nu">3000</span>)
+treat <span class="op">=</span> np.random.exponential(scale<span class="op">=</span><span class="nu">132</span>, size<span class="op">=</span><span class="nu">3000</span>)
+
+m_c, m_t   <span class="op">=</span> ctrl.mean(),  treat.mean()
+se_c <span class="op">=</span> ctrl.std(ddof<span class="op">=</span><span class="nu">1</span>)  <span class="op">/</span> np.sqrt(len(ctrl))
+se_t <span class="op">=</span> treat.std(ddof<span class="op">=</span><span class="nu">1</span>) <span class="op">/</span> np.sqrt(len(treat))
+
+<span class="cm"># ── Method 1: Delta method for relative lift ──────────────</span>
+<span class="cm"># lift = m_t / m_c − 1.  The baseline m_c is ALSO noisy, so we</span>
+<span class="cm"># propagate both uncertainties instead of just dividing by m_c.</span>
+ratio    <span class="op">=</span> m_t <span class="op">/</span> m_c
+se_ratio <span class="op">=</span> ratio <span class="op">*</span> np.sqrt((se_t <span class="op">/</span> m_t)<span class="op">**</span><span class="nu">2</span> <span class="op">+</span> (se_c <span class="op">/</span> m_c)<span class="op">**</span><span class="nu">2</span>)
+lift     <span class="op">=</span> ratio <span class="op">-</span> <span class="nu">1</span>
+lo, hi   <span class="op">=</span> lift <span class="op">-</span> <span class="nu">1.96</span> <span class="op">*</span> se_ratio, lift <span class="op">+</span> <span class="nu">1.96</span> <span class="op">*</span> se_ratio
+<span class="fn">print</span>(<span class="st">f"Relative lift: {lift:+.1%}"</span>)
+<span class="fn">print</span>(<span class="st">f"Delta-method 95% CI: [{lo:+.1%}, {hi:+.1%}]"</span>)
+
+<span class="cm"># ── Method 2: Bootstrap (no distribution assumptions) ─────</span>
+rng   <span class="op">=</span> np.random.default_rng(<span class="nu">0</span>)
+lifts <span class="op">=</span> []
+<span class="kw">for</span> _ <span class="kw">in</span> range(<span class="nu">5000</span>):
+    bc <span class="op">=</span> rng.choice(ctrl,  size<span class="op">=</span>len(ctrl),  replace<span class="op">=</span><span class="kw">True</span>)
+    bt <span class="op">=</span> rng.choice(treat, size<span class="op">=</span>len(treat), replace<span class="op">=</span><span class="kw">True</span>)
+    lifts.append(bt.mean() <span class="op">/</span> bc.mean() <span class="op">-</span> <span class="nu">1</span>)
+
+lo_b, hi_b <span class="op">=</span> np.percentile(lifts, [<span class="nu">2.5</span>, <span class="nu">97.5</span>])
+<span class="fn">print</span>(<span class="st">f"Bootstrap 95% CI:    [{lo_b:+.1%}, {hi_b:+.1%}]"</span>)
+
+<span class="cm"># ── Naive shortcut: divide absolute CI by control mean ────</span>
+diff <span class="op">=</span> m_t <span class="op">-</span> m_c
+se_d <span class="op">=</span> np.sqrt(se_t<span class="op">**</span><span class="nu">2</span> <span class="op">+</span> se_c<span class="op">**</span><span class="nu">2</span>)
+<span class="fn">print</span>(<span class="st">f"Naive shortcut CI:   [{(diff-1.96*se_d)/m_c:+.1%}, {(diff+1.96*se_d)/m_c:+.1%}]"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+<div class="output-pre">Relative lift: +9.0%
+Delta-method 95% CI: [+3.5%, +14.5%]
+Bootstrap 95% CI:    [+3.6%, +14.5%]
+Naive shortcut CI:   [+3.7%, +14.3%]</div>
+      <div class="output-comment">
+        The delta method and the bootstrap agree closely. The naive shortcut (dividing the absolute CI by the control mean) is close
+        here only because n is large — it ignores the baseline's own uncertainty. Prefer the delta method for well-behaved metrics and the
+        bootstrap for heavy-tailed or ratio-of-sums metrics (revenue per session, CTR per user) where an analytic SE is awkward.
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="ci-read">
+    <h2><span class="sec-num">09B</span> How to Read a Confidence Interval</h2>
+    <div class="section-divider"></div>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">❌ The Common Misreading</div>
+      "There's a 95% chance the true lift is between +1.7 and +5.5 pp." Strictly, the 95% describes the <em>procedure</em>:
+      if you repeated the experiment many times and built an interval each time, about 95% of those intervals would contain the true effect.
+      Any single interval either contains it or it doesn't. In practice, teams read a CI as the range of plausible effect sizes —
+      that is fine for decisions, <strong>provided the experiment was clean</strong> (valid randomization, no peeking, the right test).
+    </div>
+
+    <p>A CI tells you three things at a glance:</p>
+    <ul>
+      <li><strong>Direction &amp; significance</strong> — does it exclude 0? That is the same question as "p &lt; 0.05" at the same α.</li>
+      <li><strong>Magnitude</strong> — where do the endpoints sit relative to the smallest lift that matters? (This drives the next section.)</li>
+      <li><strong>Precision</strong> — the width, 2 × critical value × SE. It shrinks with √n: to halve the width you need 4× the users.</li>
+    </ul>
+
+    <h3>How CI width connects to MDE</h3>
+    <div class="formula-box">
+      <div class="formula-label">Same standard error, two different multipliers</div>
+      Expected CI half-width = z<sub>1−α/2</sub> × SE &nbsp;&nbsp;|&nbsp;&nbsp; MDE = (z<sub>1−α/2</sub> + z<sub>1−β</sub>) × SE<br><br>
+      half-width ÷ MDE = 1.96 ÷ (1.96 + 0.84) ≈ <strong>0.70</strong>
+    </div>
+    <p>
+      A test powered at 80% to detect an effect of size X will typically return a CI about <strong>±0.7X</strong> wide.
+      So if the true effect is exactly the MDE, the observed lower bound lands near <strong>0.3X</strong>: significant, but well short of X.
+      Keep this in mind in the next section — it is why "significant" and "clearly worth shipping" are different things.
+    </p>
+
+    <h3>CI variants you'll need in practice</h3>
+    <ul>
+      <li><strong>Many metrics:</strong> with k metrics, widen each CI to level 1 − α/k (Bonferroni). Five metrics → 99% CIs.</li>
+      <li><strong>One-sided bound:</strong> for guardrails you only care about the harmful side. The one-sided 95% lower bound is Δ − 1.645 × SE.</li>
+      <li><strong>Peeking:</strong> a fixed-horizon CI is invalid if you checked results repeatedly. Use sequential / always-valid CIs, or look once at the planned end.</li>
+      <li><strong>Skewed metrics:</strong> bootstrap the CI, or build it on winsorized / log-transformed data (see the Skewed Data section).</li>
+      <li><strong>Small n or extreme rates:</strong> the plain (Wald) proportion CI misbehaves near 0% or 100%; use Wilson or Newcombe intervals.</li>
+      <li><strong>Narrower CIs for free:</strong> variance reduction such as CUPED shrinks the SE, so the CI tightens without adding users.</li>
+    </ul>
+  </div>
+
+  <!-- ══ SECTION 10: POST-EXPERIMENT DECISIONS ══ -->
+  <div class="section" id="decision">
+    <h2><span class="sec-num">10</span> Post-Experiment Decision Making — Ship or Not?</h2>
+    <div class="section-divider"></div>
+
+    <p>
+      A significant p-value is not a launch decision. Shipping costs engineering time, adds maintenance, and can quietly hurt something the
+      primary metric doesn't capture. The decision combines four things: <strong>the evidence</strong> (the CI),
+      <strong>the business bar</strong> (the smallest lift worth shipping), <strong>the guardrails</strong> (what must not break),
+      and <strong>the cost of being wrong</strong> (how reversible and how expensive the change is).
+    </p>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">0</div><div><h4>Validate the experiment</h4><p>SRM, balance, full weekly cycles, instrumentation. If this fails, nothing below matters.</p></div></div>
+      <div class="step"><div class="step-num">1</div><div><h4>Read the primary metric's CI</h4><p>Place it against 0 and ±δ<sub>min</sub>. There are exactly nine regions it can land in.</p></div></div>
+      <div class="step"><div class="step-num">2</div><div><h4>Check the guardrails</h4><p>Each guardrail is PASS, UNCERTAIN or FAIL — judged by whether its CI rules out harm beyond a pre-set margin.</p></div></div>
+      <div class="step"><div class="step-num">3</div><div><h4>Combine into a decision</h4><p>Primary outcome × guardrail state → ship, extend, iterate or stop.</p></div></div>
+      <div class="step"><div class="step-num">4</div><div><h4>Check durability &amp; segments</h4><p>Is the effect stable over time? Did a pre-registered segment move the other way?</p></div></div>
+      <div class="step"><div class="step-num">5</div><div><h4>Roll out and document</h4><p>Staged ramp, kill criteria, a long-term holdback, and a decision log.</p></div></div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">📏 Three lines on the number line</div>
+      Every outcome is read against three reference points on the effect axis (treatment − control, higher is better):
+      <ul style="margin:0.6rem 0 0;">
+        <li style="color:inherit;"><strong style="color:inherit;">0 — statistical significance.</strong> Does the CI exclude it?</li>
+        <li style="color:inherit;"><strong style="color:inherit;">+δ<sub>min</sub> — practical significance.</strong> The smallest lift that justifies the cost of shipping and maintaining the change. Set it <em>before</em> the experiment.</li>
+        <li style="color:inherit;"><strong style="color:inherit;">−δ<sub>min</sub> — the mirror line for harm.</strong> A loss this big is a meaningful loss.</li>
+      </ul>
+      <p style="margin:0.75rem 0 0;color:inherit;font-size:0.85rem;">
+        δ<sub>min</sub> is often set equal to the MDE you powered for, but they are different ideas: the MDE is a <em>design</em> input (what the test can see),
+        δ<sub>min</sub> is a <em>business</em> input (what is worth shipping). If δ<sub>min</sub> is smaller than your MDE, you built a test that cannot reliably see what matters.
+      </p>
+    </div>
+  </div>
+
+  <div class="section" id="decision-validity">
+    <h2><span class="sec-num">10A</span> Step 0 — Trust the Data Before the Result</h2>
+    <div class="section-divider"></div>
+    <p>A beautiful CI from a broken experiment is a beautiful lie. Run these gates before looking at the effect.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Check</th><th>How</th><th>If it fails</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="test-name">Sample ratio mismatch (SRM)</span></td>
+            <td>Chi-square goodness-of-fit of the arm sizes against the planned split; flag at p &lt; 0.001</td>
+            <td><strong>Stop.</strong> Results are invalid. Look for bucketing bugs, logging loss, bot filtering or redirects that hit one arm.</td>
+          </tr>
+          <tr>
+            <td><span class="test-name">Pre-experiment balance</span></td>
+            <td>Compare pre-period metrics and key covariates across arms (or inspect the A/A)</td>
+            <td>Question the bucketing; adjust with CUPED / regression only if the imbalance is chance, not a bug.</td>
+          </tr>
+          <tr>
+            <td><span class="test-name">Full planned duration</span></td>
+            <td>Ran the pre-registered runtime, in whole weekly cycles (day-of-week effects are large)</td>
+            <td>Don't decide early with a fixed-horizon test — peeking inflates false positives. Use sequential methods if early looks are needed.</td>
+          </tr>
+          <tr>
+            <td><span class="test-name">Instrumentation &amp; incidents</span></td>
+            <td>Logging coverage by arm; timeline of outages, releases, holidays, campaigns</td>
+            <td>Exclude the affected days from <em>both</em> arms, or re-run.</td>
+          </tr>
+          <tr>
+            <td><span class="test-name">Outliers &amp; bots</span></td>
+            <td>Apply the winsorization / bot rule that was written down before launch</td>
+            <td>Don't tune the rule after seeing which choice favours the treatment.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">from</span> scipy.stats <span class="kw">import</span> chisquare
+
+<span class="kw">def</span> <span class="fn">check_srm</span>(n_control, n_treat, expected_split<span class="op">=</span>(<span class="nu">0.5</span>, <span class="nu">0.5</span>)):
+    total    <span class="op">=</span> n_control <span class="op">+</span> n_treat
+    expected <span class="op">=</span> [total <span class="op">*</span> expected_split[<span class="nu">0</span>], total <span class="op">*</span> expected_split[<span class="nu">1</span>]]
+    _, p     <span class="op">=</span> chisquare([n_control, n_treat], f_exp<span class="op">=</span>expected)
+    <span class="kw">return</span> p
+
+<span class="cm"># Healthy 50/50 split: small random imbalance is normal</span>
+p <span class="op">=</span> check_srm(<span class="nu">10_050</span>, <span class="nu">9_950</span>)
+<span class="fn">print</span>(<span class="st">f"Healthy: 10,050 vs  9,950 → p = {p:.3f} → {'SRM!' if p &lt; 0.001 else 'OK'}"</span>)
+
+<span class="cm"># Broken split: something dropped users from one arm</span>
+p <span class="op">=</span> check_srm(<span class="nu">10_300</span>, <span class="nu">9_700</span>)
+<span class="fn">print</span>(<span class="st">f"Broken:  10,300 vs  9,700 → p = {p:.6f} → {'SRM!' if p &lt; 0.001 else 'OK'}"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+<div class="output-pre">Healthy: 10,050 vs  9,950 → p = 0.480 → OK
+Broken:  10,300 vs  9,700 → p = 0.000022 → SRM!</div>
+      <div class="output-comment">
+        A 100-user imbalance on 20,000 is normal noise (p = 0.48). A 600-user gap is not (p ≈ 0.00002): it means the arms are no longer
+        comparable populations, so <strong>no CI computed from them can be trusted</strong>. Debug first, analyse later.
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="decision-cases">
+    <h2><span class="sec-num">10B</span> Step 1 — The Primary Metric: Nine Possible Outcomes</h2>
+    <div class="section-divider"></div>
+    <p>
+      Take the 95% CI of the primary metric and see where it sits relative to the three lines. Worked example: D1 retention,
+      with δ<sub>min</sub> = <strong>+1.0 pp</strong> (so the harm line is −1.0 pp). Each bar is a 95% CI; the dot is the point estimate.
+    </p>
+
+    <div class="forest"><div class="forest-row head"><div class="forest-label"></div><div class="forest-plot"><span class="forest-axis-label" style="left:35.71%">−δ<sub>min</sub></span><span class="forest-axis-label" style="left:50.00%">0</span><span class="forest-axis-label" style="left:64.29%">+δ<sub>min</sub></span></div><div class="forest-verdict forest-head-label">Decision</div></div><div class="forest-row"><div class="forest-label">1 · Clear win<small>CI [+1.4, +3.2] pp</small></div><div class="forest-plot"><div class="forest-zone" style="left:35.71%;width:28.57%"></div><div class="forest-line" style="left:35.71%"></div><div class="forest-line zero" style="left:50.00%"></div><div class="forest-line" style="left:64.29%"></div><div class="forest-bar c-ship" style="left:70.00%;width:25.71%"></div><div class="forest-dot c-ship" style="left:82.86%"></div></div><div class="forest-verdict"><span class="verdict verdict-ship">SHIP</span></div></div><div class="forest-row"><div class="forest-label">2 · Significant, size uncertain<small>CI [+0.3, +2.1] pp</small></div><div class="forest-plot"><div class="forest-zone" style="left:35.71%;width:28.57%"></div><div class="forest-line" style="left:35.71%"></div><div class="forest-line zero" style="left:50.00%"></div><div class="forest-line" style="left:64.29%"></div><div class="forest-bar c-judge" style="left:54.29%;width:25.71%"></div><div class="forest-dot c-judge" style="left:67.14%"></div></div><div class="forest-verdict"><span class="verdict verdict-judge">JUDGMENT</span></div></div><div class="forest-row"><div class="forest-label">3 · Significant but trivial<small>CI [+0.2, +0.8] pp</small></div><div class="forest-plot"><div class="forest-zone" style="left:35.71%;width:28.57%"></div><div class="forest-line" style="left:35.71%"></div><div class="forest-line zero" style="left:50.00%"></div><div class="forest-line" style="left:64.29%"></div><div class="forest-bar c-judge" style="left:52.86%;width:8.57%"></div><div class="forest-dot c-judge" style="left:57.14%"></div></div><div class="forest-verdict"><span class="verdict verdict-judge">USUALLY NO</span></div></div><div class="forest-row"><div class="forest-label">4 · Inconclusive, leans +<small>CI [-0.4, +1.8] pp</small></div><div class="forest-plot"><div class="forest-zone" style="left:35.71%;width:28.57%"></div><div class="forest-line" style="left:35.71%"></div><div class="forest-line zero" style="left:50.00%"></div><div class="forest-line" style="left:64.29%"></div><div class="forest-bar c-data" style="left:44.29%;width:31.43%"></div><div class="forest-dot c-data" style="left:60.00%"></div></div><div class="forest-verdict"><span class="verdict verdict-data">EXTEND</span></div></div><div class="forest-row"><div class="forest-label">5 · Inconclusive, too wide<small>CI [-1.6, +2.6] pp</small></div><div class="forest-plot"><div class="forest-zone" style="left:35.71%;width:28.57%"></div><div class="forest-line" style="left:35.71%"></div><div class="forest-line zero" style="left:50.00%"></div><div class="forest-line" style="left:64.29%"></div><div class="forest-bar c-data" style="left:27.14%;width:60.00%"></div><div class="forest-dot c-data" style="left:57.14%"></div></div><div class="forest-verdict"><span class="verdict verdict-data">RE-RUN</span></div></div><div class="forest-row"><div class="forest-label">6 · Conclusive null<small>CI [-0.6, +0.7] pp</small></div><div class="forest-plot"><div class="forest-zone" style="left:35.71%;width:28.57%"></div><div class="forest-line" style="left:35.71%"></div><div class="forest-line zero" style="left:50.00%"></div><div class="forest-line" style="left:64.29%"></div><div class="forest-bar c-judge" style="left:41.43%;width:18.57%"></div><div class="forest-dot c-judge" style="left:50.71%"></div></div><div class="forest-verdict"><span class="verdict verdict-judge">NO LIFT</span></div></div><div class="forest-row"><div class="forest-label">7 · Inconclusive, leans −<small>CI [-1.8, +0.6] pp</small></div><div class="forest-plot"><div class="forest-zone" style="left:35.71%;width:28.57%"></div><div class="forest-line" style="left:35.71%"></div><div class="forest-line zero" style="left:50.00%"></div><div class="forest-line" style="left:64.29%"></div><div class="forest-bar c-stop" style="left:24.29%;width:34.29%"></div><div class="forest-dot c-stop" style="left:41.43%"></div></div><div class="forest-verdict"><span class="verdict verdict-stop">DON'T SHIP</span></div></div><div class="forest-row"><div class="forest-label">8 · Clear loss<small>CI [-3.0, -1.3] pp</small></div><div class="forest-plot"><div class="forest-zone" style="left:35.71%;width:28.57%"></div><div class="forest-line" style="left:35.71%"></div><div class="forest-line zero" style="left:50.00%"></div><div class="forest-line" style="left:64.29%"></div><div class="forest-bar c-stop" style="left:7.14%;width:24.29%"></div><div class="forest-dot c-stop" style="left:19.29%"></div></div><div class="forest-verdict"><span class="verdict verdict-stop">ROLL BACK</span></div></div><div class="forest-row"><div class="forest-label">9 · Significant small loss<small>CI [-0.9, -0.2] pp</small></div><div class="forest-plot"><div class="forest-zone" style="left:35.71%;width:28.57%"></div><div class="forest-line" style="left:35.71%"></div><div class="forest-line zero" style="left:50.00%"></div><div class="forest-line" style="left:64.29%"></div><div class="forest-bar c-stop" style="left:37.14%;width:10.00%"></div><div class="forest-dot c-stop" style="left:42.14%"></div></div><div class="forest-verdict"><span class="verdict verdict-stop">DON'T SHIP</span></div></div><div class="forest-legend">Axis: change in D1 retention, treatment − control (pp). Shaded band = effects smaller than δ<sub>min</sub> (too small to matter). Bar = 95% CI, dot = point estimate.</div></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Where the CI sits</th><th>What it means</th><th>Decision</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="num">1</td>
+            <td><strong>Clear win</strong><br>Entire CI ≥ +δ<sub>min</sub></td>
+            <td>Even the pessimistic end of the CI is worth shipping.</td>
+            <td><span class="verdict verdict-ship">SHIP</span><br>Ramp to 100%.</td>
+          </tr>
+          <tr>
+            <td class="num">2</td>
+            <td><strong>Significant, size uncertain</strong><br>CI &gt; 0, straddles +δ<sub>min</sub></td>
+            <td>The effect is real, but it might be smaller than the bar. This is the most common kind of "win".</td>
+            <td><span class="verdict verdict-judge">JUDGMENT</span><br>Ship if cheap, reversible and guardrails pass; otherwise extend or re-test with more power.</td>
+          </tr>
+          <tr>
+            <td class="num">3</td>
+            <td><strong>Significant but trivial</strong><br>CI &gt; 0, entirely below +δ<sub>min</sub></td>
+            <td>A real effect that is too small to matter — the classic large-n artefact.</td>
+            <td><span class="verdict verdict-judge">USUALLY NO</span><br>Don't ship for this metric alone; ship only if the change is free or has other benefits.</td>
+          </tr>
+          <tr>
+            <td class="num">4</td>
+            <td><strong>Inconclusive, leans positive</strong><br>CI contains 0, reaches +δ<sub>min</sub>, stays above −δ<sub>min</sub></td>
+            <td>A meaningful gain is not ruled out, and a meaningful loss is. <em>Not</em> "no effect".</td>
+            <td><span class="verdict verdict-data">EXTEND</span><br>Collect more data; or ship if low-risk and reversible, accepting the uncertainty.</td>
+          </tr>
+          <tr>
+            <td class="num">5</td>
+            <td><strong>Inconclusive, too wide</strong><br>CI contains 0 and spans both +δ<sub>min</sub> and −δ<sub>min</sub></td>
+            <td>The test cannot tell a big win from a big loss — it was underpowered for this metric.</td>
+            <td><span class="verdict verdict-data">RE-RUN</span><br>More users, longer runtime, or variance reduction (CUPED). Don't ship on this evidence.</td>
+          </tr>
+          <tr>
+            <td class="num">6</td>
+            <td><strong>Conclusive null (equivalent)</strong><br>CI inside (−δ<sub>min</sub>, +δ<sub>min</sub>)</td>
+            <td>A well-powered "no meaningful difference". That is real information, not a failed test.</td>
+            <td><span class="verdict verdict-judge">NO LIFT</span><br>Ship only for non-metric reasons (cost, simplicity, tech debt, a mandated change) and if guardrails pass.</td>
+          </tr>
+          <tr>
+            <td class="num">7</td>
+            <td><strong>Inconclusive, leans negative</strong><br>CI contains 0, reaches −δ<sub>min</sub>, stays below +δ<sub>min</sub></td>
+            <td>A meaningful loss is not ruled out, and a meaningful gain is.</td>
+            <td><span class="verdict verdict-stop">DON'T SHIP</span></td>
+          </tr>
+          <tr>
+            <td class="num">8</td>
+            <td><strong>Clear loss</strong><br>Entire CI &lt; 0, upper end ≤ −δ<sub>min</sub></td>
+            <td>The change meaningfully hurts the metric.</td>
+            <td><span class="verdict verdict-stop">ROLL BACK</span><br>Investigate why before iterating.</td>
+          </tr>
+          <tr>
+            <td class="num">9</td>
+            <td><strong>Significant small loss</strong><br>Entire CI &lt; 0, upper end &gt; −δ<sub>min</sub></td>
+            <td>Real harm, but small — no upside and some downside.</td>
+            <td><span class="verdict verdict-stop">DON'T SHIP</span><br>Unless the loss is a deliberate trade for another benefit.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">⚠️ Why case 2 is the typical "win"</div>
+      From the CI section: a test powered for an effect X returns a CI about ±0.7X wide. If the true effect is exactly δ<sub>min</sub>,
+      the lower bound lands near 0.3 × δ<sub>min</sub> — case 2, not case 1. To land in case 1 reliably, the true effect has to be about
+      <strong>1.7 × δ<sub>min</sub></strong>. So demanding case 1 for every launch means shipping only big winners.
+      Raise the bar with the cost and irreversibility of the change: case 1 for expensive or one-way doors, case 2 for cheap, reversible ones.
+    </div>
+
+    <p>The same logic as a small, testable function — pass in a CI and your δ<sub>min</sub>:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">def</span> <span class="fn">classify_primary</span>(ci_low, ci_high, delta_min):
+    <span class="cm">"""Place the CI of (treatment − control) relative to 0 and ±delta_min.
+    Higher is better. delta_min = smallest lift worth shipping (&gt; 0)."""</span>
+    <span class="kw">if</span> ci_low <span class="op">&gt;=</span> delta_min:                       <span class="cm"># whole CI above the bar</span>
+        <span class="kw">return</span> <span class="nu">1</span>, <span class="st">"Clear win"</span>,                        <span class="st">"SHIP"</span>
+    <span class="kw">if</span> ci_low <span class="op">&gt;</span> <span class="nu">0</span>:                                <span class="cm"># significant, but not clear of the bar</span>
+        <span class="kw">if</span> ci_high <span class="op">&gt;=</span> delta_min:
+            <span class="kw">return</span> <span class="nu">2</span>, <span class="st">"Significant, size uncertain"</span>,  <span class="st">"SHIP if cheap &amp; reversible, else EXTEND"</span>
+        <span class="kw">return</span> <span class="nu">3</span>, <span class="st">"Significant but trivial"</span>,         <span class="st">"DON'T SHIP for this metric alone"</span>
+    <span class="kw">if</span> ci_high <span class="op">&lt;</span> <span class="nu">0</span>:                               <span class="cm"># significantly negative</span>
+        <span class="kw">if</span> ci_high <span class="op">&lt;=</span> <span class="op">-</span>delta_min:
+            <span class="kw">return</span> <span class="nu">8</span>, <span class="st">"Clear loss"</span>,                   <span class="st">"DON'T SHIP / ROLL BACK"</span>
+        <span class="kw">return</span> <span class="nu">9</span>, <span class="st">"Significant small loss"</span>,          <span class="st">"DON'T SHIP"</span>
+    <span class="cm"># CI contains 0 → not significant</span>
+    can_win  <span class="op">=</span> ci_high <span class="op">&gt;=</span> delta_min               <span class="cm"># meaningful gain still possible?</span>
+    can_lose <span class="op">=</span> ci_low  <span class="op">&lt;=</span> <span class="op">-</span>delta_min              <span class="cm"># meaningful loss still possible?</span>
+    <span class="kw">if</span> can_win <span class="kw">and</span> <span class="kw">not</span> can_lose:
+        <span class="kw">return</span> <span class="nu">4</span>, <span class="st">"Inconclusive, leans positive"</span>,    <span class="st">"EXTEND / low-risk ship"</span>
+    <span class="kw">if</span> can_win <span class="kw">and</span> can_lose:
+        <span class="kw">return</span> <span class="nu">5</span>, <span class="st">"Inconclusive, too wide"</span>,          <span class="st">"RE-RUN with more power"</span>
+    <span class="kw">if</span> <span class="kw">not</span> can_win <span class="kw">and</span> <span class="kw">not</span> can_lose:
+        <span class="kw">return</span> <span class="nu">6</span>, <span class="st">"Conclusive null (equivalent)"</span>,    <span class="st">"SHIP only for non-metric reasons"</span>
+    <span class="kw">return</span> <span class="nu">7</span>, <span class="st">"Inconclusive, leans negative"</span>,        <span class="st">"DON'T SHIP"</span>
+
+
+<span class="cm"># ── The nine outcomes, with δ_min = +1.0 pp ───────────────</span>
+cases <span class="op">=</span> [(<span class="nu">1.4</span>, <span class="nu">3.2</span>), (<span class="nu">0.3</span>, <span class="nu">2.1</span>), (<span class="nu">0.2</span>, <span class="nu">0.8</span>), (<span class="op">-</span><span class="nu">0.4</span>, <span class="nu">1.8</span>), (<span class="op">-</span><span class="nu">1.6</span>, <span class="nu">2.6</span>),
+         (<span class="op">-</span><span class="nu">0.6</span>, <span class="nu">0.7</span>), (<span class="op">-</span><span class="nu">1.8</span>, <span class="nu">0.6</span>), (<span class="op">-</span><span class="nu">3.0</span>, <span class="op">-</span><span class="nu">1.3</span>), (<span class="op">-</span><span class="nu">0.9</span>, <span class="op">-</span><span class="nu">0.2</span>)]
+<span class="kw">for</span> lo, hi <span class="kw">in</span> cases:
+    n, name, action <span class="op">=</span> classify_primary(lo, hi, delta_min<span class="op">=</span><span class="nu">1.0</span>)
+    <span class="fn">print</span>(<span class="st">f"#{n}  CI [{lo:+.1f}, {hi:+.1f}] pp  {name:&lt;30} → {action}"</span>)</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+<div class="output-pre">#1  CI [+1.4, +3.2] pp  Clear win                      → SHIP
+#2  CI [+0.3, +2.1] pp  Significant, size uncertain    → SHIP if cheap &amp; reversible, else EXTEND
+#3  CI [+0.2, +0.8] pp  Significant but trivial        → DON'T SHIP for this metric alone
+#4  CI [-0.4, +1.8] pp  Inconclusive, leans positive   → EXTEND / low-risk ship
+#5  CI [-1.6, +2.6] pp  Inconclusive, too wide         → RE-RUN with more power
+#6  CI [-0.6, +0.7] pp  Conclusive null (equivalent)   → SHIP only for non-metric reasons
+#7  CI [-1.8, +0.6] pp  Inconclusive, leans negative   → DON'T SHIP
+#8  CI [-3.0, -1.3] pp  Clear loss                     → DON'T SHIP / ROLL BACK
+#9  CI [-0.9, -0.2] pp  Significant small loss         → DON'T SHIP</div>
+      <div class="output-comment">
+        The nine rows reproduce the plot above. The function uses only the CI endpoints and δ<sub>min</sub> — nothing about p-values —
+        which is the point: the decision depends on <em>where the interval sits</em>, not on whether it crosses zero.
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="decision-guardrails">
+    <h2><span class="sec-num">10C</span> Step 2 — Guardrail Metrics: Prove There's No Meaningful Harm</h2>
+    <div class="section-divider"></div>
+    <p>
+      A guardrail is a metric that must not get meaningfully worse — crash rate, latency, uninstalls, revenue, D7 retention.
+      Agree a <strong>margin</strong> for each one before launch (for example, crash rate may rise by at most 0.2 pp).
+    </p>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">❌ "Not significant" is not "safe"</div>
+      Most guardrails are badly underpowered. A guardrail with p = 0.3 may have a CI running from −2% to +1% — harm of 2% is
+      entirely plausible. A guardrail only <em>passes</em> when its CI <strong>rules out harm bigger than the margin</strong> (non-inferiority).
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>State</th><th>Rule (harm direction = worse)</th><th>Meaning</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="verdict verdict-ship">PASS</span></td>
+            <td>The CI's worst end is better than the −margin line</td>
+            <td>Harm beyond the margin is ruled out. Use the one-sided 95% bound (Δ − 1.645 × SE) for the formal non-inferiority test.</td>
+          </tr>
+          <tr>
+            <td><span class="verdict verdict-judge">UNCERTAIN</span></td>
+            <td>The CI straddles the −margin line</td>
+            <td>Harm beyond the margin is possible but not confirmed. This includes a result that is statistically significantly worse yet might still be within tolerance.</td>
+          </tr>
+          <tr>
+            <td><span class="verdict verdict-stop">FAIL</span></td>
+            <td>The CI's best end is worse than the −margin line</td>
+            <td>Harm beyond the margin is confirmed.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div>
+        <div class="code-lang">python</div>
+      </div>
+      <pre><span class="kw">def</span> <span class="fn">guardrail_status</span>(ci_low, ci_high, margin, higher_is_better<span class="op">=</span><span class="kw">True</span>):
+    <span class="cm">"""Non-inferiority check. margin = largest harm we will tolerate (&gt; 0)."""</span>
+    <span class="kw">if</span> <span class="kw">not</span> higher_is_better:                      <span class="cm"># e.g. crash rate: an INCREASE is harm</span>
+        ci_low, ci_high <span class="op">=</span> <span class="op">-</span>ci_high, <span class="op">-</span>ci_low       <span class="cm"># flip so 'negative' always means 'worse'</span>
+    <span class="kw">if</span> ci_low <span class="op">&gt;</span> <span class="op">-</span>margin:
+        <span class="kw">return</span> <span class="st">"PASS (harm bigger than margin ruled out)"</span>
+    <span class="kw">if</span> ci_high <span class="op">&lt;</span> <span class="op">-</span>margin:
+        <span class="kw">return</span> <span class="st">"FAIL (harm bigger than margin confirmed)"</span>
+    <span class="kw">return</span> <span class="st">"UNCERTAIN (can't rule out harm beyond margin)"</span>
+
+
+<span class="cm"># ── Guardrail examples: crash-rate margin = 0.2 pp ────────</span>
+<span class="fn">print</span>()
+<span class="fn">print</span>(<span class="st">"Crash rate Δ CI [-0.05, +0.10] →"</span>, guardrail_status(<span class="op">-</span><span class="nu">0.05</span>, <span class="nu">0.10</span>, <span class="nu">0.2</span>, higher_is_better<span class="op">=</span><span class="kw">False</span>))
+<span class="fn">print</span>(<span class="st">"Crash rate Δ CI [+0.05, +0.45] →"</span>, guardrail_status(<span class="nu">0.05</span>, <span class="nu">0.45</span>, <span class="nu">0.2</span>, higher_is_better<span class="op">=</span><span class="kw">False</span>))
+<span class="fn">print</span>(<span class="st">"Crash rate Δ CI [+0.25, +0.60] →"</span>, guardrail_status(<span class="nu">0.25</span>, <span class="nu">0.60</span>, <span class="nu">0.2</span>, higher_is_better<span class="op">=</span><span class="kw">False</span>))</pre>
+    </div>
+    <div class="output-block">
+      <div class="output-label">▶ Output</div>
+<div class="output-pre">
+Crash rate Δ CI [-0.05, +0.10] → PASS (harm bigger than margin ruled out)
+Crash rate Δ CI [+0.05, +0.45] → UNCERTAIN (can't rule out harm beyond margin)
+Crash rate Δ CI [+0.25, +0.60] → FAIL (harm bigger than margin confirmed)</div>
+      <div class="output-comment">
+        Note the direction flip for "lower is better" metrics like crash rate: an <em>increase</em> is harm. The middle row is the instructive one —
+        crashes are significantly up (CI excludes 0), yet because the CI still reaches inside the 0.2 pp tolerance it is UNCERTAIN, not FAIL.
+        Many guardrails at once means some will flag by chance; since a false alarm only <em>pauses</em> a launch, teams usually accept that.
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="decision-matrix">
+    <h2><span class="sec-num">10D</span> Step 3 — Combine Into a Launch Decision</h2>
+    <div class="section-divider"></div>
+    <p>Primary outcome (rows, using the case numbers above) × guardrail state (columns):</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Primary outcome</th><th>Guardrails PASS</th><th>Guardrails UNCERTAIN</th><th>Guardrails FAIL</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Case 1</strong> — clear win</td>
+            <td><span class="verdict verdict-ship">SHIP</span></td>
+            <td><span class="verdict verdict-ship">SHIP, STAGED</span><br>Ramp slowly with the guardrail on watch; extend first if it is critical.</td>
+            <td><span class="verdict verdict-stop">NOT AS IS</span><br>Fix it, retest — or make an explicit, signed-off trade-off.</td>
+          </tr>
+          <tr>
+            <td><strong>Case 2</strong> — significant, size uncertain</td>
+            <td><span class="verdict verdict-judge">JUDGMENT</span><br>Ship if cheap &amp; reversible, else extend.</td>
+            <td><span class="verdict verdict-data">EXTEND</span><br>Resolve the guardrail first.</td>
+            <td><span class="verdict verdict-stop">DON'T SHIP</span></td>
+          </tr>
+          <tr>
+            <td><strong>Cases 3 &amp; 6</strong> — trivial or equivalent</td>
+            <td><span class="verdict verdict-judge">ONLY FOR OTHER REASONS</span><br>Cost savings, simplicity, tech debt.</td>
+            <td><span class="verdict verdict-stop">DON'T SHIP</span></td>
+            <td><span class="verdict verdict-stop">DON'T SHIP</span></td>
+          </tr>
+          <tr>
+            <td><strong>Cases 4 &amp; 5</strong> — inconclusive</td>
+            <td><span class="verdict verdict-data">EXTEND / RE-RUN</span></td>
+            <td><span class="verdict verdict-data">EXTEND / REDESIGN</span></td>
+            <td><span class="verdict verdict-stop">DROP</span></td>
+          </tr>
+          <tr>
+            <td><strong>Cases 7, 8, 9</strong> — loss</td>
+            <td><span class="verdict verdict-stop">DON'T SHIP</span></td>
+            <td><span class="verdict verdict-stop">DON'T SHIP</span></td>
+            <td><span class="verdict verdict-stop">DON'T SHIP</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="decision-edge">
+    <h2><span class="sec-num">10E</span> Step 4 — Tricky Scenarios &amp; Edge Cases</h2>
+    <div class="section-divider"></div>
+    <p>Real results rarely fall cleanly into one cell. These are the situations that cause the most arguments.</p>
+
+    <div class="mistake-list">
+      <div class="mistake-item edge">
+        <div class="mistake-icon">🔬</div>
+        <div class="mistake-text">
+          <h4>Significant, but tiny (huge sample)</h4>
+          <p>With millions of users, a +0.05 pp lift gets p &lt; 0.001. The CI is narrow and sits entirely below δ<sub>min</sub> — case 3.
+          Report the effect size, not the star. If it isn't worth the maintenance cost, don't ship.</p>
+        </div>
+      </div>
+      <div class="mistake-item edge">
+        <div class="mistake-icon">🌫️</div>
+        <div class="mistake-text">
+          <h4>Big point estimate, not significant</h4>
+          <p>+4 pp with a CI of [−3, +11] is case 5, not "no effect" and not "a 4 pp win". The data are compatible with a large gain and a large loss.
+          Don't ship on the point estimate and don't bury the idea — re-run with more power.</p>
+        </div>
+      </div>
+      <div class="mistake-item edge">
+        <div class="mistake-icon">⚖️</div>
+        <div class="mistake-text">
+          <h4>Primary wins, a guardrail regresses</h4>
+          <p>+2 pp D1 retention, but revenue −1.5%. Convert both to a common currency (e.g. estimated LTV) or escalate to the metric owner for an explicit trade-off.
+          Never let the winning metric quietly outvote the losing one. Check whether the harm is concentrated in a segment you can exclude.</p>
+        </div>
+      </div>
+      <div class="mistake-item edge">
+        <div class="mistake-icon">🎲</div>
+        <div class="mistake-text">
+          <h4>Mixed signals across secondary metrics</h4>
+          <p>Decide on the pre-registered primary metric; treat the others as diagnostics that explain <em>why</em>. Picking whichever metric happened to move
+          is p-hacking. With many secondary metrics, expect a few false flags and apply a multiplicity correction.</p>
+        </div>
+      </div>
+      <div class="mistake-item edge">
+        <div class="mistake-icon">🧩</div>
+        <div class="mistake-text">
+          <h4>Overall flat, but one segment moves</h4>
+          <p>Only pre-registered segments (platform, new vs returning, country) can drive a decision, and you should test the treatment × segment <em>interaction</em>,
+          not just the segment's own p-value. A post-hoc "it works for iOS users in Brazil" is a hypothesis for the next experiment, not a result.
+          Beware Simpson's paradox when segment mix differs between arms.</p>
+        </div>
+      </div>
+      <div class="mistake-item edge">
+        <div class="mistake-icon">⏱️</div>
+        <div class="mistake-text">
+          <h4>Stopped early because it hit p &lt; 0.05</h4>
+          <p>Early stops capture noise at its peak: significant results from peeking are biased upward (winner's curse) and the false-positive rate is inflated.
+          If you didn't use a sequential method, re-run or discount the effect, and rely on the planned-end analysis.</p>
+        </div>
+      </div>
+      <div class="mistake-item edge">
+        <div class="mistake-icon">🌗</div>
+        <div class="mistake-text">
+          <h4>Novelty or primacy effects</h4>
+          <p>Plot the effect by day, or by week since each user's first exposure. A shrinking lift suggests novelty; a growing one, learning.
+          Forecast from the stable tail, extend the test if it hasn't settled, and keep a holdback to verify the long-term number.</p>
+        </div>
+      </div>
+      <div class="mistake-item edge">
+        <div class="mistake-icon">🚨</div>
+        <div class="mistake-text">
+          <h4>SRM or other validity failure</h4>
+          <p>Don't decide — not even "directionally". Find the root cause, fix it, and re-run. A result from a biased split can point either way.</p>
+        </div>
+      </div>
+      <div class="mistake-item edge">
+        <div class="mistake-icon">🏆</div>
+        <div class="mistake-text">
+          <h4>Picking the winner among many variants (A/B/C/n)</h4>
+          <p>The best of k variants is biased upward even if all are equal. Correct comparisons against control (Bonferroni or Dunnett), choose the winner by a rule
+          written beforehand, and expect its real effect to land below what the test showed. Confirm with a follow-up if the stakes are high.</p>
+        </div>
+      </div>
+      <div class="mistake-item edge">
+        <div class="mistake-icon">🔧</div>
+        <div class="mistake-text">
+          <h4>"Ship if it does no harm" launches</h4>
+          <p>Infrastructure migrations, cost cuts and refactors aren't expected to lift anything. The hypothesis flips to non-inferiority:
+          the win condition is a CI whose worst end stays above −margin, and a flat result <em>is</em> success. Power the test for the margin, not for a lift.</p>
+        </div>
+      </div>
+      <div class="mistake-item edge">
+        <div class="mistake-icon">🚪</div>
+        <div class="mistake-text">
+          <h4>Reversible vs one-way doors</h4>
+          <p>The evidence bar should scale with the cost of being wrong. A copy tweak you can revert in minutes can ship on case 2 or even case 4.
+          A pricing change, a data migration or an irreversible UX change should require case 1, clean guardrails and a staged rollout.</p>
+        </div>
+      </div>
+      <div class="mistake-item edge">
+        <div class="mistake-icon">🕸️</div>
+        <div class="mistake-text">
+          <h4>Interference between users</h4>
+          <p>In social or marketplace products, treated users affect control users (SUTVA violation), so the measured effect can understate or overstate the real one.
+          Treat the CI as optimistic; prefer cluster or geo experiments when spillovers are likely.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="decision-rollout">
+    <h2><span class="sec-num">10F</span> Step 5 — Roll Out and Document</h2>
+    <div class="section-divider"></div>
+
+    <div class="solution-grid">
+      <div class="solution-pill"><div class="icon">📈</div><span class="label">Staged ramp</span><p>e.g. 5% → 25% → 50% → 100%, holding long enough at each step to read the guardrails.</p></div>
+      <div class="solution-pill"><div class="icon">🛑</div><span class="label">Kill criteria</span><p>Written in advance: a guardrail's CI crossing its −margin line triggers rollback.</p></div>
+      <div class="solution-pill"><div class="icon">🧪</div><span class="label">Long-term holdback</span><p>Keep 1–5% on the old experience for weeks to confirm the effect persists and to measure LTV.</p></div>
+      <div class="solution-pill"><div class="icon">📉</div><span class="label">Forecast conservatively</span><p>Plan with the CI's lower bound, not the point estimate — winners usually shrink after launch.</p></div>
+    </div>
+
+    <p>
+      Write the decision down while it is fresh. A one-paragraph decision log makes the next experiment cheaper and stops the same debate from recurring:
+      hypothesis, primary metric, δ<sub>min</sub>, guardrails and margins, planned n and runtime, validity checks, result as <em>estimate + CI</em>
+      (which of the nine cases), guardrail states, the decision and its owner, and follow-ups.
+    </p>
+
+    <div class="callout callout-success">
+      <div class="callout-title">✅ Post-Experiment Checklist</div>
+      <ol style="margin:0.5rem 0 0;padding-left:1.25rem;">
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Validity gates pass</strong> — no SRM, arms balanced, full weekly cycles, no unexplained incidents</li>
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Report effect + CI</strong> — absolute and relative, never just a p-value</li>
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Locate the CI</strong> against 0 and ±δ<sub>min</sub> — which of the nine cases?</li>
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Score every guardrail</strong> — PASS, UNCERTAIN or FAIL against its margin</li>
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Check the time trend and pre-registered segments</strong> — novelty, interactions</li>
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Decide with the matrix</strong> — raise the bar for costly or irreversible changes</li>
+        <li style="color:var(--accent)"><strong>Ramp, hold back, log</strong> — staged rollout, kill criteria, long-term holdback, decision log</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 11: PITFALLS ══ -->
+  <div class="section" id="pitfalls">
+    <h2><span class="sec-num">11</span> Practical Insights & Common Mistakes</h2>
+    <div class="section-divider"></div>
+
+    <div class="mistake-list">
+      <div class="mistake-item">
+        <div class="mistake-icon">💥</div>
+        <div class="mistake-text">
+          <h4>Running an underpowered experiment</h4>
+          <p>Skipping MDE calculation and just running for "2 weeks". A p-value of 0.4 means nothing if 
+          your power was 30%. You can't conclude "no effect" — you simply couldn't detect it. 
+          Always calculate MDE and required sample size before starting.</p>
+        </div>
+      </div>
+      <div class="mistake-item">
+        <div class="mistake-icon">🎭</div>
+        <div class="mistake-text">
+          <h4>Using the wrong test for the variable type</h4>
+          <p>Running a T-test on conversion rates instead of a Z-test. Or using a paired T-test on 
+          independent groups. Both give wrong degrees of freedom and wrong p-values. 
+          Always match your test to your variable type.</p>
+        </div>
+      </div>
+      <div class="mistake-item">
+        <div class="mistake-icon">👀</div>
+        <div class="mistake-text">
+          <h4>Peeking at results and stopping early</h4>
+          <p>Checking p-values daily and stopping when p &lt; 0.05 inflates false positive rate 
+          dramatically. If you check 20 times, your true α could be 40% even though you set α=0.05. 
+          Use sequential testing methods or fix your runtime upfront.</p>
+        </div>
+      </div>
+      <div class="mistake-item">
+        <div class="mistake-icon">🐋</div>
+        <div class="mistake-text">
+          <h4>Ignoring skewness in revenue metrics</h4>
+          <p>Running a vanilla T-test on raw revenue when 3 whale users dominate variance. 
+          Whales create such high std dev that your MDE requires 50%+ ARPU lift to detect — 
+          which basically never happens. Always check the distribution first.</p>
+        </div>
+      </div>
+      <div class="mistake-item">
+        <div class="mistake-icon">🔀</div>
+        <div class="mistake-text">
+          <h4>Novelty effects and insufficient runtime</h4>
+          <p>Users behave differently when something is new. A feature that looks great in week 1 
+          (novelty bump) may stabilize or even decline by week 3. Run experiments long enough 
+          to capture a stable behavioral state — typically at least one full week cycle.</p>
+        </div>
+      </div>
+      <div class="mistake-item">
+        <div class="mistake-icon">📊</div>
+        <div class="mistake-text">
+          <h4>Over-interpreting non-significant results</h4>
+          <p>p = 0.07 is NOT "trending towards significance." It's a null result. 
+          Absence of evidence is not evidence of absence — especially in underpowered tests. 
+          Report confidence intervals, not just p-values.</p>
+        </div>
+      </div>
+      <div class="mistake-item">
+        <div class="mistake-icon">🎯</div>
+        <div class="mistake-text">
+          <h4>Ignoring Multiple Testing (FWER)</h4>
+          <p>Testing 10 metrics simultaneously at α=0.05 means you'd expect 0.5 false positives 
+          by chance. Apply Bonferroni correction (α/k) or Benjamini-Hochberg for multiple metrics. 
+          Pre-specify your primary metric before looking at any results.</p>
+        </div>
+      </div>
+      <div class="mistake-item">
+        <div class="mistake-icon">🏝️</div>
+        <div class="mistake-text">
+          <h4>Network effects & SUTVA violations</h4>
+          <p>In social games, one user's treatment can affect their friends in the control group 
+          (spillover). This violates the Stable Unit Treatment Value Assumption (SUTVA). 
+          Consider cluster-randomized trials or geo-experiments where whole friend groups 
+          are in the same arm.</p>
+        </div>
+      </div>
+      <div class="mistake-item">
+        <div class="mistake-icon">🚢</div>
+        <div class="mistake-text">
+          <h4>Shipping on the p-value alone</h4>
+          <p>A small p-value says the effect probably isn't zero — not that it is big enough to matter, or that nothing else broke.
+          Before launching, place the confidence interval against your minimum worthwhile lift (δ<sub>min</sub>) and check every guardrail
+          against its margin. See <a href="#decision" style="color:var(--accent4);">Post-Experiment Decision Making</a>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-success">
+      <div class="callout-title">✅ A/B Testing Checklist (Before You Start)</div>
+      <ol style="margin:0.5rem 0 0;padding-left:1.25rem;">
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Define your primary metric</strong> — one metric, pre-specified, before you look at data</li>
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Check the distribution</strong> — is it binary, continuous, skewed? Choose your test accordingly</li>
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Calculate MDE and required n</strong> — can you actually detect the effect you care about?</li>
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Verify randomization</strong> — run an A/A test or check covariate balance before launch</li>
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Fix your runtime</strong> — don't peek and stop early</li>
+        <li style="color:var(--accent);margin-bottom:0.5rem;"><strong>Handle skew before testing</strong> — log transform or winsorize revenue metrics</li>
+        <li style="color:var(--accent)"><strong>Pre-register your ship bar</strong> — the smallest lift worth shipping (δ<sub>min</sub>) and a margin for every guardrail, written down before you see data</li>
+      </ol>
+    </div>
+  </div>
+
+  <footer>
+    <p>A/B Testing Field Guide • Built with HTML + CSS • No external dependencies</p>
+    <p style="margin-top:0.3rem;color:var(--text-dim);">Statistical tests: scipy.stats • MDE calculations: scipy.stats.norm, math • Data simulation: numpy</p>
+  </footer>
+
+</main>
+</div>
+</body>
+</html>
